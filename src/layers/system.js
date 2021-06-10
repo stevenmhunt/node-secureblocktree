@@ -1,15 +1,16 @@
-const hash = require('object-hash');
-const crypto = require('crypto');
+// Blocktree API Level 0 - System
 
-const data = {};
-const cache = {};
+// TODO: dependeny injection.
+const cache = require('../cache/mock');
+const storage = require('../storage/mock');
+const system = require('../system/mock');
 
 /**
  * Generates hashes for block data.
- * @param {string} value 
+ * @param {string} value
  */
 function generateHash(value) {
-    return hash(value);
+    return system.generateHash(value);
 }
 
 /**
@@ -17,9 +18,7 @@ function generateHash(value) {
  * @returns {BigInt} A UTC epoch timestamp.
  */
 function generateTimestamp() {
-    const now = new Date();
-    const utcMilliseconds = BigInt(now.getTime()) + BigInt(now.getTimezoneOffset() * 60 * 1000);
-    return utcMilliseconds / 1000n;
+    return system.generateTimestamp();
 }
 
 /**
@@ -27,7 +26,7 @@ function generateTimestamp() {
  * @returns {Buffer} A random 32 bit integer.
  */
 function generateNonce() {
-    return crypto.randomBytes(4);
+    return system.generateNonce();
 }
 
 /**
@@ -36,7 +35,7 @@ function generateNonce() {
  * @returns {Promise<Buffer>} The binary data being stored.
  */
 async function readStorage(hash) {
-    return data[hash];
+    return storage.readStorage(hash);
 }
 
 /**
@@ -46,8 +45,7 @@ async function readStorage(hash) {
  */
 async function writeStorage(value) {
     const hash = generateHash(value);
-    data[hash] = value;
-    return hash;
+    return storage.writeStorage(hash, value);
 }
 
 /**
@@ -56,7 +54,7 @@ async function writeStorage(value) {
  * @returns {Promise<Array>} the result of the map() call.
  */
 async function mapInStorage(fn) {
-    return Object.values(data).map(fn);
+    return storage.mapInStorage(fn);
 }
 
 /**
@@ -65,7 +63,7 @@ async function mapInStorage(fn) {
  * @returns {Promise} The result of the find() call.
  */
 async function findInStorage(fn) {
-    return Object.values(data).find(fn);
+    return storage.findInStorage(fn);
 }
 
 /**
@@ -75,8 +73,7 @@ async function findInStorage(fn) {
  * @returns {Promise<string>} The located cache value, or null.
  */
 async function readCache(scope, name) {
-    const result = cache[`${scope || 'global'}___${name}`];
-    return result === undefined ? null : result;
+    return cache.readCache(scope, name);
 }
 
 /**
@@ -86,7 +83,7 @@ async function readCache(scope, name) {
  * @param {string} value The value to write to the cache.
  */
 async function writeCache(scope, name, value) {
-    cache[`${scope || 'global'}___${name}`] = value;
+    return cache.writeCache(scope, name, value);
 }
 
 module.exports = {
