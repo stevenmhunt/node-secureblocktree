@@ -1,5 +1,5 @@
-const hash = require('object-hash');
 const crypto = require('crypto');
+const constants = require('../../src/constants');
 
 module.exports = function osFactory() {
     /**
@@ -7,7 +7,7 @@ module.exports = function osFactory() {
      * @param {string} value 
      */
     function generateHash(value) {
-        return hash(value);
+        return crypto.createHash(constants.block.hash).update(value).digest(constants.format.hash);
     }
 
     /**

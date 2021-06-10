@@ -1,47 +1,47 @@
 const assert = require('assert');
 const constants = require('../src/constants');
-const { initBlockchain, getRandomHash } = require('./utils');
+const { initBlocktree, getRandomHash } = require('./utils');
 
-describe('blocktree API layer 1 - [blockchain]', function () {
+describe('blocktree API layer 2 - [blocktree]', function () {
     describe('read block', function () {
         it('should return null if no value is found.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
 
             // act
-            const result = await blockchain.readBlock(constants.block.zero);
+            const result = await blocktree.readBlock(constants.block.zero);
 
             // assert
             assert.strictEqual(null, result);
         });
         it('should return null if no value is found.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
 
             // act
-            const result = await blockchain.readBlock(null);
+            const result = await blocktree.readBlock(null);
 
             // assert
             assert.strictEqual(null, result);
         });
         it('should return null if no value is found.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
 
             // act
-            const result = await blockchain.readBlock(false);
+            const result = await blocktree.readBlock(false);
 
             // assert
             assert.strictEqual(null, result);
         });
         it('should retrieve block data if found from a root.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", "utf-8");
-            const block1 = await blockchain.writeBlock({ prev: null, data });
+            const block1 = await blocktree.writeBlock({ prev: null, data });
 
             // act
-            const result = await blockchain.readBlock(block1);
+            const result = await blocktree.readBlock(block1);
 
             // assert
             assert.ok(Buffer.compare(data, result.data) === 0, 'Expected data to match.');
@@ -51,14 +51,14 @@ describe('blocktree API layer 1 - [blockchain]', function () {
         });
         it('should retrieve block data if found from a block in a chain.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
             const data1 = Buffer.from("I'm a string!", "utf-8");
-            const block1 = await blockchain.writeBlock({ prev: null, data: data1 });
+            const block1 = await blocktree.writeBlock({ prev: null, data: data1 });
             const data2 = Buffer.from("I'm another string!", "utf-8");
-            const block2 = await blockchain.writeBlock({ prev: block1, data: data2 });
+            const block2 = await blocktree.writeBlock({ prev: block1, data: data2 });
 
             // act
-            const result = await blockchain.readBlock(block2);
+            const result = await blocktree.readBlock(block2);
 
             // assert
             assert.ok(Buffer.compare(data2, result.data) === 0, 'Expected data to match.');
@@ -70,12 +70,12 @@ describe('blocktree API layer 1 - [blockchain]', function () {
     describe('write block', function () {
         it('should ignore user-provided values other than prev and data.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", "utf-8");
-            const block1 = await blockchain.writeBlock({ prev: null, data, timestamp: 0, nonce: 0, hash: 'ff' });
+            const block1 = await blocktree.writeBlock({ prev: null, data, timestamp: 0, nonce: 0, hash: 'ff' });
 
             // act
-            const result = await blockchain.readBlock(block1);
+            const result = await blocktree.readBlock(block1);
 
             // assert
             assert.ok(Buffer.compare(data, result.data) === 0, 'Expected data to match.');
@@ -86,16 +86,16 @@ describe('blocktree API layer 1 - [blockchain]', function () {
         });
         it('should support large numbers of blocks in a chain.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", "utf-8");
             let block = null;
             for (let i = 0; i < 100; i += 1) {
-                block = await blockchain.writeBlock({ prev: block, data });
+                block = await blocktree.writeBlock({ prev: block, data });
             }
 
             // act
-            const result = await blockchain.readBlock(block);
-            const prev = await blockchain.readBlock(result.prev);
+            const result = await blocktree.readBlock(block);
+            const prev = await blocktree.readBlock(result.prev);
 
             // assert
             assert.ok(Buffer.compare(data, result.data) === 0, 'Expected data to match.');
@@ -106,9 +106,9 @@ describe('blocktree API layer 1 - [blockchain]', function () {
             assert.ok(result.nonce, 'Expected valid nonce value.');
             assert.ok(prev.nonce, 'Expected valid nonce value.');
         });
-        it('should throw an exception if writing to an invalid blockchain if validation is enabled.', async function () {
+        it('should throw an exception if writing to an invalid blocktree if validation is enabled.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
             const options = { validate: true };
             const block1 = getRandomHash();
             const data2 = Buffer.from("I'm another string!", "utf-8");
@@ -116,7 +116,7 @@ describe('blocktree API layer 1 - [blockchain]', function () {
             // act
             let isExecuted = false;
             try {
-                await blockchain.writeBlock({ prev: block1, data: data2 }, options);
+                await blocktree.writeBlock({ prev: block1, data: data2 }, options);
                 isExecuted = true;
             }
             catch (err) {
@@ -126,9 +126,9 @@ describe('blocktree API layer 1 - [blockchain]', function () {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should not throw an exception if writing to an invalid blockchain if validation is disabled.', async function () {
+        it('should not throw an exception if writing to an invalid blocktree if validation is disabled.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
             const options = { validate: false };
             const block1 = getRandomHash();
             const data2 = Buffer.from("I'm another string!", "utf-8");
@@ -136,7 +136,7 @@ describe('blocktree API layer 1 - [blockchain]', function () {
             // act
             let isExecuted = false;
             try {
-                await blockchain.writeBlock({ prev: block1, data: data2 }, options);
+                await blocktree.writeBlock({ prev: block1, data: data2 }, options);
                 isExecuted = true;
             }
             catch (err) {
@@ -150,17 +150,17 @@ describe('blocktree API layer 1 - [blockchain]', function () {
     describe('get next block', function () {
         it('should scan the blocks to find the next one in the chain.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", "utf-8");
             let block = null;
             for (let i = 0; i < 100; i += 1) {
-                block = await blockchain.writeBlock({ prev: block, data });
+                block = await blocktree.writeBlock({ prev: block, data });
             }
-            const result = await blockchain.readBlock(block);
-            const prev = await blockchain.readBlock(result.prev);
+            const result = await blocktree.readBlock(block);
+            const prev = await blocktree.readBlock(result.prev);
 
             // act
-            const next = await blockchain.getNextBlock(result.prev);
+            const next = await blocktree.getNextBlock(result.prev);
 
             // assert
             assert.strictEqual(next, block);
@@ -174,13 +174,13 @@ describe('blocktree API layer 1 - [blockchain]', function () {
         });
         it('should return null if there are no more blocks in the chain.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", "utf-8");
-            const block = await blockchain.writeBlock({ prev: null, data, timestamp: 0, nonce: 0, hash: 'ff' });
-            const result = await blockchain.readBlock(block);
+            const block = await blocktree.writeBlock({ prev: null, data, timestamp: 0, nonce: 0, hash: 'ff' });
+            const result = await blocktree.readBlock(block);
 
             // act
-            const next = await blockchain.getNextBlock(block);
+            const next = await blocktree.getNextBlock(block);
 
             // assert
             assert.strictEqual(next, null);
@@ -192,20 +192,20 @@ describe('blocktree API layer 1 - [blockchain]', function () {
     describe('get head block', function () {
         it('should scan the blocks to find the last one in the chain.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", "utf-8");
             let block = null, first = null;
             for (let i = 0; i < 100; i += 1) {
-                block = await blockchain.writeBlock({ prev: block, data });
+                block = await blocktree.writeBlock({ prev: block, data });
                 if (i === 0) {
                     first = block;
                 }
             }
-            const result = await blockchain.readBlock(block);
+            const result = await blocktree.readBlock(block);
 
             // act
-            const head = await blockchain.getHeadBlock(first);
-            const headBlock = await blockchain.readBlock(head);
+            const head = await blocktree.getHeadBlock(first);
+            const headBlock = await blocktree.readBlock(head);
 
             // assert
             assert.ok(head !== null);
@@ -216,8 +216,8 @@ describe('blocktree API layer 1 - [blockchain]', function () {
         });
         it('should return null if there is not a valid block.', async function () {
             // arrange
-            const blockchain = initBlockchain();
-            const head = await blockchain.getHeadBlock(constants.block.zero);
+            const blocktree = initBlocktree();
+            const head = await blocktree.getHeadBlock(constants.block.zero);
 
             // assert
             assert.strictEqual(head, null);
@@ -226,19 +226,19 @@ describe('blocktree API layer 1 - [blockchain]', function () {
     describe('get root block', function () {
         it('should walk across the blocks to find the first one in the chain.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", "utf-8");
             let block = null, first = null;
             for (let i = 0; i < 100; i += 1) {
-                block = await blockchain.writeBlock({ prev: block, data });
+                block = await blocktree.writeBlock({ prev: block, data });
                 if (i === 0) {
                     first = block;
                 }
             }
 
             // act
-            const root = await blockchain.getRootBlock(block);
-            const rootBlock = await blockchain.readBlock(root);
+            const root = await blocktree.getRootBlock(block);
+            const rootBlock = await blocktree.readBlock(root);
 
             // assert
             assert.ok(root !== null);
@@ -248,24 +248,24 @@ describe('blocktree API layer 1 - [blockchain]', function () {
         });
         it('should return null if there is not a valid block.', async function () {
             // act
-            const blockchain = initBlockchain();
-            const root = await blockchain.getRootBlock(0);
+            const blocktree = initBlocktree();
+            const root = await blocktree.getRootBlock(0);
 
             // assert
             assert.strictEqual(root, null);
         });
     });
-    describe('validate blockchain', function () {
-        it('should report that a valid blockchain is valid.', async function () {
+    describe('validate blocktree', function () {
+        it('should report that a valid blocktree is valid.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
             const data1 = Buffer.from("I'm a string!", "utf-8");
-            const block1 = await blockchain.writeBlock({ prev: null, data: data1 });
+            const block1 = await blocktree.writeBlock({ prev: null, data: data1 });
             const data2 = Buffer.from("I'm another string!", "utf-8");
-            const block2 = await blockchain.writeBlock({ prev: block1, data: data2 });
+            const block2 = await blocktree.writeBlock({ prev: block1, data: data2 });
 
             // act
-            const result = await blockchain.validateBlockchain(block2);
+            const result = await blocktree.validateBlocktree(block2);
 
             // assert
             assert.strictEqual(result.isValid, true);
@@ -273,16 +273,16 @@ describe('blocktree API layer 1 - [blockchain]', function () {
             assert.strictEqual(result.reason, undefined);
             assert.strictEqual(result.block, undefined);
         });
-        it('should report that an invalid blockchain is invalid.', async function () {
+        it('should report that an invalid blocktree is invalid.', async function () {
             // arrange
-            const blockchain = initBlockchain();
+            const blocktree = initBlocktree();
             const options = { validate: false };
             const block1 = getRandomHash();
             const data2 = Buffer.from("I'm another string!", "utf-8");
-            const block2 = await blockchain.writeBlock({ prev: block1, data: data2 }, options);
+            const block2 = await blocktree.writeBlock({ prev: block1, data: data2 }, options);
 
             // act
-            const result = await blockchain.validateBlockchain(block2);
+            const result = await blocktree.validateBlocktree(block2);
 
             // assert
             assert.strictEqual(result.isValid, false);

@@ -1,13 +1,13 @@
 {
   "name": "blocktree",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "A blockchain implementation with additional capabilities geared towards business data management.",
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha"
   },
-  "author": "",
-  "license": "UNLICENSED",
+  "author": "Steven Hunt",
+  "license": "MIT",
   "dependencies": {
     "object-hash": "^2.2.0"
   },

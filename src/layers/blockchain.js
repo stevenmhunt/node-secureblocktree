@@ -5,20 +5,21 @@ const convert = require('../convert');
 
 module.exports = function blockchainLayerFactory({ system }) {
     /**
-     * Given a blockchain data object, converts it into a Buffer.
-     * @param {Object} bcBlockData The blockchain data object.
+     * Given a blockchain object, converts it into a Buffer.
+     * @param {Object} bcBlockData The blockchain object.
      * @returns {Buffer} The binary representation of the block.
      */
-    function serializeBlockData(bcBlockData) {
-        let prev = bcBlockData.prev || Buffer.alloc(1);
+    function serializeBlockchainData(bcBlockData) {
+        let prev = bcBlockData.prev || Buffer.alloc(constants.size.hash);
         if (!Buffer.isBuffer(prev)) {
-            prev = Buffer.from(prev, 'hex');
+            prev = Buffer.from(prev, constants.format.hash);
+            if (Buffer.byteLength(prev) !== constants.size.hash) {
+                throw new Error('Unexpected byte length for SHA-256 hash.');
+            }
         }
         const nonce = system.generateNonce();
         const timestamp = system.generateTimestamp();
         const buf = Buffer.concat([
-            // hash size (1 - 256 bytes)
-            Buffer.from([Buffer.byteLength(prev) - 1]),
             // previous hash
             prev,
             // uniqueness
@@ -32,25 +33,24 @@ module.exports = function blockchainLayerFactory({ system }) {
     }
 
     /**
-     * Given a buffer, deserializes it into a blockchain data object.
+     * Given a buffer, deserializes it into a blockchain object.
      * @param {Buffer} buf The buffer to deserialize.
-     * @returns {Object} A blockchain data object.
+     * @returns {Object} A blockchain object.
      */
-    function deserializeBlockData(buf) {
+    function deserializeBlockchainData(buf) {
         if (!buf) {
             return null;
         }
         let index = 0;
         const result = {};
-        const hashSize = buf[index++] + 1;
-        result.prev = buf.slice(index, index + hashSize);
-        index += hashSize;
+        result.prev = buf.slice(index, index + constants.size.hash);
+        index += constants.size.hash;
         // handle the case where prev is null.
-        if (hashSize === 1 && Buffer.compare(result.prev, Buffer.alloc(1)) === 0) {
+        if (Buffer.compare(result.prev, Buffer.alloc(constants.size.hash)) === 0) {
             result.prev = null;
         }
         else {
-            result.prev = result.prev.toString('hex');
+            result.prev = result.prev.toString(constants.format.hash);
         }
         result.nonce = convert.toInt32(buf, index);
         index += constants.size.int32;
@@ -67,14 +67,14 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promise<Object>} The requested blockchain data.
      */
     async function readBlock(block) {
-        return deserializeBlockData(await system.readStorage(block));
+        return deserializeBlockchainData(await system.readStorage(block));
     }
 
     /**
      * @private
      * Handles caching of the root block.
      * @param {string} block The block to update caches for.
-     * @param {Object} bcBlockData The blockchain data object.
+     * @param {Object} bcBlockData The blockchain object.
      * @returns {Promis<string>} The root block of the blockchain.
      */
     async function cacheRootBlock(block, bcBlockData) {
@@ -101,7 +101,7 @@ module.exports = function blockchainLayerFactory({ system }) {
 
     /**
      * Writes a block to storage.
-     * @param {Object} bcBlockData The blockchain data object.
+     * @param {Object} bcBlockData The blockchain object.
      * @returns {Promise<string>} The hash of the newly written block.
      */
     async function writeBlock(bcBlockData, options = {}) {
@@ -111,7 +111,7 @@ module.exports = function blockchainLayerFactory({ system }) {
                 throw new Error(`Invalid block ${bcBlockData.prev}`);
             }
         }
-        const block = await system.writeStorage(serializeBlockData(bcBlockData));
+        const block = await system.writeStorage(serializeBlockchainData(bcBlockData));
         if (options.cacheRoot !== false) {
             const root = await cacheRootBlock(block, bcBlockData);
             await system.writeCache(root, constants.cache.headBlock, block);
@@ -125,9 +125,9 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promise<Object>} The matching block, or null.
      */
     async function findInBlocks(fn) {
-        const result = await system.findInStorage(data => fn(deserializeBlockData(data)));
+        const result = await system.findInStorage(data => fn(deserializeBlockchainData(data)));
         if (result) {
-            return deserializeBlockData(result);
+            return deserializeBlockchainData(result);
         }
         return null;
     }
@@ -138,7 +138,7 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promise<Array>} The result of the map() call.
      */
     async function mapInBlocks(fn) {
-        return await system.mapInStorage(data => fn(deserializeBlockData(data)));
+        return await system.mapInStorage(data => fn(deserializeBlockchainData(data)));
     }
 
     /**
@@ -151,7 +151,7 @@ module.exports = function blockchainLayerFactory({ system }) {
         if (cached) {
             return cached;
         }
-        const value = await system.findInStorage(buf => deserializeBlockData(buf).prev === block);
+        const value = await system.findInStorage(buf => deserializeBlockchainData(buf).prev === block);
         if (value) {
             const result = system.generateHash(value);
             await system.writeCache(block, constants.cache.next, result);
@@ -248,7 +248,7 @@ module.exports = function blockchainLayerFactory({ system }) {
         getNextBlock,
         copyBlock,
         validateBlockchain,
-        serializeBlockData,
-        deserializeBlockData
+        serializeBlockchainData,
+        deserializeBlockchainData
     };
 };
