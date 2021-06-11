@@ -13,20 +13,53 @@ module.exports = function securityLayerFactory({ blocktree, secureCache, os }) {
         return data;
     }
 
-    async function serializeSecureBlockData(data) {
+    function serializeSecureBlockData(type, dataItem) {
+        if (type === constants.blockType.keys) {
+            const { keys, init_ts, exp_ts } = dataItem;
+            const data = Buffer.concat([
+                // key count
+                Buffer.from([Object.keys(keys).length]),
+                // list of key actions
+                ...Object.keys(keys).map(i => Buffer.from([i])),
+                // list of keys
+                ...Object.values(keys).map(i => Buffer.from(i, constants.format.hash)),
+                // start and expiration timestamps for keys
+                convert.fromInt64(init_ts),
+                convert.fromInt64(exp_ts)
+            ]);
+            return { prev, parent, data };     
+        }
+    }
+
+    function serializeSecureBlock(secureData) {
+        const { prev, parent } = secureData;
+        const data = Buffer.concat([
+            // secure block type
+            Buffer.from([secureData.type]),            
+            // signature
+            secureData.sig,
+            // data
+            serializeSecureBlockData(secureData.type, secureData.data)
+        ]);
+        return { prev, parent, data };
+    }
+
+    function deserializeSecureBlockData(data) {
 
     }
 
-    async function serializeSecureBlock(secureData) {
-
-    }
-
-    async function deserializeSecureBlockData(data) {
-
-    }
-
-    async function deserializeSecureBlock(btData) {
-
+    function deserializeSecureBlock(btBlockData) {
+        if (!btBlockData) {
+            return null;
+        }
+        const { timestamp, prev, parent, nonce, hash, data } = btBlockData;
+        let index = 0;
+        const result = { timestamp, prev, parent, nonce, hash };
+        result.type = data[index++];
+        result.sig = data.slice(index, index + constants.size.signature);
+        index += constants.size.signature;
+        result.data = deserializeSecureBlockData(result.type, data.slice(index));
+        return result;
     }
 
     async function readSecureBlock(block) {
@@ -37,7 +70,50 @@ module.exports = function securityLayerFactory({ blocktree, secureCache, os }) {
         return blocktree.writeBlock(serializeSecureBlock(secureData));
     }
 
-    async function getBlockPublicKeys({ parent, action, type }) {
+    async function keyScan(block, isRecursive = false) {
+        const result = [];
+        let current = await blocktree.getHeadBlock(block);
+        while (current != null) {
+            const secureBlock = await readSecureBlock(current);
+            if (secureBlock.type === constants.blockType.keys) {
+                result.push(secureBlock.data);
+            }
+        }
+        if (isRecursive) {
+            const parent = await blocktree.getParentBlock(block);
+            if (!parent) {
+                return result;
+            }
+            return [...result, keyScan(parent, isRecursive)];
+        }
+        return result;
+    }
+
+    function isKeyActive( { key, init_ts, exp_ts, timestamp }) {
+        const ts = timestamp === null ? os.generateTimestamp() : timestamp;
+        return ts >= init_ts && ts < exp_ts;
+    }
+
+    function isKeyParentOf(parentKey, key) {
+        // TODO: handle certificate chains.
+        return true;
+    }
+
+    async function getBlockPublicKeys({ block, action, type, isRecursive, timestamp }) {
+        const results = [];
+        const keyItems = await keyScan(block, isRecursive !== null ? isRecursive : false);
+        keyItems.forEach(keyItem => {
+            const { keys, init_ts, exp_ts } = keyItem || {};
+            if (keys && keys[action]) {
+                if (type === 'valid' && isKeyActive({ key: keys[action], init_ts, exp_ts, timestamp })) {
+                    results.push(keys[action]);
+                }
+                else if (type === 'all') {
+                    results.push(keys[action]);
+                }
+            }
+        });
+        return results;
     }
 
     async function validateSignature ({ sig, block, action, noThrow }) {
@@ -59,30 +135,6 @@ module.exports = function securityLayerFactory({ blocktree, secureCache, os }) {
             throw new Error('Invalid signature.');
         }
         return result;
-    }
-
-    async function keyScan(block, isRecursive = false) {
-        const result = [];
-        let current = await blocktree.getHeadBlock(block);
-        while (current != null) {
-            const secureBlock = await readSecureBlock(current);
-            if (secureBlock.data.type === constants.blockType.keys) {
-                result.push(secureBlock.data);
-            }
-        }
-        if (isRecursive) {
-            const parent = await blocktree.getParentBlock(block);
-            if (!parent) {
-                return result;
-            }
-            return [...result, keyScan(parent, isRecursive)];
-        }
-        return result;
-    }
-
-    async function isKeyActive( { key, init_ts, exp_ts, timestamp }) {
-        const ts = timestamp === null ? os.generateTimestamp() : timestamp;
-        return ts >= init_ts && ts < exp_ts;
     }
 
     async function validateKey({ block, key, action }) {
@@ -135,9 +187,9 @@ module.exports = function securityLayerFactory({ blocktree, secureCache, os }) {
             await validateKeys({ block, keys });
         }
 
-        const data = { type: constants.blockType.keys, keys, init_ts, exp_ts };
+        const data = { keys, init_ts, exp_ts };
         await writeSecureBlock({
-            sig, parent, prev: block, data
+            sig, parent, prev: block, type: constants.blockType.keys, data
         });
     }
 
@@ -151,7 +203,7 @@ module.exports = function securityLayerFactory({ blocktree, secureCache, os }) {
 
         // create a new blockchain for the zone.
         const zoneBlock = await writeSecureBlock({
-            sig, parent: block, prev: null, data: { type: constants.blockType.zone, name }
+            sig, parent: block, prev: null, type: constants.blockType.zone, data: { name }
         });
 
         // configure keys

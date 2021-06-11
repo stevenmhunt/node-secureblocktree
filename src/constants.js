@@ -11,7 +11,8 @@ module.exports = {
     size: {
         int32: 4,
         int64: 8,
-        hash: 32
+        hash: 32,
+        signature: 32
     },
     min: {
         timestamp: 0n
@@ -35,8 +36,7 @@ module.exports = {
         keys: 2,
     },
     action: {
-        read: 'read',
-        write: 'write',
-        exportKey: 'exportKey'
+        read: 1,
+        write: 2
     }
 };
