@@ -12,6 +12,7 @@
     "object-hash": "^2.2.0"
   },
   "devDependencies": {
+    "buffer-xor": "^2.0.2",
     "mocha": "^9.0.0"
   }
 }

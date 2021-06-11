@@ -9,6 +9,7 @@ const systemLayerFactory = require('../src/layers/system');
 
 // mocks
 const cacheFactory = require('./mocks/cache');
+const certificatesFactory = require('./mocks/certificates');
 const osFactory = require('./mocks/os');
 const storageFactory = require('./mocks/storage');
 
@@ -40,15 +41,16 @@ function initSecurity() {
     const blocktree = initBlocktree();
     const secureCache = cacheFactory();
     const os = osFactory();
-    const security = securityLayerFactory({ blocktree, secureCache, os });
+    const certificates = certificatesFactory();
+    const security = securityLayerFactory({ blocktree, secureCache, os, certificates });
     return security;
 }
 
 async function initializeSecureRoot(security) {
+    const rootWriteKey = 'bbbb';
     const rootKeys = { [constants.action.read]: ['aaaa'], [constants.action.write]: ['bbbb'] };
     const rootZoneKeys = { [constants.action.read]: ['cccc'], [constants.action.write]: ['dddd'] };
-    // TODO: sign as root.
-    const signAsRoot = data => data;
+    const signAsRoot = block => security.signBlock(rootWriteKey, block);
     const result = await security.installRoot({ rootKeys, rootZoneKeys, signAsRoot })
     return result;
 }

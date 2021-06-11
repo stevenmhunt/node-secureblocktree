@@ -3,7 +3,7 @@ const constants = require('../src/constants');
 const { initSecurity, initializeSecureRoot } = require('./utils');
 
 describe('blocktree API layer 3 - [security]', function () {
-    describe('read security block', function () {
+    describe('read secure block', function () {
         it('should return null if no value is found.', async function () {
             // arrange
             const security = initSecurity();
@@ -14,6 +14,36 @@ describe('blocktree API layer 3 - [security]', function () {
 
             // assert
             assert.strictEqual(null, result);
+        });
+        it('should retrieve block data if found from the root block.', async function () {
+            // arrange
+            const security = initSecurity();
+            const { rootBlock } = await initializeSecureRoot(security);
+
+            // act
+            const result = await security.readSecureBlock(rootBlock);
+
+            // assert
+            assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
+            assert.strictEqual(result.prev, null);
+            assert.strictEqual(result.parent, null);
+            assert.strictEqual(result.type, constants.blockType.keys);
+            assert.ok(result.nonce, 'Expected valid nonce value.');
+        });
+        it('should retrieve block data if found from the root zone.', async function () {
+            // arrange
+            const security = initSecurity();
+            const { rootBlock, rootZone } = await initializeSecureRoot(security);
+
+            // act
+            const result = await security.readSecureBlock(rootZone);
+
+            // assert
+            assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
+            assert.strictEqual(result.prev, null);
+            assert.strictEqual(result.parent, rootBlock);
+            assert.strictEqual(result.type, constants.blockType.zone);
+            assert.ok(result.nonce, 'Expected valid nonce value.');
         });
     });
 });
