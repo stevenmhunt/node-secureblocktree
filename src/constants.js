@@ -14,18 +14,19 @@ module.exports = {
         hash: 32,
         signature: 32
     },
-    min: {
-        timestamp: 0n
-    },
-    max: {
-        timestamp: 2n ** 64n - 1n
-    },
+    timestamp: {
+        min: -(2n ** 63n),
+        zero: 0n,
+        max: 2n ** 63n - 1n
+    },    
     validation: {
         missingBlock: 'missing block',
         missingParentBlock: 'missing parent block'
     },
     format: {
-        hash: 'hex'
+        hash: 'hex',
+        signature: 'hex',
+        key: 'hex'
     },
     block: {
         zero: Buffer.alloc(32),

@@ -1,6 +1,8 @@
 const crypto = require('crypto');
+const constants = require('../src/constants');
 
 // blocktree layers
+const securityLayerFactory = require('../src/layers/security');
 const blocktreeLayerFactory = require('../src/layers/blocktree');
 const blockchainLayerFactory = require('../src/layers/blockchain');
 const systemLayerFactory = require('../src/layers/system');
@@ -9,7 +11,6 @@ const systemLayerFactory = require('../src/layers/system');
 const cacheFactory = require('./mocks/cache');
 const osFactory = require('./mocks/os');
 const storageFactory = require('./mocks/storage');
-const constants = require('../src/constants');
 
 function getRandomHash() {
     return crypto.randomBytes(constants.size.hash).toString(constants.format.hash);
@@ -43,9 +44,19 @@ function initSecurity() {
     return security;
 }
 
+async function initializeSecureRoot(security) {
+    const rootKeys = { [constants.action.read]: ['aaaa'], [constants.action.write]: ['bbbb'] };
+    const rootZoneKeys = { [constants.action.read]: ['cccc'], [constants.action.write]: ['dddd'] };
+    // TODO: sign as root.
+    const signAsRoot = data => data;
+    const result = await security.installRoot({ rootKeys, rootZoneKeys, signAsRoot })
+    return result;
+}
+
 module.exports = {
     getRandomHash,
     initBlockchain,
     initBlocktree,
-    initSecurity
+    initSecurity,
+    initializeSecureRoot
 };
