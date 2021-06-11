@@ -15,12 +15,17 @@ function getRandomHash() {
     return crypto.randomBytes(constants.size.hash).toString(constants.format.hash);
 }
 
-function initBlockchain() {
+function initSystem() {
     const cache = cacheFactory();
     const os = osFactory();
     const storage = storageFactory();
+    return { cache, os, storage };
+}
+
+function initBlockchain() {
+    const { cache, storage, os } = initSystem();
     const system = systemLayerFactory({ cache, storage, os });
-    const blockchain = blockchainLayerFactory({ system });
+    const blockchain = blockchainLayerFactory({ system, cache, os });
     return blockchain;
 }
 
@@ -30,8 +35,17 @@ function initBlocktree() {
     return blocktree;
 }
 
+function initSecurity() {
+    const blocktree = initBlocktree();
+    const secureCache = cacheFactory();
+    const os = osFactory();
+    const security = securityLayerFactory({ blocktree, secureCache, os });
+    return security;
+}
+
 module.exports = {
     getRandomHash,
     initBlockchain,
-    initBlocktree
+    initBlocktree,
+    initSecurity
 };
