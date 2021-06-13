@@ -70,6 +70,10 @@ module.exports = function blockchainLayerFactory({ system }) {
         return deserializeBlockchainData(await system.readStorage(block));
     }
 
+    async function listBlocks(partial = null) {
+        return system.readKeys(partial);
+    }
+
     /**
      * @private
      * Handles caching of the root block.
@@ -238,9 +242,45 @@ module.exports = function blockchainLayerFactory({ system }) {
         return { isValid: true, blockCount };
     }
 
+    async function handleCommand(env, command, parameters) {
+        switch (command) {
+            case 'read-block':
+                {
+                    await env.resolveBlock(parameters[0], listBlocks, async function (block) {
+                        console.log(await readBlock(block));
+                    });
+                    return true;
+                }
+            case 'get-head-block': {
+                await env.resolveBlock(parameters[0], listBlocks, async function (block) {
+                    console.log(await getHeadBlock(block));
+                });
+                return true;
+            }
+            case 'get-root-block': {
+                await env.resolveBlock(parameters[0], listBlocks, async function (block) {
+                    console.log(await getRootBlock(block));
+                });
+                return true;
+            }
+            case 'get-next-block': {
+                await env.resolveBlock(parameters[0], listBlocks, async function (block) {
+                    console.log(await getNextBlock(block));
+                });
+                return true;
+            }
+            case 'list-blocks': {
+                (await listBlocks()).map(i => console.log(i));
+                return true;
+            }
+        }
+        return false;
+    }
+
     return {
         readBlock,
         writeBlock,
+        listBlocks,
         findInBlocks,
         mapInBlocks,
         getHeadBlock,
@@ -249,6 +289,7 @@ module.exports = function blockchainLayerFactory({ system }) {
         copyBlock,
         validateBlockchain,
         serializeBlockchainData,
-        deserializeBlockchainData
+        deserializeBlockchainData,
+        handleCommand
     };
 };

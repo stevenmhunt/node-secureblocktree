@@ -55,7 +55,7 @@ module.exports = function securityLayerFactory({ blocktree, secureCache, os, cer
                 results.push(keyData);
             });
         });
-        return Buffer.concat(results);        
+        return Buffer.concat(results);
     }
 
     function serializeSecureBlockData(type, dataItem) {
@@ -92,7 +92,7 @@ module.exports = function securityLayerFactory({ blocktree, secureCache, os, cer
             // secure block type
             Buffer.from([secureData.type]),
             // signature data
-            serializeSignature(secureData.sig),            
+            serializeSignature(secureData.sig),
             // data
             serializeSecureBlockData(secureData.type, secureData.data)
         ].filter(i => i));
@@ -146,7 +146,7 @@ module.exports = function securityLayerFactory({ blocktree, secureCache, os, cer
             result.sig = data.slice(index, index + sigLength)
                 .toString(constants.format.signature);
             index += sigLength;
-            }
+        }
         else {
             result.sig = null;
         }
@@ -189,38 +189,38 @@ module.exports = function securityLayerFactory({ blocktree, secureCache, os, cer
             if (!parent) {
                 return result;
             }
-            return [...result, performKeyScan(parent, isRecursive)];
+            return [...result, ...await performKeyScan(parent, isRecursive)];
         }
         return result;
     }
 
-    function isKeyActive( { key, init_ts, exp_ts, timestamp }) {
+    async function isKeyActive({ key, init_ts, exp_ts, timestamp }) {
         const ts = !timestamp ? os.generateTimestamp() : timestamp;
         return ts >= init_ts && ts < exp_ts;
     }
 
-    function isKeyParentOf(parentKey, key) {
+    async function isKeyParentOf(parentKey, key) {
         // TODO: handle certificate chains.
         return true;
     }
 
     async function getBlockPublicKeys({ block, action, type, isRecursive, timestamp }) {
         const keyItems = await performKeyScan(block, isRecursive !== null ? isRecursive : false);
-        return keyItems
+        return (await Promise.all(keyItems
             .filter(i => i.action === action)
-            .map(keyItem => {
+            .map(async (keyItem) => {
                 const { key, init_ts, exp_ts } = keyItem || {};
-                if (type === 'valid' && isKeyActive({ key, init_ts, exp_ts, timestamp })) {
+                if (type === 'valid' && await isKeyActive({ key, init_ts, exp_ts, timestamp })) {
                     return keyItem.key;
                 }
                 else if (type === 'all') {
                     return keyItem.key;
                 }
                 return null;
-            }).filter(i => i);
+            }))).filter(i => i);
     }
 
-    async function validateSignature ({ sig, block, action, noThrow }) {
+    async function validateSignature({ sig, block, action, noThrow }) {
         // get the public keys for this action.
         const keyList = await getBlockPublicKeys({
             block,
@@ -239,26 +239,27 @@ module.exports = function securityLayerFactory({ blocktree, secureCache, os, cer
     async function validateKey({ block, key, action }) {
         const keyData = await performKeyScan(block);
         for (let i = 0; i < keyData.length; i += 1) {
-            if (keyData[i].action === action,
-                isKeyActive({ key: keyData[i].key, init_ts: keyData[i].init_ts, exp_ts: keyData[i].exp_ts }) &&
-                isKeyParentOf(keyData[i].key, key)) {
-                    const parent = await getParentBlock(block);
-                    if (!parent) {
-                        return true;
-                    }
-                    return validateKey({ block: parent, key: keyData[i].key, action });
+            if (keyData[i].action === action &&
+                await isKeyActive({ key: keyData[i].key, init_ts: keyData[i].init_ts, exp_ts: keyData[i].exp_ts }) &&
+                await isKeyParentOf(keyData[i].key, key)) {
+                const parent = await blocktree.getParentBlock(block);
+                if (!parent) {
+                    return true;
+                }
+                return validateKey({ block: parent, key: keyData[i].key, action });
             }
         }
-        throw new Error('The provided key is invalid.');
+        return false;
     }
 
     async function validateKeysInternal({ block, keys, action }) {
-        return Promise.all(key.map(async (k) => validateKey({ block, keys: k, action })));
+        const result = await Promise.all(keys.map(async (k) => validateKey({ block, key: k, action })));
+        return result.filter(i => i).length;
     }
 
     async function validateKeys({ block, keys }) {
-        const results = Promise.all(Object.keys(keys).map(async (k) => validateKeysInternal({ block, keys: keys[k], action: k })));
-        if (results.length < Object.keys(keys).length) {
+        const results = await Promise.all(Object.keys(keys).map(async (k) => validateKeysInternal({ block, keys: keys[k], action: parseInt(k, 10) })));
+        if (results.reduce((a, b) => a + b) < Object.keys(keys).length) {
             throw new Error('Invalid keys detected.');
         }
     }
@@ -350,6 +351,26 @@ module.exports = function securityLayerFactory({ blocktree, secureCache, os, cer
         return { rootBlock, rootZone };
     }
 
+    async function handleCommand(env, command, parameters) {
+        switch (command) {
+            case 'install-root': {
+                const rootWriteKey = 'bbbb';
+                const rootKeys = { [constants.action.read]: ['aaaa'], [constants.action.write]: ['bbbb'] };
+                const rootZoneKeys = { [constants.action.read]: ['cccc'], [constants.action.write]: ['dddd'] };
+                const signAsRoot = block => signBlock(rootWriteKey, block);
+                console.log(await installRoot({ rootKeys, rootZoneKeys, signAsRoot }));
+                return true;
+            }
+            case 'read-secure-block': {
+                await env.resolveBlock(parameters[0], blocktree.listBlocks, async function (block) {
+                    console.log(await readSecureBlock(block));
+                });
+                return true;
+            }
+        }
+        return false;
+    }
+
     return {
         signBlock,
         verifySignedBlock,
@@ -365,6 +386,7 @@ module.exports = function securityLayerFactory({ blocktree, secureCache, os, cer
         setKeys,
         revokeKeys,
         createZone,
-        installRoot
+        installRoot,
+        handleCommand
     }
 };

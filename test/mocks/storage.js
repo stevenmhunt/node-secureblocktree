@@ -21,6 +21,9 @@ module.exports = function storageFactory() {
         return hash;
     }
 
+    async function readKeys() {
+        return Object.keys(data).map(i => i);
+    }
 
     /**
      * Iterates through all blocks in the system using the map() function.
@@ -43,6 +46,7 @@ module.exports = function storageFactory() {
     return {
         readStorage,
         writeStorage,
+        readKeys,
         mapInStorage,
         findInStorage
     };

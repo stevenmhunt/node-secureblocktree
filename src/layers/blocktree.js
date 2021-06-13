@@ -70,6 +70,10 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         return blockchain.writeBlock(serializeBlocktreeData(btBlockData), options);
     }
 
+    async function listBlocks(partial = null) {
+        return blockchain.listBlocks(partial);
+    }
+
     /**
      * Scans through all blocks in the system until a block matching the predicate is found.
      * @param {*} fn The predicate function.
@@ -177,9 +181,22 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         return { isValid: true, blockCount };
     }
 
+    async function handleCommand(env, command, parameters) {
+        switch (command) {
+            case 'read-tree-block': {
+                await env.resolveBlock(parameters[0], listBlocks, async function (block) {
+                    console.log(await readBlock(block));
+                });
+                return true;
+            }
+        }
+        return false;
+    }
+
     return {
         readBlock,
         writeBlock,
+        listBlocks,
         findInBlocks,
         mapInBlocks,
         getHeadBlock,
@@ -191,6 +208,6 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         validateBlocktree,
         serializeBlocktreeData,
         deserializeBlocktreeData,
-
+        handleCommand
     };
 };

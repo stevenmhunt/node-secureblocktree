@@ -45,6 +45,14 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
         return storage.writeStorage(hash, value);
     }
 
+    async function readKeys(partial = null) {
+        const result = await storage.readKeys();
+        if (partial) {
+            return result.filter(i => i.startsWith(partial));
+        }
+        return result;
+    }
+
     /**
      * Iterates through all blocks in the system using the map() function.
      * @param {Function} fn The map() callback function.
@@ -83,15 +91,25 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
         return cache.writeCache(scope, name, value);
     }
 
+    async function handleCommand(command, parameters) {
+        switch (command) {
+            case 'generate-hash':
+                console.log(generateHash());
+                break;
+        }
+    }
+
     return {
         readStorage,
         writeStorage,
+        readKeys,
         mapInStorage,
         findInStorage,
         readCache,
         writeCache,
         generateHash,
         generateTimestamp,
-        generateNonce
+        generateNonce,
+        handleCommand
     };
 };
