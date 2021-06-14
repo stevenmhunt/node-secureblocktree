@@ -1,9 +1,11 @@
-// Blocktree API Level 2 - Blocktree
-
 const constants = require('../constants');
 const convert = require('../convert');
 
+/**
+ * Blocktree Level 2 - Blocktree
+ */
 module.exports = function blocktreeLayerFactory({ blockchain }) {
+
     /**
      * Given a blocktree object, converts it into a blockchain object.
      * @param {Object} btBlockData The blocktree object.
@@ -53,7 +55,7 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
     }
 
     /**
-     * Reads a block from the blockchain.
+     * Reads a block from the blocktree.
      * @param {string} block The block hash to read.
      * @returns {Promise<Object>} The requested blocktree data.
      */
@@ -62,7 +64,7 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
     }
 
     /**
-     * Writes a block to the blockchain.
+     * Writes a block to the blocktree.
      * @param {Object} btBlockData The blocktree object.
      * @returns {Promise<string>} The hash of the newly written block.
      */
@@ -70,13 +72,18 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         return blockchain.writeBlock(serializeBlocktreeData(btBlockData), options);
     }
 
+    /**
+     * Retrieves the specified list of blocks.
+     * @param {string} partial The "starts with" search to perform, or null to retrieve all blocks.
+     * @returns {Promise<Array>} The list of requested blocks.
+     */
     async function listBlocks(partial = null) {
         return blockchain.listBlocks(partial);
     }
 
     /**
      * Scans through all blocks in the system until a block matching the predicate is found.
-     * @param {*} fn The predicate function.
+     * @param {Function} fn The predicate function.
      * @returns {Promise<Object>} The matching block, or null.
      */
     async function findInBlocks(fn) {
@@ -89,7 +96,7 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
 
     /**
      * Scans through all blocks in the system and runs the map() function.
-     * @param {*} fn The selector function.
+     * @param {Function} fn The selector function.
      * @returns {Promise<Array>} The result of the map() call.
      */
     async function mapInBlocks(fn) {
@@ -107,34 +114,25 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
 
     /**
      * Given a block, locates the root block of the blockchain.
+     * If block is null, retries the root of the blocktree.
      * @param {string} block The block to start from.
-     * @returns {Promise<string>} The root block of the blockchain.
+     * @returns {Promise<string>} The root block of the blockchain or blocktree, or null.
      */
     async function getRootBlock(block) {
         return blockchain.getRootBlock(block);
     }
 
+    /**
+     * Given a block, locates the parent of this block on the blocktree.
+     * @param {string} block The block to start from.
+     * @returns {Promise<string>} The parent block of the specified block, or null.
+     */
     async function getParentBlock(block) {
         const blockData = await readBlock(block);
         if (!blockData) {
             throw new Error(`Invalid block ${block}`);
         }
         return blockData.parent;
-    }
-
-    async function getParentRootBlock(block) {
-        let result = block;
-        let next = block;
-        do {
-            const nextBlock = await readBlock(next);
-            next = (nextBlock || {}).parent
-            result = next || result
-            if (!nextBlock) {
-                result = null;
-            }
-        }
-        while (next != null);
-        return result;
     }
 
     /**
@@ -146,13 +144,10 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         return blockchain.getHeadBlock(block);
     }
 
-    async function copyBlock(block) {
-        return blockchain.copyBlock(block);
-    }
-
     /**
-     * Given a block, validates all previous blocks in the blockchain.
-     * @param {*} block 
+     * Given a block, validates all previous blocks in the blocktree.
+     * @param {string} block 
+     * @returns {Promise<Object>} A validation report.
      */
     async function validateBlocktree(block) {
         let next = block;
@@ -181,6 +176,13 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         return { isValid: true, blockCount };
     }
 
+    /**
+     * Handles CLI requests.
+     * @param {object} env The CLI environment context.
+     * @param {string} command The command to execute.
+     * @param {Array} parameters The command parameters.
+     * @returns {Promise<boolean>} Whether or not the command was handled.
+     */
     async function handleCommand(env, command, parameters) {
         switch (command) {
             case 'read-tree-block': {
@@ -202,9 +204,7 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         getHeadBlock,
         getRootBlock,
         getParentBlock,
-        getParentRootBlock,
         getNextBlock,
-        copyBlock,
         validateBlocktree,
         serializeBlocktreeData,
         deserializeBlocktreeData,

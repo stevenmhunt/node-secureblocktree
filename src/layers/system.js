@@ -1,5 +1,6 @@
-// Blocktree API Level 0 - System
-
+/**
+ * Blocktree Level 0 - System
+ */
 module.exports = function systemLayerFactory({ cache, storage, os }) {
 
     /**
@@ -45,6 +46,11 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
         return storage.writeStorage(hash, value);
     }
 
+    /**
+     * Retrieves the specified list of keys.
+     * @param {string} partial The "starts with" search to perform, or null to retrieve all keys.
+     * @returns {Promise<Array>} The list of requested keys.
+     */
     async function readKeys(partial = null) {
         const result = await storage.readKeys();
         if (partial) {
@@ -91,12 +97,20 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
         return cache.writeCache(scope, name, value);
     }
 
-    async function handleCommand(command, parameters) {
+    /**
+     * Handles CLI requests.
+     * @param {object} env The CLI environment context.
+     * @param {string} command The command to execute.
+     * @param {Array} parameters The command parameters.
+     * @returns {Promise<boolean>} Whether or not the command was handled.
+     */
+    async function handleCommand(env, command, parameters) {
         switch (command) {
             case 'generate-hash':
-                console.log(generateHash());
-                break;
+                console.log(generateHash(parameters[0]));
+                return true;
         }
+        return false;
     }
 
     return {

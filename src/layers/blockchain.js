@@ -1,9 +1,11 @@
-// Blocktree API Level 1 - Blockchain
-
 const constants = require('../constants');
 const convert = require('../convert');
 
+/**
+ * Blocktree Level 1 - Blockchain
+ */
 module.exports = function blockchainLayerFactory({ system }) {
+
     /**
      * Given a blockchain object, converts it into a Buffer.
      * @param {Object} bcBlockData The blockchain object.
@@ -70,6 +72,11 @@ module.exports = function blockchainLayerFactory({ system }) {
         return deserializeBlockchainData(await system.readStorage(block));
     }
 
+    /**
+     * Retrieves the specified list of blocks.
+     * @param {string} partial The "starts with" search to perform, or null to retrieve all blocks.
+     * @returns {Promise<Array>} The list of requested blocks.
+     */
     async function listBlocks(partial = null) {
         return system.readKeys(partial);
     }
@@ -125,7 +132,7 @@ module.exports = function blockchainLayerFactory({ system }) {
 
     /**
      * Scans through all blocks in the system until a block matching the predicate is found.
-     * @param {*} fn The predicate function.
+     * @param {Function} fn The predicate function.
      * @returns {Promise<Object>} The matching block, or null.
      */
     async function findInBlocks(fn) {
@@ -138,7 +145,7 @@ module.exports = function blockchainLayerFactory({ system }) {
 
     /**
      * Scans through all blocks in the system and runs the map() function.
-     * @param {*} fn The selector function.
+     * @param {Function} fn The selector function.
      * @returns {Promise<Array>} The result of the map() call.
      */
     async function mapInBlocks(fn) {
@@ -214,13 +221,9 @@ module.exports = function blockchainLayerFactory({ system }) {
         return null;
     }
 
-    async function copyBlock() {
-        return null;
-    }
-
     /**
      * Given a block, validates all previous blocks in the blockchain.
-     * @param {*} block 
+     * @param {string} block 
      */
     async function validateBlockchain(block) {
         let next = block;
@@ -242,6 +245,13 @@ module.exports = function blockchainLayerFactory({ system }) {
         return { isValid: true, blockCount };
     }
 
+    /**
+     * Handles CLI requests.
+     * @param {object} env The CLI environment context.
+     * @param {string} command The command to execute.
+     * @param {Array} parameters The command parameters.
+     * @returns {Promise<boolean>} Whether or not the command was handled.
+     */
     async function handleCommand(env, command, parameters) {
         switch (command) {
             case 'read-block':
@@ -286,7 +296,6 @@ module.exports = function blockchainLayerFactory({ system }) {
         getHeadBlock,
         getRootBlock,
         getNextBlock,
-        copyBlock,
         validateBlockchain,
         serializeBlockchainData,
         deserializeBlockchainData,

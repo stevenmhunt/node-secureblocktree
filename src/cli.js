@@ -76,6 +76,7 @@ module.exports = async function cliFactory({ system, blockchain, blocktree, secu
         }
         const { command, parameters } = parseCommand(cmd);
         if (await env.handleCommand(command, env.process(parameters))) { continue; }
+        if (await system.handleCommand(env, command, env.process(parameters))) { continue; }
         if (await blockchain.handleCommand(env, command, env.process(parameters))) { continue; }
         if (await blocktree.handleCommand(env, command, env.process(parameters))) { continue; }
         if (await security.handleCommand(env, command, env.process(parameters))) { continue; }
