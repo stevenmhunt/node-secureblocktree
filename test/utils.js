@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const constants = require('../src/constants');
 
 // blocktree layers
-const securityLayerFactory = require('../src/layers/security');
+const secureBlocktreeLayerFactory = require('../src/layers/secure-blocktree');
 const blocktreeLayerFactory = require('../src/layers/blocktree');
 const blockchainLayerFactory = require('../src/layers/blockchain');
 const systemLayerFactory = require('../src/layers/system');
@@ -37,23 +37,23 @@ function initBlocktree() {
     return blocktree;
 }
 
-function initSecurity() {
+function initSecureBlocktree() {
     const blocktree = initBlocktree();
     const secureCache = cacheFactory();
     const os = osFactory();
     const certificates = certificatesFactory();
-    const security = securityLayerFactory({
+    const secureBlocktree = secureBlocktreeLayerFactory({
         blocktree, secureCache, os, certificates,
     });
-    return security;
+    return secureBlocktree;
 }
 
-async function initializeSecureRoot(security) {
+async function initializeSecureRoot(secureBlocktree) {
     const rootWriteKey = 'bbbb';
     const rootKeys = { [constants.action.read]: ['aaaa'], [constants.action.write]: ['bbbb'] };
     const rootZoneKeys = { [constants.action.read]: ['cccc'], [constants.action.write]: ['dddd'] };
-    const signAsRoot = (block) => security.signBlock(rootWriteKey, block);
-    const result = await security.installRoot({ rootKeys, rootZoneKeys, signAsRoot });
+    const signAsRoot = (block) => secureBlocktree.signBlock(rootWriteKey, block);
+    const result = await secureBlocktree.installRoot({ rootKeys, rootZoneKeys, signAsRoot });
     return result;
 }
 
@@ -61,6 +61,6 @@ module.exports = {
     getRandomHash,
     initBlockchain,
     initBlocktree,
-    initSecurity,
+    initSecureBlocktree,
     initializeSecureRoot,
 };

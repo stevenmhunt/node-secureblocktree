@@ -1,7 +1,7 @@
 const cliFactory = require('./src/cli');
 
 // blocktree layers
-const securityLayerFactory = require('./src/layers/security');
+const secureBlocktreeLayerFactory = require('./src/layers/secure-blocktree');
 const blocktreeLayerFactory = require('./src/layers/blocktree');
 const blockchainLayerFactory = require('./src/layers/blockchain');
 const systemLayerFactory = require('./src/layers/system');
@@ -21,12 +21,12 @@ if (require.main === module) {
     const blocktree = blocktreeLayerFactory({ blockchain });
     const secureCache = cacheFactory();
     const certificates = certificatesFactory();
-    const security = securityLayerFactory({
+    const secureBlocktree = secureBlocktreeLayerFactory({
         blocktree, secureCache, os, certificates,
     });
 
     cliFactory({
-        system, blockchain, blocktree, security,
+        system, blockchain, blocktree, secureBlocktree,
     })
         .then(() => process.exit(0));
 }

@@ -4,7 +4,7 @@ const constants = require('../constants');
 const utils = require('../utils');
 
 /**
- * Blocktree Level 1 - Blockchain
+ * Blocktree Layer 1 - Blockchain
  */
 module.exports = function blockchainLayerFactory({ system }) {
     let emitter = null;
@@ -289,6 +289,12 @@ module.exports = function blockchainLayerFactory({ system }) {
         case 'get-next-block': {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
                 console.log(await getNextBlock(block));
+            });
+            return true;
+        }
+        case 'validate-blockchain': {
+            await env.resolveBlock(parameters[0], listBlocks, async (block) => {
+                console.log(await validateBlockchain(block));
             });
             return true;
         }

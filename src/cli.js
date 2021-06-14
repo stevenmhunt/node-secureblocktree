@@ -74,7 +74,7 @@ function initializeCliEnvironment() {
 }
 
 module.exports = async function cliFactory({
-    system, blockchain, blocktree, security,
+    system, blockchain, blocktree, secureBlocktree,
 }) {
     const env = initializeCliEnvironment();
     for (;;) {
@@ -88,7 +88,7 @@ module.exports = async function cliFactory({
         if (await system.handleCommand(env, command, processedParams)) { continue; }
         if (await blockchain.handleCommand(env, command, processedParams)) { continue; }
         if (await blocktree.handleCommand(env, command, processedParams)) { continue; }
-        if (await security.handleCommand(env, command, processedParams)) { continue; }
+        if (await secureBlocktree.handleCommand(env, command, processedParams)) { continue; }
         if (command && command.length > 0) {
             console.log(`${command}: command not found.`);
         }

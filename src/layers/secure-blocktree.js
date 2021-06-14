@@ -3,9 +3,9 @@ const constants = require('../constants');
 const utils = require('../utils');
 
 /**
- * Blocktree Level 3 - Security
+ * Blocktree Layer 3 - Secure Blocktree
  */
-module.exports = function securityLayerFactory({
+module.exports = function secureBlocktreeLayerFactory({
     blocktree, secureCache, os, certificates,
 }) {
     /**

@@ -3,7 +3,7 @@ const assert = require('assert');
 const constants = require('../src/constants');
 const { initBlockchain, getRandomHash } = require('./utils');
 
-describe('blocktree API layer 1 - [blockchain]', () => {
+describe('Blocktree Layer 1 - Blockchain', () => {
     describe('read block', () => {
         it('should return null if no value is found.', async () => {
             // arrange

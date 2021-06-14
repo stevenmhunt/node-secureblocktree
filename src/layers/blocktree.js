@@ -2,7 +2,7 @@
 const constants = require('../constants');
 
 /**
- * Blocktree Level 2 - Blocktree
+ * Blocktree Layer 2 - Blocktree
  */
 module.exports = function blocktreeLayerFactory({ blockchain }) {
     /**
@@ -170,9 +170,6 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
                 };
             }
             next = (nextBlock || {}).parent;
-            if (next) {
-                blockCount += 1;
-            }
         }
         while (next != null);
         return { isValid: true, blockCount };
@@ -190,6 +187,18 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         case 'read-tree-block': {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
                 console.log(await readBlock(block));
+            });
+            return true;
+        }
+        case 'get-parent-block': {
+            await env.resolveBlock(parameters[0], listBlocks, async (block) => {
+                console.log(await getParentBlock(block));
+            });
+            return true;
+        }
+        case 'validate-blocktree': {
+            await env.resolveBlock(parameters[0], listBlocks, async (block) => {
+                console.log(await validateBlocktree(block));
             });
             return true;
         }
