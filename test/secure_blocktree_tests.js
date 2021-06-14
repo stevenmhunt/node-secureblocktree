@@ -95,4 +95,67 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
     });
+    describe('set keys', () => {
+        it('should allow for setting keys for a zone using the parent key.', async () => {
+            // arrange
+            const secureBlocktree = initSecureBlocktree();
+            const { rootZone, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
+            const newZoneKeys = await generateKeys();
+            const newZone = await secureBlocktree.createZone({
+                sig: await secureBlocktree.signBlock(
+                    rootZoneKeys[constants.action.write][0], rootZone,
+                ),
+                block: rootZone,
+                keys: newZoneKeys,
+                name: 'test zone',
+            });
+            const newKeys = await generateKeys();
+
+            // act
+            const result = await secureBlocktree.setKeys({
+                sig: await secureBlocktree.signBlock(
+                    rootZoneKeys[constants.action.write][0], rootZone,
+                ),
+                block: newZone,
+                keys: newKeys,
+            });
+
+            // assert
+            assert.ok(result !== null, 'Expected a valid block to be returned.');
+        });
+        it('should not allow setting keys without a valid signature.', async () => {
+            // arrange
+            const secureBlocktree = initSecureBlocktree();
+            const { rootZone, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
+            const newZone = await secureBlocktree.createZone({
+                sig: await secureBlocktree.signBlock(
+                    rootZoneKeys[constants.action.write][0], rootZone,
+                ),
+                block: rootZone,
+                keys: await generateKeys(),
+                name: 'test zone',
+            });
+            const newKeys = await generateKeys();
+            const invalidKey = 'blah';
+            const sig = await secureBlocktree.signBlock(
+                invalidKey, newZone,
+            );
+
+            // act
+            let isExecuted = false;
+            try {
+                await secureBlocktree.setKeys({
+                    sig,
+                    block: newZone,
+                    keys: newKeys,
+                });
+                isExecuted = true;
+            } catch (err) {
+                // ignore error.
+            }
+
+            // assert
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+    });
 });

@@ -39,7 +39,7 @@ module.exports = {
         keys: 3,
         ledger: 4,
         log: 5,
-        name: 6,
+        option: 6,
     },
     action: {
         read: 1,

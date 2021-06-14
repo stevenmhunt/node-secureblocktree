@@ -57,10 +57,22 @@ async function initializeSecureRoot(secureBlocktree) {
     return { ...result, rootKeys, rootZoneKeys };
 }
 
+const testKeys = [
+    ['eeee', 'ffff'],
+    ['gggg', 'hhhh'],
+    ['iiii', 'jjjj'],
+];
+let testKeyIndex = 0;
+
 async function generateKeys() {
+    const [readKey, writeKey] = testKeys[testKeyIndex];
+    testKeyIndex += 1;
+    if (testKeyIndex >= testKeys.length) {
+        testKeyIndex = 0;
+    }
     return {
-        [constants.action.read]: ['eeee'],
-        [constants.action.write]: ['ffff'],
+        [constants.action.read]: [readKey],
+        [constants.action.write]: [writeKey],
     };
 }
 

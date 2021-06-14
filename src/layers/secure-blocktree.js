@@ -325,7 +325,7 @@ module.exports = function secureBlocktreeLayerFactory({
     /**
      * Validates a signature based on the provided block and action to perform.
      * @param {string} sig The signature to validate.
-     * @param {string} block The block to validate.
+     * @param {string} block The block to allow.
      * @param {number} action The action to validate.
      * @param {boolean} noThrow Whether or not to throw an exception if validation fails.
      * @returns {Promise<boolean>} Whether or not the signature was validated.
@@ -484,24 +484,25 @@ module.exports = function secureBlocktreeLayerFactory({
     }
 
     /**
-     * Specifies a new name for the specified blockchain.
+     * Specifies a new option for the specified blockchain.
      * @param {string} sig The signature to use.
      * @param {string} block The block to add keys to.
-     * @param {string} name The new name to use.
+     * @param {string} name The option name to set.
+     * @param {string} value The option value to set.
      * @returns {Promise<string>} The new block.
      */
-    async function setName({
-        sig, block, name,
+    async function setOption({
+        sig, block, name, value,
     }) {
         let parent = null;
         // validate the provided signature and the parent value.
         parent = await validateParentBlock(block);
         await validateSignature({ sig, block: parent });
 
-        const data = { name };
+        const data = { name, value };
         const prev = block ? await blocktree.getHeadBlock(block) : block;
         return writeSecureBlock({
-            sig, parent, prev, type: constants.blockType.name, data,
+            sig, parent, prev, type: constants.blockType.option, data,
         });
     }
 
@@ -689,7 +690,7 @@ module.exports = function secureBlocktreeLayerFactory({
         validateParentBlock,
         setKeys,
         revokeKeys,
-        setName,
+        setOption,
         createZone,
         createIdentity,
         createLedger,
