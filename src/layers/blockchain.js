@@ -182,6 +182,14 @@ module.exports = function blockchainLayerFactory({ system }) {
     }
 
     /**
+     * Retrieves a count of the number of blocks in the system.
+     * @returns {Promise<number>} The number of blocks in the system.
+     */
+    async function countBlocks() {
+        return system.countInStorage();
+    }
+
+    /**
      * Scans through all blocks in the system until a block matching the predicate is found.
      * @param {Function} fn The predicate function.
      * @returns {Promise<Object>} The matching block, or null.
@@ -192,6 +200,16 @@ module.exports = function blockchainLayerFactory({ system }) {
             return deserializeBlockchainData(result);
         }
         return null;
+    }
+
+    /**
+     * Scans through all blocks in the system and returns all matching blocks.
+     * @param {Function} fn The predicate function.
+     * @returns {Promise<Array>} The matching blocks.
+     */
+    async function findAllInBlocks(fn) {
+        return (await system.mapInStorage((data) => deserializeBlockchainData(data)))
+            .filter(fn);
     }
 
     /**
@@ -334,7 +352,9 @@ module.exports = function blockchainLayerFactory({ system }) {
         readBlock,
         writeBlock,
         listBlocks,
+        countBlocks,
         findInBlocks,
+        findAllInBlocks,
         mapInBlocks,
         getHeadBlock,
         getRootBlock,

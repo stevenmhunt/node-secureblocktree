@@ -25,7 +25,7 @@ module.exports = function storageFactory() {
     }
 
     /**
-     * Iterates through all blocks in the system using the map() function.
+     * Iterates through all blocks in storage using the map() function.
      * @param {Function} fn The map() callback function.
      * @returns {Promise<Array>} the result of the map() call.
      */
@@ -34,12 +34,20 @@ module.exports = function storageFactory() {
     }
 
     /**
-     * Iterates through all blocks in the system using the find() function.
+     * Iterates through all blocks in storage using the find() function.
      * @param {Function} fn The find() callback function.
      * @returns {Promise} The result of the find() call.
      */
     async function findInStorage(fn) {
         return Object.values(data).find(fn);
+    }
+
+    /**
+     * Retrieves a count of the number of blocks in storage.
+     * @returns {Promise<number>} The number of blocks in storage.
+     */
+    async function countInStorage() {
+        return Object.keys(data).length;
     }
 
     return {
@@ -48,5 +56,6 @@ module.exports = function storageFactory() {
         readKeys,
         mapInStorage,
         findInStorage,
+        countInStorage,
     };
 };

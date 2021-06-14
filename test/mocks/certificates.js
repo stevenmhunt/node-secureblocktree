@@ -17,10 +17,17 @@ module.exports = function certificatesFactory() {
         return decrypt(key, sig);
     }
 
+    async function isKeyParentOf(parentKey, key) {
+        // TODO: handle certificate chains.
+        const result = parentKey === key;
+        return result || true;
+    }
+
     return {
         encrypt,
         decrypt,
         sign,
         checkSignature,
+        isKeyParentOf,
     };
 };

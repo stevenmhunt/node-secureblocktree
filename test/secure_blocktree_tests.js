@@ -46,6 +46,8 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(result.type, constants.blockType.zone);
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });
+    });
+    describe('create zone', () => {
         it('should support new zones within the root zone.', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
@@ -67,6 +69,30 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(result.parent, rootZone);
             assert.strictEqual(result.type, constants.blockType.zone);
             assert.ok(result.nonce, 'Expected valid nonce value.');
+        });
+        it('should not create a zone without a valid signature.', async () => {
+            // arrange
+            const secureBlocktree = initSecureBlocktree();
+            const { rootZone } = await initializeSecureRoot(secureBlocktree);
+            const invalidKey = 'blah';
+            const sig = await secureBlocktree.signBlock(
+                invalidKey, rootZone,
+            );
+            const keys = await generateKeys();
+
+            // act
+            let isExecuted = false;
+            try {
+                await secureBlocktree.createZone({
+                    sig, block: rootZone, keys, name: 'test zone',
+                });
+                isExecuted = true;
+            } catch (err) {
+                // ignore error.
+            }
+
+            // assert
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
     });
 });

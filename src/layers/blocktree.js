@@ -84,6 +84,14 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
     }
 
     /**
+     * Retrieves a count of the number of blocks in the system.
+     * @returns {Promise<number>} The number of blocks in the system.
+     */
+    async function countBlocks() {
+        return blockchain.countBlocks();
+    }
+
+    /**
      * Scans through all blocks in the system until a block matching the predicate is found.
      * @param {Function} fn The predicate function.
      * @returns {Promise<Object>} The matching block, or null.
@@ -97,12 +105,51 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
     }
 
     /**
+     * Scans through all blocks in the system and returns all matching blocks.
+     * @param {Function} fn The predicate function.
+     * @returns {Promise<Array>} The matching blocks.
+     */
+    async function findAllInBlocks(fn) {
+        return (await blockchain.mapInBlocks((data) => deserializeBlocktreeData(data)))
+            .filter(fn);
+    }
+
+    /**
      * Scans through all blocks in the system and runs the map() function.
      * @param {Function} fn The selector function.
      * @returns {Promise<Array>} The result of the map() call.
      */
     async function mapInBlocks(fn) {
         return blockchain.mapInBlocks((data) => fn(deserializeBlocktreeData(data)));
+    }
+
+    /**
+     * Given a block, returns its data as well as data for all parent blocks.
+     * @param {string} block The block to start from.
+     * @returns {Promise<Array>} Block data for the block and all parents.
+     */
+    async function performParentScan(block) {
+        const result = [];
+        let next = block;
+        do {
+            const nextBlock = await readBlock(next);
+            if (next && !nextBlock) {
+                return null;
+            }
+            result.push(nextBlock);
+            next = (nextBlock || {}).parent;
+        }
+        while (next != null);
+        return result;
+    }
+
+    /**
+     * Given a block, locates all child root blocks.
+     * @param {*} block The block to start from.
+     * @returns {Promise<Array>} Block data for all child root blocks.
+     */
+    async function performChildScan(block) {
+        return findAllInBlocks((b) => b.prev === null && b.parent === block);
     }
 
     /**
@@ -190,6 +237,18 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
             });
             return true;
         }
+        case 'parent-scan': {
+            await env.resolveBlock(parameters[0], listBlocks, async (block) => {
+                console.log(await performParentScan(block));
+            });
+            return true;
+        }
+        case 'child-scan': {
+            await env.resolveBlock(parameters[0], listBlocks, async (block) => {
+                console.log(await performChildScan(block));
+            });
+            return true;
+        }
         case 'get-parent-block': {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
                 console.log(await getParentBlock(block));
@@ -211,8 +270,11 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         readBlock,
         writeBlock,
         listBlocks,
+        countBlocks,
         findInBlocks,
         mapInBlocks,
+        performParentScan,
+        performChildScan,
         getHeadBlock,
         getRootBlock,
         getParentBlock,

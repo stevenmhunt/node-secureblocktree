@@ -319,9 +319,7 @@ module.exports = function secureBlocktreeLayerFactory({
      * @returns {Promise<boolean>} Whether or not the "parent key" is the parent of "key".
      */
     async function isKeyParentOf(parentKey, key) {
-        // TODO: handle certificate chains.
-        const result = parentKey === key;
-        return result || true;
+        return certificates.isKeyParentOf(parentKey, key);
     }
 
     /**
@@ -453,8 +451,7 @@ module.exports = function secureBlocktreeLayerFactory({
         // if attempting to initialize the root...
         if (sig === null && block === null) {
             // there can only be one root key in the system.
-            const blockData = await blocktree.findInBlocks(() => true);
-            if (blockData) {
+            if (await blocktree.countBlocks() > 0) {
                 throw new Error('Cannot install a root if blocks are already present.');
             }
         } else {
@@ -497,7 +494,7 @@ module.exports = function secureBlocktreeLayerFactory({
         sig, block, name,
     }) {
         let parent = null;
-        // validate the provided signature, the keys, and the parent value.
+        // validate the provided signature and the parent value.
         parent = await validateParentBlock(block);
         await validateSignature({ sig, block: parent });
 

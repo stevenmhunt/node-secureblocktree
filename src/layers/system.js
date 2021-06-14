@@ -32,7 +32,11 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
      * @returns {Promise<Buffer>} The binary data being stored.
      */
     async function readStorage(hash) {
-        return storage.readStorage(hash);
+        const result = await storage.readStorage(hash);
+        if (result && generateHash(result) !== hash) {
+            return null;
+        }
+        return result;
     }
 
     /**
@@ -74,6 +78,14 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
      */
     async function findInStorage(fn) {
         return storage.findInStorage(fn);
+    }
+
+    /**
+     * Retrieves a count of the number of blocks in storage.
+     * @returns {Promise<number>} The number of blocks in storage.
+     */
+    async function countInStorage() {
+        return storage.countInStorage();
     }
 
     /**
@@ -121,6 +133,7 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
         readKeys,
         mapInStorage,
         findInStorage,
+        countInStorage,
         readCache,
         writeCache,
         generateHash,
