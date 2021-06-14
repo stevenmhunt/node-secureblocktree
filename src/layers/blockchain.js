@@ -14,7 +14,7 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @param {Object} bcBlockData The blockchain object.
      * @returns {Buffer} The binary representation of the block.
      */
-    function serializeBlockchainData(bcBlockData) {
+    function serializeBlockchainData(bcBlockData, timestamp) {
         let prev = bcBlockData.prev || Buffer.alloc(constants.size.hash);
         if (!Buffer.isBuffer(prev)) {
             prev = Buffer.from(prev, constants.format.hash);
@@ -23,7 +23,6 @@ module.exports = function blockchainLayerFactory({ system }) {
             }
         }
         const nonce = system.generateNonce();
-        const timestamp = system.generateTimestamp();
         const buf = Buffer.concat([
             // previous hash
             prev,
@@ -159,17 +158,24 @@ module.exports = function blockchainLayerFactory({ system }) {
      */
     async function writeBlock(bcBlockData, options = {}) {
         return utils.withEvent(emitter, 'write-block', { bcBlockData, options }, async () => {
+            const timestamp = system.generateTimestamp();
             if (options.validate !== false && bcBlockData.prev !== null) {
                 const prev = await readBlock(bcBlockData.prev);
                 if (!prev) {
                     throw new Error(`Invalid block ${bcBlockData.prev}`);
                 }
+                if (prev.timestamp > timestamp) {
+                    throw new Error('Cannot add a new block with a lower timestamp than prev.');
+                }
+
                 const next = await getNextBlock(bcBlockData.prev);
                 if (next) {
                     throw new Error(`The block ${bcBlockData.prev} already has a block.`);
                 }
             }
-            const block = await system.writeStorage(serializeBlockchainData(bcBlockData));
+            const block = await system.writeStorage(
+                serializeBlockchainData(bcBlockData, timestamp),
+            );
             if (options.cacheRoot !== false) {
                 const root = await cacheRootBlock(block, bcBlockData);
                 await system.writeCache(root, constants.cache.headBlock, block);

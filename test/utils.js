@@ -48,11 +48,19 @@ function initSecureBlocktree() {
     return secureBlocktree;
 }
 
+function signAs(secureBlocktree, key) {
+    return ({ parent, prev }) => secureBlocktree.signBlock({
+        key,
+        parent,
+        prev,
+    });
+}
+
 async function initializeSecureRoot(secureBlocktree) {
     const rootWriteKey = 'bbbb';
     const rootKeys = { [constants.action.read]: ['aaaa'], [constants.action.write]: ['bbbb'] };
     const rootZoneKeys = { [constants.action.read]: ['cccc'], [constants.action.write]: ['dddd'] };
-    const signAsRoot = (block) => secureBlocktree.signBlock(rootWriteKey, block);
+    const signAsRoot = signAs(secureBlocktree, rootWriteKey);
     const result = await secureBlocktree.installRoot({ rootKeys, rootZoneKeys, signAsRoot });
     return { ...result, rootKeys, rootZoneKeys };
 }
@@ -61,19 +69,26 @@ const testKeys = [
     ['eeee', 'ffff'],
     ['gggg', 'hhhh'],
     ['iiii', 'jjjj'],
+    ['abab', 'acac'],
+    ['adad', 'aeae'],
+    ['agag', 'afaf'],
+    ['ahah', 'aiai'],
+    ['akak', 'ajaj'],
+    ['alal', 'amam'],
 ];
 let testKeyIndex = 0;
 
-async function generateKeys() {
+function generateKeys() {
     const [readKey, writeKey] = testKeys[testKeyIndex];
     testKeyIndex += 1;
     if (testKeyIndex >= testKeys.length) {
         testKeyIndex = 0;
     }
-    return {
+    const result = {
         [constants.action.read]: [readKey],
         [constants.action.write]: [writeKey],
     };
+    return result;
 }
 
 module.exports = {
@@ -83,4 +98,5 @@ module.exports = {
     initSecureBlocktree,
     initializeSecureRoot,
     generateKeys,
+    signAs,
 };

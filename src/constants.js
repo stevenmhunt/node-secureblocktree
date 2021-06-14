@@ -1,4 +1,4 @@
-module.exports = {
+const constants = {
     cache: {
         headBlock: 'head block',
         rootBlock: 'root block',
@@ -46,3 +46,10 @@ module.exports = {
         write: 2,
     },
 };
+
+constants.parentBlockTypes = {
+    [constants.blockType.zone]: [constants.blockType.zone],
+    [constants.blockType.keys]: [constants.blockType.zone],
+};
+
+module.exports = constants;

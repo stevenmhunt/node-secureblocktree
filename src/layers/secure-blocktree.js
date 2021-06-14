@@ -42,13 +42,17 @@ module.exports = function secureBlocktreeLayerFactory({
     /**
      * Digitally signs a block using the specified key.
      * @param {string} key The key to sign the block with (usually a write key).
-     * @param {string} block The block to sign.
+     * @param {string} parent The parent of the block to sign.
+     * @param {string} prev The previous block of the block to sign.
      * @returns {Promise<Buffer>} The signed block data.
      */
-    async function signBlock(key, block) {
+    async function signBlock({ key, parent, prev }) {
         const result = await certificates.sign(
             Buffer.from(key, constants.format.key),
-            Buffer.from(block, constants.format.hash),
+            Buffer.concat([
+                parent ? Buffer.from(parent, constants.format.hash) : Buffer.alloc(0),
+                prev ? Buffer.from(prev, constants.format.hash) : Buffer.alloc(0),
+            ]),
         );
         return result.toString(constants.format.signature);
     }
@@ -58,16 +62,19 @@ module.exports = function secureBlocktreeLayerFactory({
      * determines if the signature is valid and matches the block.
      * @param {*} key The key to verify.
      * @param {*} sig The signature generated when the block was signed.
-     * @param {*} block The block to validate.
+     * @param {*} parent The parent block to validate.
+     * @param {*} prev The prev block to validate.
      * @returns {Promise<boolean>} Whether or not the signature and key are valid for the block.
      */
-    async function verifySignedBlock(key, sig, block) {
+    async function verifySignedBlock({
+        key, sig, parent, prev,
+    }) {
         const sigResult = await certificates.checkSignature(
             Buffer.from(key, constants.format.key),
             Buffer.from(sig, constants.format.signature),
         );
         const sigBlock = sigResult ? sigResult.toString(constants.format.hash) : null;
-        return block !== null && sigBlock !== null && sigBlock === block;
+        return (parent || prev) && sigBlock !== null && sigBlock === `${parent || ''}${prev || ''}`;
     }
 
     /**
@@ -243,6 +250,43 @@ module.exports = function secureBlocktreeLayerFactory({
     }
 
     /**
+     * Given a block, scans the blocks in the system to find the next one.
+     * @param {string} block The block to start from.
+     * @returns {Promise<string>} The hash of the next block, or null.
+     */
+    async function getNextBlock(block) {
+        return blocktree.getNextBlock(block);
+    }
+
+    /**
+     * Given a block, locates the root block of the blockchain.
+     * If block is null, retries the root of the blocktree.
+     * @param {string} block The block to start from.
+     * @returns {Promise<string>} The root block of the blockchain or blocktree, or null.
+     */
+    async function getRootBlock(block) {
+        return blocktree.getRootBlock(block);
+    }
+
+    /**
+     * Given a block, locates the parent of this block on the blocktree.
+     * @param {string} block The block to start from.
+     * @returns {Promise<string>} The parent block of the specified block, or null.
+     */
+    async function getParentBlock(block) {
+        return blocktree.getParentBlock(block);
+    }
+
+    /**
+     * Given a block, finds the head block in the blockchain.
+     * @param {string} block The block to start with.
+     * @returns {Promise<string>} The head block of the blockchain.
+     */
+    async function getHeadBlock(block) {
+        return blocktree.getHeadBlock(block);
+    }
+
+    /**
      * Determines whether or not a key is active.
      * @param {BigInt} tsInit The initializion timestamp for the key.
      * @param {BigInt} tsExp The expiration timestamp for the key.
@@ -274,6 +318,7 @@ module.exports = function secureBlocktreeLayerFactory({
         const result = [];
         let current = await blocktree.getHeadBlock(block);
         let secureBlock = null;
+        const inactiveKeys = {};
         while (current != null) {
             secureBlock = await readSecureBlock(current);
             if (secureBlock.type === constants.blockType.keys) {
@@ -285,7 +330,11 @@ module.exports = function secureBlocktreeLayerFactory({
                         for (let j = 0; j < keyList.length; j += 1) {
                             const key = keyList[j];
                             const { tsInit, tsExp } = secureBlock.data;
-                            if (isActive !== true || isKeyActive({ tsInit, tsExp, timestamp })) {
+                            if (isActive === true
+                                && !(await isKeyActive({ tsInit, tsExp, timestamp }))) {
+                                inactiveKeys[key] = true;
+                            }
+                            if (!inactiveKeys[key]) {
                                 result.push({
                                     key,
                                     block: current,
@@ -325,14 +374,18 @@ module.exports = function secureBlocktreeLayerFactory({
     /**
      * Validates a signature based on the provided block and action to perform.
      * @param {string} sig The signature to validate.
-     * @param {string} block The block to allow.
+     * @param {string} parent The parent block.
+     * @param {string} prev The previous block.
      * @param {number} action The action to validate.
      * @param {boolean} noThrow Whether or not to throw an exception if validation fails.
-     * @returns {Promise<boolean>} Whether or not the signature was validated.
+     * @returns {Promise<string>} The valid signature, or null.
      */
     async function validateSignature({
-        sig, block, action, noThrow,
+        sig, parent, prev, action, noThrow, requireParent,
     }) {
+        const block = requireParent !== false ? parent : (parent || prev);
+        const signature = typeof sig === 'function' ? await sig({ prev, parent }) : sig;
+
         // get the public keys for this action.
         const keyList = (await performKeyScan({
             block,
@@ -343,13 +396,15 @@ module.exports = function secureBlocktreeLayerFactory({
 
         // keep trying until a key is found, or there aren't any left.
         const results = await Promise.all(
-            keyList.map(async (pk) => verifySignedBlock(pk, sig, block)),
+            keyList.map(async (key) => verifySignedBlock({
+                key, sig: signature, parent, prev,
+            })),
         );
         const result = results.find((i) => i) !== undefined;
         if (!result && noThrow !== true) {
             throw new Error('Invalid signature.');
         }
-        return result;
+        return result ? signature : null;
     }
 
     /**
@@ -424,12 +479,29 @@ module.exports = function secureBlocktreeLayerFactory({
      * @param {string} block The block to check
      * @returns {Promise<string>} The parent block, or throws an exception.
      */
-    async function validateParentBlock(block) {
-        const parent = await blocktree.getParentBlock(block);
-        if (parent === null) {
+    async function validateParentBlock({ prev, parent, type }) {
+        let selected = null;
+        if (prev) {
+            selected = await blocktree.getParentBlock(prev);
+        } else if (parent) {
+            selected = await blocktree.getRootBlock(parent);
+        }
+        if (selected === null) {
             throw new Error('Parent block cannot be null.');
         }
-        return parent;
+        // get the root block if we're adding to the current blockchain.
+        const blockToValidate = prev ? await blocktree.getRootBlock(prev) : selected;
+        const validateData = await readSecureBlock(blockToValidate);
+        if (!constants.parentBlockTypes[type].includes(validateData.type)) {
+            // check if we're dealing with the root block.
+            if (type === constants.blockType.zone
+                && validateData.prev === null
+                && validateData.parent === null) {
+                return selected;
+            }
+            throw new Error(`Cannot create block type ${type} within block type ${validateData.type}.`);
+        }
+        return selected;
     }
 
     /**
@@ -444,27 +516,29 @@ module.exports = function secureBlocktreeLayerFactory({
     async function setKeys({
         sig, block, keys, tsInit, tsExp,
     }) {
+        const type = constants.blockType.keys;
         const init = tsInit !== undefined ? tsInit : constants.timestamp.zero;
         const exp = tsExp !== undefined ? tsExp : constants.timestamp.max;
+        const prev = block ? await blocktree.getHeadBlock(block) : block;
         let parent = null;
+        let signature = null;
 
         // if attempting to initialize the root...
-        if (sig === null && block === null) {
+        if (sig === null && prev === null) {
             // there can only be one root key in the system.
             if (await blocktree.countBlocks() > 0) {
                 throw new Error('Cannot install a root if blocks are already present.');
             }
         } else {
             // validate the provided signature, the keys, and the parent value.
-            parent = await validateParentBlock(block);
-            await validateSignature({ sig, block: parent });
-            await validateKeys({ block, keys });
+            parent = await validateParentBlock({ prev, type });
+            signature = await validateSignature({ sig, prev, parent });
+            await validateKeys({ block: prev, keys });
         }
 
         const data = { keys, tsInit: init, tsExp: exp };
-        const prev = block ? await blocktree.getHeadBlock(block) : block;
         return writeSecureBlock({
-            sig, parent, prev, type: constants.blockType.keys, data,
+            sig: signature, parent, prev, type, data,
         });
     }
 
@@ -494,15 +568,15 @@ module.exports = function secureBlocktreeLayerFactory({
     async function setOption({
         sig, block, name, value,
     }) {
-        let parent = null;
+        const type = constants.blockType.option;
         // validate the provided signature and the parent value.
-        parent = await validateParentBlock(block);
-        await validateSignature({ sig, block: parent });
+        const prev = block ? await blocktree.getHeadBlock(block) : block;
+        const parent = await validateParentBlock({ prev, type });
+        const signature = await validateSignature({ sig, prev, parent });
 
         const data = { name, value };
-        const prev = block ? await blocktree.getHeadBlock(block) : block;
         return writeSecureBlock({
-            sig, parent, prev, type: constants.blockType.option, data,
+            sig: signature, parent, prev, type, data,
         });
     }
 
@@ -511,13 +585,13 @@ module.exports = function secureBlocktreeLayerFactory({
      * Creates a child block.
      * @param {string} sig The signature to use.
      * @param {string} block The block to add a child block to.
-     * @param {Object} keys A set of actions with associated keys, or null if no keys.
      * @param {number} type The secure block type to create.
      * @param {object} data The block type data to write.
      * @returns {Promise<string>} The new block.
      */
     async function createChildBlockInternal({
-        sig, block, keys, type, data,
+
+        sig, block, type, data,
     }) {
         if (!sig) {
             throw new Error('A signature is required.');
@@ -525,19 +599,16 @@ module.exports = function secureBlocktreeLayerFactory({
         if (!block) {
             throw new Error('A valid block is required.');
         }
+        // always all child blocks to the root.
+        const parent = await validateParentBlock({ parent: block, type });
 
         // validate the provided signature.
-        await validateSignature({ sig, block });
+        const signature = await validateSignature({ sig, parent, prev: null });
 
         // create a new blockchain for the child block.
         const childBlock = await writeSecureBlock({
-            sig, parent: block, prev: null, type, data,
+            sig: signature, parent, prev: null, type, data,
         });
-
-        // configure keys if provided
-        if (keys) {
-            await setKeys({ sig, block: childBlock, keys });
-        }
 
         return childBlock;
     }
@@ -617,8 +688,7 @@ module.exports = function secureBlocktreeLayerFactory({
      */
     async function installRoot({ rootKeys, rootZoneKeys, signAsRoot }) {
         // there can only be one root key in the system.
-        const blockData = await blocktree.findInBlocks(() => true);
-        if (blockData) {
+        if (await blocktree.countBlocks() > 0) {
             throw new Error('Cannot install a root if blocks are already present.');
         }
 
@@ -632,11 +702,17 @@ module.exports = function secureBlocktreeLayerFactory({
 
         // establish the root zone.
         const rootZone = await createZone({
-            sig: await signAsRoot(rootBlock),
+            sig: signAsRoot,
             block: rootBlock,
-            keys: rootZoneKeys,
         });
         await secureCache.writeCache(null, constants.secureCache.rootZone, rootZone);
+
+        // set the root zone keys.
+        await setKeys({
+            sig: signAsRoot,
+            block: rootZone,
+            keys: rootZoneKeys,
+        });
         return { rootBlock, rootZone };
     }
 
@@ -653,7 +729,7 @@ module.exports = function secureBlocktreeLayerFactory({
             const rootWriteKey = 'bbbb';
             const rootKeys = { [constants.action.read]: ['aaaa'], [constants.action.write]: ['bbbb'] };
             const rootZoneKeys = { [constants.action.read]: ['cccc'], [constants.action.write]: ['dddd'] };
-            const signAsRoot = (block) => signBlock(rootWriteKey, block);
+            const signAsRoot = ({ parent, prev }) => signBlock({ key: rootWriteKey, parent, prev });
             console.log(await installRoot({ rootKeys, rootZoneKeys, signAsRoot }));
             return true;
         }
@@ -682,7 +758,10 @@ module.exports = function secureBlocktreeLayerFactory({
         serializeSecureBlock,
         deserializeSecureBlock,
         readSecureBlock,
-        writeSecureBlock,
+        getNextBlock,
+        getRootBlock,
+        getParentBlock,
+        getHeadBlock,
         performKeyScan,
         validateSignature,
         validateKey,

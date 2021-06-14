@@ -9,7 +9,7 @@ function fromInt64(val) {
         return val;
     }
     const buf = Buffer.allocUnsafe(constants.size.int64);
-    buf.writeBigUInt64BE(val);
+    buf.writeBigInt64BE(val);
     return buf;
 }
 
