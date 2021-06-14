@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 const assert = require('assert');
 const constants = require('../src/constants');
-const { initSecureBlocktree, initializeSecureRoot } = require('./utils');
+const { initSecureBlocktree, initializeSecureRoot, generateKeys } = require('./utils');
 
 describe('Blocktree Layer 3 - Secure Blocktree', () => {
     describe('read secure block', () => {
@@ -43,6 +43,28 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
             assert.strictEqual(result.prev, null);
             assert.strictEqual(result.parent, rootBlock);
+            assert.strictEqual(result.type, constants.blockType.zone);
+            assert.ok(result.nonce, 'Expected valid nonce value.');
+        });
+        it('should support new zones within the root zone.', async () => {
+            // arrange
+            const secureBlocktree = initSecureBlocktree();
+            const { rootZone, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
+            const sig = await secureBlocktree.signBlock(
+                rootZoneKeys[constants.action.write][0], rootZone,
+            );
+            const keys = await generateKeys();
+
+            // act
+            const newZone = await secureBlocktree.createZone({
+                sig, block: rootZone, keys, name: 'test zone',
+            });
+            const result = await secureBlocktree.readSecureBlock(newZone);
+
+            // assert
+            assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
+            assert.strictEqual(result.prev, null);
+            assert.strictEqual(result.parent, rootZone);
             assert.strictEqual(result.type, constants.blockType.zone);
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });

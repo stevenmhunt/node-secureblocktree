@@ -33,8 +33,13 @@ module.exports = {
         hash: 'sha256',
     },
     blockType: {
+        record: 0,
         zone: 1,
-        keys: 2,
+        identity: 2,
+        keys: 3,
+        ledger: 4,
+        log: 5,
+        name: 6,
     },
     action: {
         read: 1,

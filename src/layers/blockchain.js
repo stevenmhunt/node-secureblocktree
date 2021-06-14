@@ -104,6 +104,28 @@ module.exports = function blockchainLayerFactory({ system }) {
     }
 
     /**
+     * Given a block, scans the blocks in the system to find the next one.
+     * @param {string} block The block to start from.
+     * @returns {Promise<string>} The hash of the next block, or null.
+     */
+    async function getNextBlock(block) {
+        const cached = await system.readCache(block, constants.cache.next);
+        if (cached) {
+            return cached;
+        }
+
+        const value = await system.findInStorage(
+            (buf) => deserializeBlockchainData(buf).prev === block,
+        );
+        if (value) {
+            const result = system.generateHash(value);
+            await system.writeCache(block, constants.cache.next, result);
+            return result;
+        }
+        return null;
+    }
+
+    /**
      * @private
      * Handles caching of the root block.
      * @param {string} block The block to update caches for.
@@ -142,11 +164,18 @@ module.exports = function blockchainLayerFactory({ system }) {
                 if (!prev) {
                     throw new Error(`Invalid block ${bcBlockData.prev}`);
                 }
+                const next = await getNextBlock(bcBlockData.prev);
+                if (next) {
+                    throw new Error(`The block ${bcBlockData.prev} already has a block.`);
+                }
             }
             const block = await system.writeStorage(serializeBlockchainData(bcBlockData));
             if (options.cacheRoot !== false) {
                 const root = await cacheRootBlock(block, bcBlockData);
                 await system.writeCache(root, constants.cache.headBlock, block);
+            }
+            if (options.cacheNext !== false && bcBlockData.prev) {
+                await system.writeCache(bcBlockData.prev, constants.cache.next, block);
             }
             return block;
         });
@@ -172,27 +201,6 @@ module.exports = function blockchainLayerFactory({ system }) {
      */
     async function mapInBlocks(fn) {
         return system.mapInStorage((data) => fn(deserializeBlockchainData(data)));
-    }
-
-    /**
-     * Given a block, scans the blocks in the system to find the next one.
-     * @param {string} block The block to start from.
-     * @returns {Promise<string>} The hash of the next block, or null.
-     */
-    async function getNextBlock(block) {
-        const cached = await system.readCache(block, constants.cache.next);
-        if (cached) {
-            return cached;
-        }
-        const value = await system.findInStorage(
-            (buf) => deserializeBlockchainData(buf).prev === block,
-        );
-        if (value) {
-            const result = system.generateHash(value);
-            await system.writeCache(block, constants.cache.next, result);
-            return result;
-        }
-        return null;
     }
 
     /**

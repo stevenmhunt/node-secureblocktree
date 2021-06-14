@@ -54,7 +54,14 @@ async function initializeSecureRoot(secureBlocktree) {
     const rootZoneKeys = { [constants.action.read]: ['cccc'], [constants.action.write]: ['dddd'] };
     const signAsRoot = (block) => secureBlocktree.signBlock(rootWriteKey, block);
     const result = await secureBlocktree.installRoot({ rootKeys, rootZoneKeys, signAsRoot });
-    return result;
+    return { ...result, rootKeys, rootZoneKeys };
+}
+
+async function generateKeys() {
+    return {
+        [constants.action.read]: ['eeee'],
+        [constants.action.write]: ['ffff'],
+    };
 }
 
 module.exports = {
@@ -63,4 +70,5 @@ module.exports = {
     initBlocktree,
     initSecureBlocktree,
     initializeSecureRoot,
+    generateKeys,
 };

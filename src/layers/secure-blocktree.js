@@ -487,15 +487,39 @@ module.exports = function secureBlocktreeLayerFactory({
     }
 
     /**
-     * Creates a new zone, which acts as a permission container for managing keys and data.
+     * Specifies a new name for the specified blockchain.
      * @param {string} sig The signature to use.
-     * @param {string} block The block to add a zone to.
-     * @param {Object} keys A set of actions with associated keys, or null if no zone keys.
-     * @param {string} name The name of the zone.
+     * @param {string} block The block to add keys to.
+     * @param {string} name The new name to use.
      * @returns {Promise<string>} The new block.
      */
-    async function createZone({
-        sig, block, keys, name,
+    async function setName({
+        sig, block, name,
+    }) {
+        let parent = null;
+        // validate the provided signature, the keys, and the parent value.
+        parent = await validateParentBlock(block);
+        await validateSignature({ sig, block: parent });
+
+        const data = { name };
+        const prev = block ? await blocktree.getHeadBlock(block) : block;
+        return writeSecureBlock({
+            sig, parent, prev, type: constants.blockType.name, data,
+        });
+    }
+
+    /**
+     * @private
+     * Creates a child block.
+     * @param {string} sig The signature to use.
+     * @param {string} block The block to add a child block to.
+     * @param {Object} keys A set of actions with associated keys, or null if no keys.
+     * @param {number} type The secure block type to create.
+     * @param {object} data The block type data to write.
+     * @returns {Promise<string>} The new block.
+     */
+    async function createChildBlockInternal({
+        sig, block, keys, type, data,
     }) {
         if (!sig) {
             throw new Error('A signature is required.');
@@ -507,17 +531,83 @@ module.exports = function secureBlocktreeLayerFactory({
         // validate the provided signature.
         await validateSignature({ sig, block });
 
-        // create a new blockchain for the zone.
-        const zoneBlock = await writeSecureBlock({
-            sig, parent: block, prev: null, type: constants.blockType.zone, data: { name },
+        // create a new blockchain for the child block.
+        const childBlock = await writeSecureBlock({
+            sig, parent: block, prev: null, type, data,
         });
 
-        // configure keys
+        // configure keys if provided
         if (keys) {
-            await setKeys({ sig, block: zoneBlock, keys });
+            await setKeys({ sig, block: childBlock, keys });
         }
 
-        return zoneBlock;
+        return childBlock;
+    }
+
+    /**
+     * Creates a new zone, which acts as a permission container for managing keys and data.
+     * @param {string} sig The signature to use.
+     * @param {string} block The block to add a zone to.
+     * @param {Object} keys A set of actions with associated keys, or null if no zone keys.
+     * @param {string} name The name of the zone.
+     * @returns {Promise<string>} The new block.
+     */
+    async function createZone({
+        sig, block, keys, name,
+    }) {
+        return createChildBlockInternal({
+            sig,
+            block,
+            keys,
+            type: constants.blockType.zone,
+            data: {
+                name,
+            },
+        });
+    }
+
+    /**
+     * Creates a new identity, which represents a user or system.
+     * @param {string} sig The signature to use.
+     * @param {string} block The block to add an identity to.
+     * @param {Object} keys A set of actions with associated keys, or null if no zone keys.
+     * @param {string} name The name of the identity.
+     * @returns {Promise<string>} The new block.
+     */
+    async function createIdentity({
+        sig, block, keys, name,
+    }) {
+        return createChildBlockInternal({
+            sig,
+            block,
+            keys,
+            type: constants.blockType.identity,
+            data: {
+                name,
+            },
+        });
+    }
+
+    /**
+     * Creates a new ledger, which represents a blockchain for storing data.
+     * @param {string} sig The signature to use.
+     * @param {string} block The block to add a ledger to.
+     * @param {Object} keys A set of actions with associated keys, or null if no zone keys.
+     * @param {string} name The name of the ledger.
+     * @returns {Promise<string>} The new block.
+     */
+    async function createLedger({
+        sig, block, keys, name,
+    }) {
+        return createChildBlockInternal({
+            sig,
+            block,
+            keys,
+            type: constants.blockType.ledger,
+            data: {
+                name,
+            },
+        });
     }
 
     /**
@@ -602,7 +692,10 @@ module.exports = function secureBlocktreeLayerFactory({
         validateParentBlock,
         setKeys,
         revokeKeys,
+        setName,
         createZone,
+        createIdentity,
+        createLedger,
         installRoot,
         handleCommand,
     };
