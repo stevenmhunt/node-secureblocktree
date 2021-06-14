@@ -45,6 +45,19 @@ const constants = {
         read: 1,
         write: 2,
     },
+    error: {
+        serialization: 1,
+        invalidBlock: 2,
+        invalidSignature: 3,
+        invalidKey: 4,
+        invalidRoot: 5,
+    },
+    layer: {
+        system: 0,
+        blockchain: 1,
+        blocktree: 2,
+        secureBlocktree: 3,
+    },
 };
 
 constants.parentBlockTypes = {

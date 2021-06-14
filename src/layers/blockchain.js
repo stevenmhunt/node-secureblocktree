@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 const EventEmitter = require('events');
 const constants = require('../constants');
+const { SerializationError, InvalidBlockError } = require('../errors');
 const utils = require('../utils');
 
 /**
@@ -19,7 +20,9 @@ module.exports = function blockchainLayerFactory({ system }) {
         if (!Buffer.isBuffer(prev)) {
             prev = Buffer.from(prev, constants.format.hash);
             if (Buffer.byteLength(prev) !== constants.size.hash) {
-                throw new Error('Unexpected byte length for SHA-256 hash.');
+                throw new SerializationError({ data: prev },
+                    SerializationError.reasons.invalidHash,
+                    constants.layer.blockchain);
             }
         }
         const nonce = system.generateNonce();
@@ -162,15 +165,26 @@ module.exports = function blockchainLayerFactory({ system }) {
             if (options.validate !== false && bcBlockData.prev !== null) {
                 const prev = await readBlock(bcBlockData.prev);
                 if (!prev) {
-                    throw new Error(`Invalid block ${bcBlockData.prev}`);
+                    throw new InvalidBlockError({
+                        block: bcBlockData.prev,
+                    }, InvalidBlockError.reasons.isNull, constants.layer.blockchain);
                 }
                 if (prev.timestamp > timestamp) {
-                    throw new Error('Cannot add a new block with a lower timestamp than prev.');
+                    throw new InvalidBlockError({
+                        block: bcBlockData.prev,
+                        prevTimestamp: prev.timestamp,
+                        timestamp,
+                    }, InvalidBlockError.reasons.invalidTimestamp,
+                    constants.layer.blockchain);
                 }
 
                 const next = await getNextBlock(bcBlockData.prev);
                 if (next) {
-                    throw new Error(`The block ${bcBlockData.prev} already has a block.`);
+                    throw new InvalidBlockError({
+                        block: bcBlockData.prev,
+                        next,
+                    }, InvalidBlockError.reasons.nextBlockExists,
+                    constants.layer.blockchain);
                 }
             }
             const block = await system.writeStorage(

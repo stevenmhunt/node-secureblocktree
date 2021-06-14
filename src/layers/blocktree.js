@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 const constants = require('../constants');
+const { SerializationError, InvalidBlockError } = require('../errors');
 
 /**
  * Blocktree Layer 2 - Blocktree
@@ -16,7 +17,9 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         if (!Buffer.isBuffer(parent)) {
             parent = Buffer.from(parent, constants.format.hash);
             if (Buffer.byteLength(parent) !== constants.size.hash) {
-                throw new Error('Unexpected byte length for SHA-256 hash.');
+                throw new SerializationError({ data: parent },
+                    SerializationError.reasons.invalidHash,
+                    constants.layer.blocktree);
             }
         }
         const data = Buffer.concat([
@@ -179,7 +182,8 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
     async function getParentBlock(block) {
         const blockData = await readBlock(block);
         if (!blockData) {
-            throw new Error(`Invalid block ${block}`);
+            throw new InvalidBlockError({ block }, InvalidBlockError.reasons.isNull,
+                constants.layer.blocktree);
         }
         return blockData.parent;
     }

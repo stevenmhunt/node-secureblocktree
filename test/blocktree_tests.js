@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 const assert = require('assert');
 const constants = require('../src/constants');
+const { InvalidBlockError } = require('../src/errors');
 const { initBlocktree, getRandomHash } = require('./utils');
 
 describe('Blocktree Layer 2 - Blocktree', () => {
@@ -122,7 +123,9 @@ describe('Blocktree Layer 2 - Blocktree', () => {
                 await blocktree.writeBlock({ prev: block1, data: data2 }, options);
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidBlockError);
+                assert.strictEqual(err.layer, constants.layer.blockchain);
+                assert.strictEqual(err.reason, InvalidBlockError.reasons.isNull);
             }
 
             // assert

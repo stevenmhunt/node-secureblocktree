@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 const assert = require('assert');
 const constants = require('../src/constants');
+const { InvalidBlockError, InvalidSignatureError } = require('../src/errors');
 const {
     initSecureBlocktree, initializeSecureRoot, generateKeys, signAs,
 } = require('./utils');
@@ -85,7 +86,9 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 });
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidBlockError);
+                assert.strictEqual(err.layer, constants.layer.secureBlocktree);
+                assert.strictEqual(err.reason, InvalidBlockError.reasons.isNull);
             }
 
             // assert
@@ -106,7 +109,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 });
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidSignatureError);
             }
 
             // assert
@@ -128,7 +131,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 });
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidSignatureError);
             }
 
             // assert
@@ -161,7 +164,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 });
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidSignatureError);
             }
 
             // assert
@@ -198,7 +201,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 });
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidSignatureError);
             }
 
             // assert
@@ -261,7 +264,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 });
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidSignatureError);
             }
 
             // assert
@@ -293,7 +296,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 });
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidSignatureError);
             }
 
             // assert
@@ -315,7 +318,9 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 });
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidBlockError);
+                assert.strictEqual(err.layer, constants.layer.secureBlocktree);
+                assert.strictEqual(err.reason, InvalidBlockError.reasons.isNull);
             }
 
             // assert
@@ -337,7 +342,9 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 });
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidBlockError);
+                assert.strictEqual(err.layer, constants.layer.secureBlocktree);
+                assert.strictEqual(err.reason, InvalidBlockError.reasons.isNull);
             }
 
             // assert
@@ -398,7 +405,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 });
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidSignatureError);
             }
 
             // assert
@@ -430,7 +437,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 });
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidSignatureError);
             }
 
             // assert

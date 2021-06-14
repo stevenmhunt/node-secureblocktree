@@ -1,6 +1,10 @@
 /* eslint-disable no-plusplus, no-await-in-loop */
 const constants = require('../constants');
 const utils = require('../utils');
+const {
+    InvalidSignatureError, InvalidBlockError,
+    InvalidKeyError, InvalidRootError,
+} = require('../errors');
 
 /**
  * Blocktree Layer 3 - Secure Blocktree
@@ -396,13 +400,19 @@ module.exports = function secureBlocktreeLayerFactory({
 
         // keep trying until a key is found, or there aren't any left.
         const results = await Promise.all(
-            keyList.map(async (key) => verifySignedBlock({
-                key, sig: signature, parent, prev,
+            keyList.map(async (key) => ({
+                result: await verifySignedBlock({
+                    key, sig: signature, parent, prev,
+                }),
+                key,
+                sig: signature,
+                parent,
+                prev,
             })),
         );
-        const result = results.find((i) => i) !== undefined;
+        const result = results.find((i) => i.result) !== undefined;
         if (!result && noThrow !== true) {
-            throw new Error('Invalid signature.');
+            throw new InvalidSignatureError({ results });
         }
         return result ? signature : null;
     }
@@ -470,7 +480,7 @@ module.exports = function secureBlocktreeLayerFactory({
             ),
         );
         if (results.reduce((a, b) => a + b) < Object.keys(keys).length) {
-            throw new Error('Invalid keys detected.');
+            throw new InvalidKeyError();
         }
     }
 
@@ -487,7 +497,8 @@ module.exports = function secureBlocktreeLayerFactory({
             selected = await blocktree.getRootBlock(parent);
         }
         if (selected === null) {
-            throw new Error('Parent block cannot be null.');
+            throw new InvalidBlockError({ block: selected }, InvalidBlockError.reasons.isNull,
+                constants.layer.secureBlocktree);
         }
         // get the root block if we're adding to the current blockchain.
         const blockToValidate = prev ? await blocktree.getRootBlock(prev) : selected;
@@ -499,7 +510,12 @@ module.exports = function secureBlocktreeLayerFactory({
                 && validateData.parent === null) {
                 return selected;
             }
-            throw new Error(`Cannot create block type ${type} within block type ${validateData.type}.`);
+            throw new InvalidBlockError({
+                block: blockToValidate,
+                type,
+                parentType: validateData.type,
+            }, InvalidBlockError.reasons.invalidParentType,
+            constants.layer.secureBlocktree);
         }
         return selected;
     }
@@ -527,7 +543,7 @@ module.exports = function secureBlocktreeLayerFactory({
         if (sig === null && prev === null) {
             // there can only be one root key in the system.
             if (await blocktree.countBlocks() > 0) {
-                throw new Error('Cannot install a root if blocks are already present.');
+                throw new InvalidRootError();
             }
         } else {
             // validate the provided signature, the keys, and the parent value.
@@ -594,10 +610,11 @@ module.exports = function secureBlocktreeLayerFactory({
         sig, block, type, data,
     }) {
         if (!sig) {
-            throw new Error('A signature is required.');
+            throw new InvalidSignatureError({ results: [] });
         }
         if (!block) {
-            throw new Error('A valid block is required.');
+            throw new InvalidBlockError({ block }, InvalidBlockError.reasons.isNull,
+                constants.layer.secureBlocktree);
         }
         // always all child blocks to the root.
         const parent = await validateParentBlock({ parent: block, type });
@@ -689,7 +706,7 @@ module.exports = function secureBlocktreeLayerFactory({
     async function installRoot({ rootKeys, rootZoneKeys, signAsRoot }) {
         // there can only be one root key in the system.
         if (await blocktree.countBlocks() > 0) {
-            throw new Error('Cannot install a root if blocks are already present.');
+            throw new InvalidRootError();
         }
 
         // create the root block.
