@@ -299,6 +299,50 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
+        it('should not allow setting keys without a parent.', async () => {
+            // arrange
+            const secureBlocktree = initSecureBlocktree();
+            const { rootKeys } = await initializeSecureRoot(secureBlocktree);
+            const newKeys = generateKeys();
+
+            // act
+            let isExecuted = false;
+            try {
+                await secureBlocktree.setKeys({
+                    block: null,
+                    sig: signAs(secureBlocktree, rootKeys[constants.action.write][0]),
+                    keys: newKeys,
+                });
+                isExecuted = true;
+            } catch (err) {
+                // ignore error.
+            }
+
+            // assert
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+        it('should not allow setting keys onto the root block.', async () => {
+            // arrange
+            const secureBlocktree = initSecureBlocktree();
+            const { rootBlock, rootKeys } = await initializeSecureRoot(secureBlocktree);
+            const newKeys = generateKeys();
+
+            // act
+            let isExecuted = false;
+            try {
+                await secureBlocktree.setKeys({
+                    block: rootBlock,
+                    sig: signAs(secureBlocktree, rootKeys[constants.action.write][0]),
+                    keys: newKeys,
+                });
+                isExecuted = true;
+            } catch (err) {
+                // ignore error.
+            }
+
+            // assert
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
     });
     describe('revoke keys', () => {
         it('should allow revoke keys for a zone using the parent key.', async () => {
