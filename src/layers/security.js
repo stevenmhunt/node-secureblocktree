@@ -1,6 +1,6 @@
 /* eslint-disable no-plusplus, no-await-in-loop */
 const constants = require('../constants');
-const convert = require('../convert');
+const utils = require('../utils');
 
 /**
  * Blocktree Level 3 - Security
@@ -109,8 +109,8 @@ module.exports = function securityLayerFactory({
             const dataValue = data || Buffer.alloc(0);
             return Buffer.concat([
                 // start and expiration timestamps for keys
-                convert.fromInt64(tsInit),
-                convert.fromInt64(tsExp),
+                utils.fromInt64(tsInit),
+                utils.fromInt64(tsExp),
                 serializeKeys(keys),
                 // (optional) additional data
                 dataValue,
@@ -168,9 +168,9 @@ module.exports = function securityLayerFactory({
         let index = 0;
         const result = {};
         if (type === constants.blockType.keys) {
-            result.tsInit = convert.toInt64(data, index);
+            result.tsInit = utils.toInt64(data, index);
             index += constants.size.int64;
-            result.tsExp = convert.toInt64(data, index);
+            result.tsExp = utils.toInt64(data, index);
             index += constants.size.int64;
             const actionCount = data[index++];
             const keys = {};
@@ -273,8 +273,9 @@ module.exports = function securityLayerFactory({
         }
         const result = [];
         let current = await blocktree.getHeadBlock(block);
+        let secureBlock = null;
         while (current != null) {
-            const secureBlock = await readSecureBlock(current);
+            secureBlock = await readSecureBlock(current);
             if (secureBlock.type === constants.blockType.keys) {
                 const actionKeys = Object.keys(secureBlock.data.keys);
                 for (let i = 0; i < actionKeys.length; i += 1) {
@@ -300,7 +301,7 @@ module.exports = function securityLayerFactory({
             current = secureBlock.prev;
         }
         if (isRecursive === true) {
-            const parent = await blocktree.getParentBlock(block);
+            const { parent } = secureBlock;
             if (!parent) {
                 return result;
             }

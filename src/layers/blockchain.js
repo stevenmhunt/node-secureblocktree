@@ -1,11 +1,14 @@
 /* eslint-disable no-await-in-loop */
+const EventEmitter = require('events');
 const constants = require('../constants');
-const convert = require('../convert');
+const utils = require('../utils');
 
 /**
  * Blocktree Level 1 - Blockchain
  */
 module.exports = function blockchainLayerFactory({ system }) {
+    let emitter = null;
+
     /**
      * Given a blockchain object, converts it into a Buffer.
      * @param {Object} bcBlockData The blockchain object.
@@ -25,9 +28,9 @@ module.exports = function blockchainLayerFactory({ system }) {
             // previous hash
             prev,
             // uniqueness
-            convert.fromInt32(nonce),
+            utils.fromInt32(nonce),
             // timestamp
-            convert.fromInt64(timestamp),
+            utils.fromInt64(timestamp),
             // data
             bcBlockData.data,
         ]);
@@ -53,9 +56,9 @@ module.exports = function blockchainLayerFactory({ system }) {
         } else {
             result.prev = result.prev.toString(constants.format.hash);
         }
-        result.nonce = convert.toInt32(buf, index);
+        result.nonce = utils.toInt32(buf, index);
         index += constants.size.int32;
-        result.timestamp = convert.toInt64(buf, index);
+        result.timestamp = utils.toInt64(buf, index);
         index += constants.size.int64;
         result.data = buf.slice(index);
         result.hash = system.generateHash(buf);
@@ -68,7 +71,7 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promise<Object>} The requested blockchain data.
      */
     async function readBlock(block) {
-        return deserializeBlockchainData(await system.readStorage(block));
+        return utils.withEvent(emitter, 'read-block', { block }, async () => deserializeBlockchainData(await system.readStorage(block)));
     }
 
     /**
@@ -133,18 +136,20 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promise<string>} The hash of the newly written block.
      */
     async function writeBlock(bcBlockData, options = {}) {
-        if (options.validate !== false && bcBlockData.prev !== null) {
-            const prev = await readBlock(bcBlockData.prev);
-            if (!prev) {
-                throw new Error(`Invalid block ${bcBlockData.prev}`);
+        return utils.withEvent(emitter, 'write-block', { bcBlockData, options }, async () => {
+            if (options.validate !== false && bcBlockData.prev !== null) {
+                const prev = await readBlock(bcBlockData.prev);
+                if (!prev) {
+                    throw new Error(`Invalid block ${bcBlockData.prev}`);
+                }
             }
-        }
-        const block = await system.writeStorage(serializeBlockchainData(bcBlockData));
-        if (options.cacheRoot !== false) {
-            const root = await cacheRootBlock(block, bcBlockData);
-            await system.writeCache(root, constants.cache.headBlock, block);
-        }
-        return block;
+            const block = await system.writeStorage(serializeBlockchainData(bcBlockData));
+            if (options.cacheRoot !== false) {
+                const root = await cacheRootBlock(block, bcBlockData);
+                await system.writeCache(root, constants.cache.headBlock, block);
+            }
+            return block;
+        });
     }
 
     /**
@@ -244,6 +249,15 @@ module.exports = function blockchainLayerFactory({ system }) {
         return { isValid: true, blockCount };
     }
 
+    async function startEventCapture() {
+        emitter = new EventEmitter();
+    }
+
+    async function stopEventCapture() {
+        emitter.removeAllListeners();
+        emitter = null;
+    }
+
     /**
      * Handles CLI requests.
      * @param {object} env The CLI environment context.
@@ -282,6 +296,21 @@ module.exports = function blockchainLayerFactory({ system }) {
             (await listBlocks()).map((i) => console.log(i));
             return true;
         }
+        case 'start-blockchain-event-capture': {
+            await startEventCapture();
+            emitter.on('read-block', ({ parameters: paramData, result }) => {
+                console.log("Captured event 'read-block'", 'parameters:', paramData, 'result:', result);
+                console.log('----------------------------------------');
+            });
+            emitter.on('write-block', ({ parameters: paramData, result }) => {
+                console.log("Captured event 'write-block'", 'parameters:', paramData, 'result:', result);
+                console.log('----------------------------------------');
+            });
+            return true;
+        }
+        case 'stop-blockchain-event-capture':
+            await stopEventCapture();
+            return true;
         default:
             return false;
         }

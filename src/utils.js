@@ -26,9 +26,29 @@ function fromInt32(val) {
     return buf;
 }
 
+async function withEvent(emitter, event, parameters, fn) {
+    if (!emitter) {
+        return fn();
+    }
+    try {
+        const result = await fn();
+        emitter.emit(event, {
+            parameters,
+            result,
+        });
+        return result;
+    } catch (err) {
+        emitter.emit('error', {
+            event, parameters, err,
+        });
+        throw err;
+    }
+}
+
 module.exports = {
     fromInt64,
     toInt64,
     fromInt32,
     toInt32,
+    withEvent,
 };
