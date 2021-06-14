@@ -4,7 +4,7 @@ const constants = require('../../src/constants');
 module.exports = function osFactory() {
     /**
      * Generates hashes for block data.
-     * @param {string} value 
+     * @param {string} value
      */
     function generateHash(value) {
         return crypto.createHash(constants.block.hash).update(value).digest(constants.format.hash);
@@ -31,6 +31,6 @@ module.exports = function osFactory() {
     return {
         generateHash,
         generateTimestamp,
-        generateNonce
+        generateNonce,
     };
 };

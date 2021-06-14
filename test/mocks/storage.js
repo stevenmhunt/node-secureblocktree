@@ -1,4 +1,3 @@
-
 module.exports = function storageFactory() {
     const data = {};
 
@@ -22,7 +21,7 @@ module.exports = function storageFactory() {
     }
 
     async function readKeys() {
-        return Object.keys(data).map(i => i);
+        return Object.keys(data).map((i) => i);
     }
 
     /**
@@ -48,6 +47,6 @@ module.exports = function storageFactory() {
         writeStorage,
         readKeys,
         mapInStorage,
-        findInStorage
+        findInStorage,
     };
 };

@@ -1,10 +1,11 @@
+/* eslint-disable no-await-in-loop */
 const assert = require('assert');
 const constants = require('../src/constants');
 const { initSecurity, initializeSecureRoot } = require('./utils');
 
-describe('blocktree API layer 3 - [security]', function () {
-    describe('read secure block', function () {
-        it('should return null if no value is found.', async function () {
+describe('blocktree API layer 3 - [security]', () => {
+    describe('read secure block', () => {
+        it('should return null if no value is found.', async () => {
             // arrange
             const security = initSecurity();
             await initializeSecureRoot(security);
@@ -15,7 +16,7 @@ describe('blocktree API layer 3 - [security]', function () {
             // assert
             assert.strictEqual(null, result);
         });
-        it('should retrieve block data if found from the root block.', async function () {
+        it('should retrieve block data if found from the root block.', async () => {
             // arrange
             const security = initSecurity();
             const { rootBlock } = await initializeSecureRoot(security);
@@ -30,7 +31,7 @@ describe('blocktree API layer 3 - [security]', function () {
             assert.strictEqual(result.type, constants.blockType.keys);
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });
-        it('should retrieve block data if found from the root zone.', async function () {
+        it('should retrieve block data if found from the root zone.', async () => {
             // arrange
             const security = initSecurity();
             const { rootBlock, rootZone } = await initializeSecureRoot(security);

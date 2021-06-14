@@ -2,7 +2,6 @@
  * Blocktree Level 0 - System
  */
 module.exports = function systemLayerFactory({ cache, storage, os }) {
-
     /**
      * Generates hashes for block data.
      * @param {string} value
@@ -54,7 +53,7 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
     async function readKeys(partial = null) {
         const result = await storage.readKeys();
         if (partial) {
-            return result.filter(i => i.startsWith(partial));
+            return result.filter((i) => i.startsWith(partial));
         }
         return result;
     }
@@ -79,7 +78,8 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
 
     /**
      * Reads data from the system cache.
-     * @param {string} scope The scope (usually a block or blockchain hash) where the value can be found.
+     * @param {string} scope The scope (usually a block or blockchain hash)
+     * where the value can be found.
      * @param {string} name The name of the value to locate.
      * @returns {Promise<string>} The located cache value, or null.
      */
@@ -89,7 +89,8 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
 
     /**
      * Writes data to the system cache.
-     * @param {string} scope The scope (usually a block or blockchain hash) where the value can be found.
+     * @param {string} scope The scope (usually a block or blockchain hash)
+     * where the value can be found.
      * @param {string} name The name of the value to locate.
      * @param {string} value The value to write to the cache.
      */
@@ -106,11 +107,12 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
      */
     async function handleCommand(env, command, parameters) {
         switch (command) {
-            case 'generate-hash':
-                console.log(generateHash(parameters[0]));
-                return true;
+        case 'generate-hash':
+            console.log(generateHash(parameters[0]));
+            return true;
+        default:
+            return false;
         }
-        return false;
     }
 
     return {
@@ -124,6 +126,6 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
         generateHash,
         generateTimestamp,
         generateNonce,
-        handleCommand
+        handleCommand,
     };
 };

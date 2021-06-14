@@ -1,11 +1,10 @@
+/* eslint-disable no-await-in-loop */
 const constants = require('../constants');
-const convert = require('../convert');
 
 /**
  * Blocktree Level 2 - Blocktree
  */
 module.exports = function blocktreeLayerFactory({ blockchain }) {
-
     /**
      * Given a blocktree object, converts it into a blockchain object.
      * @param {Object} btBlockData The blocktree object.
@@ -24,7 +23,7 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
             // parent hash
             parent,
             // data
-            btBlockData.data
+            btBlockData.data,
         ]);
         return { prev, data };
     }
@@ -38,16 +37,19 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         if (!bcBlockData) {
             return null;
         }
-        const { timestamp, prev, nonce, hash, data } = bcBlockData;
+        const {
+            timestamp, prev, nonce, hash, data,
+        } = bcBlockData;
         let index = 0;
-        const result = { timestamp, prev, nonce, hash };
+        const result = {
+            timestamp, prev, nonce, hash,
+        };
         result.parent = data.slice(index, index + constants.size.hash);
         index += constants.size.hash;
         // handle the case where parent is null.
         if (Buffer.compare(result.parent, Buffer.alloc(constants.size.hash)) === 0) {
             result.parent = null;
-        }
-        else {
+        } else {
             result.parent = result.parent.toString(constants.format.hash);
         }
         result.data = data.slice(index);
@@ -87,7 +89,7 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
      * @returns {Promise<Object>} The matching block, or null.
      */
     async function findInBlocks(fn) {
-        const result = await blockchain.findInBlocks(data => fn(deserializeBlocktreeData(data)));
+        const result = await blockchain.findInBlocks((data) => fn(deserializeBlocktreeData(data)));
         if (result) {
             return deserializeBlocktreeData(result);
         }
@@ -100,7 +102,7 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
      * @returns {Promise<Array>} The result of the map() call.
      */
     async function mapInBlocks(fn) {
-        return await blockchain.mapInBlocks(data => fn(deserializeBlocktreeData(data)));
+        return blockchain.mapInBlocks((data) => fn(deserializeBlocktreeData(data)));
     }
 
     /**
@@ -146,7 +148,7 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
 
     /**
      * Given a block, validates all previous blocks in the blocktree.
-     * @param {string} block 
+     * @param {string} block
      * @returns {Promise<Object>} A validation report.
      */
     async function validateBlocktree(block) {
@@ -164,10 +166,10 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
                     isValid: false,
                     reason: constants.validation.missingParentBlock,
                     block: next,
-                    blockCount
+                    blockCount,
                 };
             }
-            next = (nextBlock || {}).parent
+            next = (nextBlock || {}).parent;
             if (next) {
                 blockCount += 1;
             }
@@ -185,14 +187,15 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
      */
     async function handleCommand(env, command, parameters) {
         switch (command) {
-            case 'read-tree-block': {
-                await env.resolveBlock(parameters[0], listBlocks, async function (block) {
-                    console.log(await readBlock(block));
-                });
-                return true;
-            }
+        case 'read-tree-block': {
+            await env.resolveBlock(parameters[0], listBlocks, async (block) => {
+                console.log(await readBlock(block));
+            });
+            return true;
         }
-        return false;
+        default:
+            return false;
+        }
     }
 
     return {
@@ -208,6 +211,6 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         validateBlocktree,
         serializeBlocktreeData,
         deserializeBlocktreeData,
-        handleCommand
+        handleCommand,
     };
 };

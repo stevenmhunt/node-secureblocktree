@@ -42,7 +42,9 @@ function initSecurity() {
     const secureCache = cacheFactory();
     const os = osFactory();
     const certificates = certificatesFactory();
-    const security = securityLayerFactory({ blocktree, secureCache, os, certificates });
+    const security = securityLayerFactory({
+        blocktree, secureCache, os, certificates,
+    });
     return security;
 }
 
@@ -50,8 +52,8 @@ async function initializeSecureRoot(security) {
     const rootWriteKey = 'bbbb';
     const rootKeys = { [constants.action.read]: ['aaaa'], [constants.action.write]: ['bbbb'] };
     const rootZoneKeys = { [constants.action.read]: ['cccc'], [constants.action.write]: ['dddd'] };
-    const signAsRoot = block => security.signBlock(rootWriteKey, block);
-    const result = await security.installRoot({ rootKeys, rootZoneKeys, signAsRoot })
+    const signAsRoot = (block) => security.signBlock(rootWriteKey, block);
+    const result = await security.installRoot({ rootKeys, rootZoneKeys, signAsRoot });
     return result;
 }
 
@@ -60,5 +62,5 @@ module.exports = {
     initBlockchain,
     initBlocktree,
     initSecurity,
-    initializeSecureRoot
+    initializeSecureRoot,
 };

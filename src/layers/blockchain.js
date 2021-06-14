@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 const constants = require('../constants');
 const convert = require('../convert');
 
@@ -5,7 +6,6 @@ const convert = require('../convert');
  * Blocktree Level 1 - Blockchain
  */
 module.exports = function blockchainLayerFactory({ system }) {
-
     /**
      * Given a blockchain object, converts it into a Buffer.
      * @param {Object} bcBlockData The blockchain object.
@@ -29,7 +29,7 @@ module.exports = function blockchainLayerFactory({ system }) {
             // timestamp
             convert.fromInt64(timestamp),
             // data
-            bcBlockData.data
+            bcBlockData.data,
         ]);
         return buf;
     }
@@ -50,8 +50,7 @@ module.exports = function blockchainLayerFactory({ system }) {
         // handle the case where prev is null.
         if (Buffer.compare(result.prev, Buffer.alloc(constants.size.hash)) === 0) {
             result.prev = null;
-        }
-        else {
+        } else {
             result.prev = result.prev.toString(constants.format.hash);
         }
         result.nonce = convert.toInt32(buf, index);
@@ -82,6 +81,26 @@ module.exports = function blockchainLayerFactory({ system }) {
     }
 
     /**
+     * Given a block, locates the root block of the blockchain.
+     * @param {string} block The block to start from.
+     * @returns {Promise<string>} The root block of the blockchain.
+     */
+    async function getRootBlock(block) {
+        let result = block;
+        let next = block;
+        do {
+            const nextBlock = await readBlock(next);
+            next = (nextBlock || {}).prev;
+            result = next || result;
+            if (!nextBlock) {
+                result = null;
+            }
+        }
+        while (next != null);
+        return result;
+    }
+
+    /**
      * @private
      * Handles caching of the root block.
      * @param {string} block The block to update caches for.
@@ -94,20 +113,18 @@ module.exports = function blockchainLayerFactory({ system }) {
             await system.writeCache(block, constants.cache.rootBlock, block);
             return block;
         }
-        else {
-            // check if the previous node in the blockchain knows who the root is.
-            const cached = await system.readCache(bcBlockData.prev, constants.cache.rootBlock);
-            if (cached) {
-                await system.writeCache(block, constants.cache.rootBlock, cached);
-                return cached;
-            }
-            else {
-                // otherwise, walk across the blocks to the beginning of the blockchain.
-                const root = await getRootBlock(block);
-                await system.writeCache(block, constants.cache.rootBlock, root);
-                return root;
-            }
+
+        // check if the previous node in the blockchain knows who the root is.
+        const cached = await system.readCache(bcBlockData.prev, constants.cache.rootBlock);
+        if (cached) {
+            await system.writeCache(block, constants.cache.rootBlock, cached);
+            return cached;
         }
+
+        // otherwise, walk across the blocks to the beginning of the blockchain.
+        const root = await getRootBlock(block);
+        await system.writeCache(block, constants.cache.rootBlock, root);
+        return root;
     }
 
     /**
@@ -136,7 +153,7 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promise<Object>} The matching block, or null.
      */
     async function findInBlocks(fn) {
-        const result = await system.findInStorage(data => fn(deserializeBlockchainData(data)));
+        const result = await system.findInStorage((data) => fn(deserializeBlockchainData(data)));
         if (result) {
             return deserializeBlockchainData(result);
         }
@@ -149,7 +166,7 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promise<Array>} The result of the map() call.
      */
     async function mapInBlocks(fn) {
-        return await system.mapInStorage(data => fn(deserializeBlockchainData(data)));
+        return system.mapInStorage((data) => fn(deserializeBlockchainData(data)));
     }
 
     /**
@@ -162,33 +179,15 @@ module.exports = function blockchainLayerFactory({ system }) {
         if (cached) {
             return cached;
         }
-        const value = await system.findInStorage(buf => deserializeBlockchainData(buf).prev === block);
+        const value = await system.findInStorage(
+            (buf) => deserializeBlockchainData(buf).prev === block,
+        );
         if (value) {
             const result = system.generateHash(value);
             await system.writeCache(block, constants.cache.next, result);
             return result;
         }
         return null;
-    }
-
-    /**
-     * Given a block, locates the root block of the blockchain.
-     * @param {string} block The block to start from.
-     * @returns {Promise<string>} The root block of the blockchain.
-     */
-    async function getRootBlock(block) {
-        let result = block;
-        let next = block;
-        do {
-            const nextBlock = await readBlock(next);
-            next = (nextBlock || {}).prev
-            result = next || result
-            if (!nextBlock) {
-                result = null;
-            }
-        }
-        while (next != null);
-        return result;
     }
 
     /**
@@ -206,11 +205,11 @@ module.exports = function blockchainLayerFactory({ system }) {
             return cached;
         }
         let result = bc;
-        let next = null
+        let next = null;
         let count = 0;
         do {
             next = await getNextBlock(result);
-            result = next || result
+            result = next || result;
             count += 1;
         }
         while (next != null);
@@ -223,7 +222,7 @@ module.exports = function blockchainLayerFactory({ system }) {
 
     /**
      * Given a block, validates all previous blocks in the blockchain.
-     * @param {string} block 
+     * @param {string} block
      */
     async function validateBlockchain(block) {
         let next = block;
@@ -235,11 +234,11 @@ module.exports = function blockchainLayerFactory({ system }) {
                     isValid: false,
                     reason: constants.validation.missingBlock,
                     block: next,
-                    blockCount
+                    blockCount,
                 };
             }
             blockCount += 1;
-            next = (nextBlock || {}).prev
+            next = (nextBlock || {}).prev;
         }
         while (next != null);
         return { isValid: true, blockCount };
@@ -254,37 +253,38 @@ module.exports = function blockchainLayerFactory({ system }) {
      */
     async function handleCommand(env, command, parameters) {
         switch (command) {
-            case 'read-block':
-                {
-                    await env.resolveBlock(parameters[0], listBlocks, async function (block) {
-                        console.log(await readBlock(block));
-                    });
-                    return true;
-                }
-            case 'get-head-block': {
-                await env.resolveBlock(parameters[0], listBlocks, async function (block) {
-                    console.log(await getHeadBlock(block));
-                });
-                return true;
-            }
-            case 'get-root-block': {
-                await env.resolveBlock(parameters[0], listBlocks, async function (block) {
-                    console.log(await getRootBlock(block));
-                });
-                return true;
-            }
-            case 'get-next-block': {
-                await env.resolveBlock(parameters[0], listBlocks, async function (block) {
-                    console.log(await getNextBlock(block));
-                });
-                return true;
-            }
-            case 'list-blocks': {
-                (await listBlocks()).map(i => console.log(i));
-                return true;
-            }
+        case 'read-block':
+        {
+            await env.resolveBlock(parameters[0], listBlocks, async (block) => {
+                console.log(await readBlock(block));
+            });
+            return true;
         }
-        return false;
+        case 'get-head-block': {
+            await env.resolveBlock(parameters[0], listBlocks, async (block) => {
+                console.log(await getHeadBlock(block));
+            });
+            return true;
+        }
+        case 'get-root-block': {
+            await env.resolveBlock(parameters[0], listBlocks, async (block) => {
+                console.log(await getRootBlock(block));
+            });
+            return true;
+        }
+        case 'get-next-block': {
+            await env.resolveBlock(parameters[0], listBlocks, async (block) => {
+                console.log(await getNextBlock(block));
+            });
+            return true;
+        }
+        case 'list-blocks': {
+            (await listBlocks()).map((i) => console.log(i));
+            return true;
+        }
+        default:
+            return false;
+        }
     }
 
     return {
@@ -299,6 +299,6 @@ module.exports = function blockchainLayerFactory({ system }) {
         validateBlockchain,
         serializeBlockchainData,
         deserializeBlockchainData,
-        handleCommand
+        handleCommand,
     };
 };

@@ -12,7 +12,7 @@ const certificatesFactory = require('./test/mocks/certificates');
 const osFactory = require('./test/mocks/os');
 const storageFactory = require('./test/mocks/storage');
 
-if (require.main === module) {    
+if (require.main === module) {
     const cache = cacheFactory();
     const os = osFactory();
     const storage = storageFactory();
@@ -21,8 +21,12 @@ if (require.main === module) {
     const blocktree = blocktreeLayerFactory({ blockchain });
     const secureCache = cacheFactory();
     const certificates = certificatesFactory();
-    const security = securityLayerFactory({ blocktree, secureCache, os, certificates });
-    
-    cliFactory({ system, blockchain, blocktree, security })
+    const security = securityLayerFactory({
+        blocktree, secureCache, os, certificates,
+    });
+
+    cliFactory({
+        system, blockchain, blocktree, security,
+    })
         .then(() => process.exit(0));
 }

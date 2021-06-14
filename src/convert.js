@@ -7,8 +7,8 @@ function toInt64(buf, index) {
 function fromInt64(val) {
     if (Buffer.isBuffer(val)) {
         return val;
-    }    
-    let buf = Buffer.allocUnsafe(constants.size.int64);
+    }
+    const buf = Buffer.allocUnsafe(constants.size.int64);
     buf.writeBigUInt64BE(val);
     return buf;
 }
@@ -21,7 +21,7 @@ function fromInt32(val) {
     if (Buffer.isBuffer(val) && Buffer.byteLength(val) === constants.size.int32) {
         return val;
     }
-    let buf = Buffer.allocUnsafe(constants.size.int32);
+    const buf = Buffer.allocUnsafe(constants.size.int32);
     buf.writeUInt32BE(val);
     return buf;
 }
@@ -30,5 +30,5 @@ module.exports = {
     fromInt64,
     toInt64,
     fromInt32,
-    toInt32
+    toInt32,
 };
