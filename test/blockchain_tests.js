@@ -88,7 +88,7 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             assert.ok(result.hash !== 'ff', 'Expected prev pointer to be null.');
             assert.ok(result.nonce !== 0, 'Expected valid nonce value.');
         });
-        it('should support large numbers of blocks in a chain.', async () => {
+        it('should support 100 blocks in a chain.', async () => {
             // arrange
             const blockchain = initBlockchain();
             const data = Buffer.from("I'm a string!", 'utf-8');

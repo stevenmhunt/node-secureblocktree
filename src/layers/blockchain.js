@@ -122,6 +122,9 @@ module.exports = function blockchainLayerFactory({ system }) {
         // 1) try to locate the value in cache.
         const cached = await system.readCache(block, constants.cache.next);
         if (cached) {
+            if (cached === 'null') {
+                return null;
+            }
             return cached;
         }
 
@@ -209,6 +212,7 @@ module.exports = function blockchainLayerFactory({ system }) {
             if (options.cacheNext !== false && bcBlockData.prev) {
                 await system.writeCache(bcBlockData.prev, constants.cache.next, block);
             }
+            await system.writeCache(block, constants.cache.next, 'null');
             return block;
         });
     }
