@@ -6,7 +6,7 @@ const { initBlocktree, getRandomHash } = require('./utils');
 
 describe('Blocktree Layer 2 - Blocktree', () => {
     describe('read block', () => {
-        it('should return null if no value is found.', async () => {
+        it('should return null if no value is found', async () => {
             // arrange
             const blocktree = initBlocktree();
 
@@ -16,7 +16,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             // assert
             assert.strictEqual(null, result);
         });
-        it('should return null if no value is found.', async () => {
+        it('should return null if no value is found', async () => {
             // arrange
             const blocktree = initBlocktree();
 
@@ -26,7 +26,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             // assert
             assert.strictEqual(null, result);
         });
-        it('should return null if no value is found.', async () => {
+        it('should return null if no value is found', async () => {
             // arrange
             const blocktree = initBlocktree();
 
@@ -36,7 +36,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             // assert
             assert.strictEqual(null, result);
         });
-        it('should retrieve block data if found from a root.', async () => {
+        it('should retrieve block data if found from a root', async () => {
             // arrange
             const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", 'utf-8');
@@ -51,7 +51,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             assert.strictEqual(result.prev, null);
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });
-        it('should retrieve block data if found from a block in a chain.', async () => {
+        it('should retrieve block data if found from a block in a chain', async () => {
             // arrange
             const blocktree = initBlocktree();
             const data1 = Buffer.from("I'm a string!", 'utf-8');
@@ -70,7 +70,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
         });
     });
     describe('write block', () => {
-        it('should ignore user-provided values other than prev and data.', async () => {
+        it('should ignore user-provided values other than prev and data', async () => {
             // arrange
             const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", 'utf-8');
@@ -88,7 +88,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             assert.ok(result.hash !== 'ff', 'Expected prev pointer to be null.');
             assert.ok(result.nonce !== 0, 'Expected valid nonce value.');
         });
-        it('should support 100 blocks in a chain.', async () => {
+        it('should support 100 blocks in a chain', async () => {
             // arrange
             const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", 'utf-8');
@@ -110,7 +110,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             assert.ok(result.nonce, 'Expected valid nonce value.');
             assert.ok(prev.nonce, 'Expected valid nonce value.');
         });
-        it('should throw an exception if writing to an invalid blocktree.', async () => {
+        it('should throw an exception if writing to an invalid blocktree', async () => {
             // arrange
             const blocktree = initBlocktree();
             const options = { validate: true };
@@ -131,7 +131,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should throw an exception if writing to a blockchain with a newer timestamp.', async () => {
+        it('should throw an exception if writing to a blockchain with a newer timestamp', async () => {
             // arrange
             const blocktree = initBlocktree();
             const options = { validate: true };
@@ -154,7 +154,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should throw an exception if writing to a blockchain with anaother block present.', async () => {
+        it('should throw an exception if writing to a blockchain with another block present', async () => {
             // arrange
             const blocktree = initBlocktree();
             const options = { validate: true };
@@ -178,120 +178,35 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
     });
-    describe('get next block', () => {
-        it('should scan the blocks to find the next one in the chain.', async () => {
+    describe('get parent block', () => {
+        it('should return null if no parent block found.', async () => {
             // arrange
             const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", 'utf-8');
-            let block = null;
-            for (let i = 0; i < 100; i += 1) {
-                block = await blocktree.writeBlock({ prev: block, data });
-            }
-            const result = await blocktree.readBlock(block);
-            const prev = await blocktree.readBlock(result.prev);
+            const block = await blocktree.writeBlock({ prev: null, parent: null, data });
 
             // act
-            const next = await blocktree.getNextBlock(result.prev);
+            const result = await blocktree.getParentBlock(block);
 
             // assert
-            assert.strictEqual(next, block);
-            assert.ok(Buffer.compare(data, result.data) === 0, 'Expected data to match.');
-            assert.ok(Buffer.compare(data, prev.data) === 0, 'Expected data to match.');
-            assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
-            assert.ok(prev.timestamp > 0, 'Expected timestamp to be valid.');
-            assert.strictEqual(result.prev, prev.hash);
-            assert.ok(result.nonce, 'Expected valid nonce value.');
-            assert.ok(prev.nonce, 'Expected valid nonce value.');
+            assert.strictEqual(result, null);
         });
-        it('should return null if there are no more blocks in the chain.', async () => {
+        it('should return the parent block if found.', async () => {
             // arrange
             const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", 'utf-8');
-            const block = await blocktree.writeBlock({
-                prev: null, data, timestamp: 0, nonce: 0, hash: 'ff',
-            });
-            const result = await blocktree.readBlock(block);
+            const parent = await blocktree.writeBlock({ prev: null, parent: null, data });
+            const block = await blocktree.writeBlock({ prev: null, parent, data });
 
             // act
-            const next = await blocktree.getNextBlock(block);
+            const result = await blocktree.getParentBlock(block);
 
             // assert
-            assert.strictEqual(next, null);
-            assert.ok(Buffer.compare(data, result.data) === 0, 'Expected data to match.');
-            assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
-            assert.ok(result.nonce, 'Expected valid nonce value.');
-        });
-    });
-    describe('get head block', () => {
-        it('should scan the blocks to find the last one in the chain.', async () => {
-            // arrange
-            const blocktree = initBlocktree();
-            const data = Buffer.from("I'm a string!", 'utf-8');
-            let block = null; let
-                first = null;
-            for (let i = 0; i < 100; i += 1) {
-                block = await blocktree.writeBlock({ prev: block, data });
-                if (i === 0) {
-                    first = block;
-                }
-            }
-            const result = await blocktree.readBlock(block);
-
-            // act
-            const head = await blocktree.getHeadBlock(first);
-            const headBlock = await blocktree.readBlock(head);
-
-            // assert
-            assert.ok(head !== null);
-            assert.strictEqual(headBlock.prev, result.prev);
-            assert.strictEqual(headBlock.timestamp, result.timestamp);
-            assert.strictEqual(headBlock.nonce, result.nonce);
-            assert.ok(Buffer.compare(data, result.data) === 0, 'Expected data to match.');
-        });
-        it('should return null if there is not a valid block.', async () => {
-            // arrange
-            const blocktree = initBlocktree();
-            const head = await blocktree.getHeadBlock(constants.block.zero);
-
-            // assert
-            assert.strictEqual(head, null);
-        });
-    });
-    describe('get root block', () => {
-        it('should walk across the blocks to find the first one in the chain.', async () => {
-            // arrange
-            const blocktree = initBlocktree();
-            const data = Buffer.from("I'm a string!", 'utf-8');
-            let block = null; let
-                first = null;
-            for (let i = 0; i < 100; i += 1) {
-                block = await blocktree.writeBlock({ prev: block, data });
-                if (i === 0) {
-                    first = block;
-                }
-            }
-
-            // act
-            const root = await blocktree.getRootBlock(block);
-            const rootBlock = await blocktree.readBlock(root);
-
-            // assert
-            assert.ok(root !== null);
-            assert.strictEqual(root, first);
-            assert.ok(rootBlock !== null);
-            assert.strictEqual(rootBlock.prev, null);
-        });
-        it('should return null if there is not a valid block.', async () => {
-            // act
-            const blocktree = initBlocktree();
-            const root = await blocktree.getRootBlock(0);
-
-            // assert
-            assert.strictEqual(root, null);
+            assert.strictEqual(result, parent);
         });
     });
     describe('validate blocktree', () => {
-        it('should report that a valid blocktree is valid.', async () => {
+        it('should report that a valid blocktree is valid', async () => {
             // arrange
             const blocktree = initBlocktree();
             const data1 = Buffer.from("I'm a string!", 'utf-8');
@@ -308,7 +223,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             assert.strictEqual(result.reason, undefined);
             assert.strictEqual(result.block, undefined);
         });
-        it('should report that an invalid blocktree is invalid.', async () => {
+        it('should report that an invalid blocktree is invalid', async () => {
             // arrange
             const blocktree = initBlocktree();
             const options = { validate: false };

@@ -8,7 +8,7 @@ const {
 
 describe('Blocktree Layer 3 - Secure Blocktree', () => {
     describe('read secure block', () => {
-        it('should return null if no value is found.', async () => {
+        it('should return null if no value is found', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             await initializeSecureRoot(secureBlocktree);
@@ -19,7 +19,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             // assert
             assert.strictEqual(null, result);
         });
-        it('should retrieve block data if found from the root block.', async () => {
+        it('should retrieve block data if found from the root block', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootBlock } = await initializeSecureRoot(secureBlocktree);
@@ -34,7 +34,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(result.type, constants.blockType.keys);
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });
-        it('should retrieve block data if found from the root zone.', async () => {
+        it('should retrieve block data if found from the root zone', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootBlock, rootZone } = await initializeSecureRoot(secureBlocktree);
@@ -51,7 +51,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
         });
     });
     describe('create zone', () => {
-        it('should support new zones within the root zone.', async () => {
+        it('should support new zones within the root zone', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootZone, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
@@ -71,7 +71,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(result.type, constants.blockType.zone);
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });
-        it('should not create a zone without a parent.', async () => {
+        it('should not create a zone without a parent', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
@@ -94,7 +94,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should not create a zone adjacent to the root zone.', async () => {
+        it('should not create a zone adjacent to the root zone', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootBlock, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
@@ -115,7 +115,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should not create a zone without a known signature.', async () => {
+        it('should not create a zone without a known signature', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootZone } = await initializeSecureRoot(secureBlocktree);
@@ -137,7 +137,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should not create a zone with an unassigned key.', async () => {
+        it('should not create a zone with an unassigned key', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootZone, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
@@ -170,7 +170,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should not create a zone with a revoked key.', async () => {
+        it('should not create a zone with a revoked key', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootZone, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
@@ -209,7 +209,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
         });
     });
     describe('set keys', () => {
-        it('should allow setting keys for a zone using the parent key.', async () => {
+        it('should allow setting keys for a zone using the parent key', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootZone, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
@@ -237,7 +237,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             // assert
             assert.ok(result !== null, 'Expected a valid block to be returned.');
         });
-        it('should not allow setting keys without a known signature.', async () => {
+        it('should not allow setting keys without a known signature', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootZone, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
@@ -270,7 +270,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should not allow setting keys with the blockchain\'s own key.', async () => {
+        it('should not allow setting keys with the blockchain\'s own key', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootZone, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
@@ -302,7 +302,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should not allow setting keys without a parent.', async () => {
+        it('should not allow setting keys without a parent', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootKeys } = await initializeSecureRoot(secureBlocktree);
@@ -326,7 +326,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should not allow setting keys onto the root block.', async () => {
+        it('should not allow setting keys onto the root block', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootBlock, rootKeys } = await initializeSecureRoot(secureBlocktree);
@@ -352,7 +352,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
         });
     });
     describe('revoke keys', () => {
-        it('should allow revoke keys for a zone using the parent key.', async () => {
+        it('should allow revoke keys for a zone using the parent key', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootZone, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
@@ -378,7 +378,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             // assert
             assert.ok(result !== null, 'Expected a valid block to be returned.');
         });
-        it('should not allow revoking keys without a known signature.', async () => {
+        it('should not allow revoking keys without a known signature', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootZone, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
@@ -411,7 +411,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should not allow revoking keys with the blockchain\'s own key.', async () => {
+        it('should not allow revoking keys with the blockchain\'s own key', async () => {
             // arrange
             const secureBlocktree = initSecureBlocktree();
             const { rootZone, rootZoneKeys } = await initializeSecureRoot(secureBlocktree);
