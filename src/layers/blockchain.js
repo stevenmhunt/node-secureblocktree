@@ -8,9 +8,14 @@ const utils = require('../utils');
  * Blocktree Layer 1 - Blockchain
  */
 module.exports = function blockchainLayerFactory({ system }) {
+    /**
+     * @private
+     * Event capture object.
+     */
     let emitter = null;
 
     /**
+     * @private
      * Given a blockchain object, converts it into a Buffer.
      * @param {Object} bcBlockData The blockchain object.
      * @returns {Buffer} The binary representation of the block.
@@ -40,6 +45,7 @@ module.exports = function blockchainLayerFactory({ system }) {
     }
 
     /**
+     * @private
      * Given a buffer, deserializes it into a blockchain object.
      * @param {Buffer} buf The buffer to deserialize.
      * @returns {Object} A blockchain object.
@@ -73,7 +79,9 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promise<Object>} The requested blockchain data.
      */
     async function readBlock(block) {
-        return utils.withEvent(emitter, 'read-block', { block }, async () => deserializeBlockchainData(await system.readStorage(block)));
+        return utils.withEvent(emitter, 'read-block', {
+            block,
+        }, async () => deserializeBlockchainData(await system.readStorage(block)));
     }
 
     /**
@@ -111,14 +119,18 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promise<string>} The hash of the next block, or null.
      */
     async function getNextBlock(block) {
+        // 1) try to locate the value in cache.
         const cached = await system.readCache(block, constants.cache.next);
         if (cached) {
             return cached;
         }
 
+        // 2) otherwise, walk through all the blocks to find the next one.
         const value = await system.findInStorage(
             (buf) => deserializeBlockchainData(buf).prev === block,
         );
+
+        // 3) if found, cache it for next time.
         if (value) {
             const result = system.generateHash(value);
             await system.writeCache(block, constants.cache.next, result);
@@ -135,20 +147,20 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promis<string>} The root block of the blockchain.
      */
     async function cacheRootBlock(block, bcBlockData) {
+        // 1) if this block IS the root node, then cache itself.
         if (!bcBlockData.prev) {
-            // if this block IS the root node, then cache itself.
             await system.writeCache(block, constants.cache.rootBlock, block);
             return block;
         }
 
-        // check if the previous node in the blockchain knows who the root is.
+        // 2) check if the previous node in the blockchain knows who the root is.
         const cached = await system.readCache(bcBlockData.prev, constants.cache.rootBlock);
         if (cached) {
             await system.writeCache(block, constants.cache.rootBlock, cached);
             return cached;
         }
 
-        // otherwise, walk across the blocks to the beginning of the blockchain.
+        // 3) otherwise, walk across the blocks to the beginning of the blockchain.
         const root = await getRootBlock(block);
         await system.writeCache(block, constants.cache.rootBlock, root);
         return root;
@@ -380,8 +392,6 @@ module.exports = function blockchainLayerFactory({ system }) {
         getRootBlock,
         getNextBlock,
         validateBlockchain,
-        serializeBlockchainData,
-        deserializeBlockchainData,
         handleCommand,
     };
 };
