@@ -1,7 +1,16 @@
 /* eslint-disable max-classes-per-file */
 const constants = require('./constants');
 
+/**
+ * Base class for all error handling.
+ */
 class BlocktreeError extends Error {
+    /**
+     * Constructor.
+     * @param {number} code The error code to report.
+     * @param {number} layer The layer where the error occurred.
+     * @param {string} message The message to display.
+     */
     constructor(code, layer, message) {
         super(message);
         this.code = code;
@@ -11,11 +20,23 @@ class BlocktreeError extends Error {
     }
 }
 
+/**
+ * Reasons for serialization errors.
+ */
 const serializationErrorReasons = {
     invalidHash: 1,
 };
 
+/**
+ * Serialization error.
+ */
 class SerializationError extends BlocktreeError {
+    /**
+     * Constructor.
+     * @param {Object} values Relevant data collected during the error.
+     * @param {number} reason The specific reason for the error.
+     * @param {number} layer The layer where the error occurred.
+     */
     constructor(values, reason, layer) {
         super(constants.error.serialization, layer, (() => {
             const { data } = values;
@@ -33,6 +54,9 @@ class SerializationError extends BlocktreeError {
 
 SerializationError.reasons = serializationErrorReasons;
 
+/**
+ * Reasons for invalid block error.
+ */
 const invalidBlockErrorReasons = {
     isNull: 1,
     invalidTimestamp: 2,
@@ -40,7 +64,16 @@ const invalidBlockErrorReasons = {
     invalidParentType: 4,
 };
 
+/**
+ * Invalid block error.
+ */
 class InvalidBlockError extends BlocktreeError {
+    /**
+     * Constructor.
+     * @param {Object} values Relevant data collected during the error.
+     * @param {number} reason The specific reason for the error.
+     * @param {number} layer The layer where the error occurred.
+     */
     constructor(values, reason, layer) {
         super(constants.error.invalidBlock, layer, (() => {
             const { block, type, parentType } = values;
@@ -53,7 +86,6 @@ class InvalidBlockError extends BlocktreeError {
                 return `The block ${block} already has a next block associated to it.`;
             case invalidBlockErrorReasons.invalidParentType:
                 return `Cannot create block type ${type} within block type ${parentType}.`;
-
             default:
                 return 'Invalid block was found.';
             }
@@ -65,7 +97,14 @@ class InvalidBlockError extends BlocktreeError {
 
 InvalidBlockError.reasons = invalidBlockErrorReasons;
 
+/**
+ * Invalid signature error.
+ */
 class InvalidSignatureError extends BlocktreeError {
+    /**
+     * Constructor.
+     * @param {Object} values Relevant data collected during the error.
+     */
     constructor(values) {
         super(constants.error.invalidSignature, constants.layer.secureBlocktree,
             'Invalid signature.');
@@ -73,7 +112,14 @@ class InvalidSignatureError extends BlocktreeError {
     }
 }
 
+/**
+ * Invalid key error.
+ */
 class InvalidKeyError extends BlocktreeError {
+    /**
+     * Constructor.
+     * @param {Object} values Relevant data collected during the error.
+     */
     constructor(values) {
         super(constants.error.invalidKey, constants.layer.secureBlocktree,
             'Invalid key(s) detected.');
@@ -81,7 +127,13 @@ class InvalidKeyError extends BlocktreeError {
     }
 }
 
+/**
+ * Invalid root error.
+ */
 class InvalidRootError extends BlocktreeError {
+    /**
+     * Constructor.
+     */
     constructor() {
         super(constants.error.invalidRoot, constants.layer.secureBlocktree,
             'Cannot install a root if blocks are already present.');
