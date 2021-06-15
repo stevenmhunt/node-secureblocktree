@@ -574,25 +574,23 @@ module.exports = function secureBlocktreeLayerFactory({
     }
 
     /**
-     * Specifies a new option for the specified blockchain.
+     * Specifies configuration options for the specified blockchain.
      * @param {string} sig The signature to use.
      * @param {string} block The block to add keys to.
-     * @param {string} name The option name to set.
-     * @param {string} value The option value to set.
+     * @param {Object} options The key/value pairs to set.
      * @returns {Promise<string>} The new block.
      */
-    async function setOption({
-        sig, block, name, value,
+    async function setOptions({
+        sig, block, options,
     }) {
-        const type = constants.blockType.option;
+        const type = constants.blockType.options;
         // validate the provided signature and the parent value.
         const prev = block ? await blocktree.getHeadBlock(block) : block;
         const parent = await validateParentBlock({ prev, type });
         const signature = await validateSignature({ sig, prev, parent });
 
-        const data = { name, value };
         return writeSecureBlock({
-            sig: signature, parent, prev, type, data,
+            sig: signature, parent, prev, type, data: options,
         });
     }
 
@@ -786,7 +784,7 @@ module.exports = function secureBlocktreeLayerFactory({
         validateParentBlock,
         setKeys,
         revokeKeys,
-        setOption,
+        setOptions,
         createZone,
         createIdentity,
         createLedger,

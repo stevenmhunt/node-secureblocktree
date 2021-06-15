@@ -28,13 +28,13 @@ function initBlockchain() {
     const { cache, storage, os } = initSystem();
     const system = systemLayerFactory({ cache, storage, os });
     const blockchain = blockchainLayerFactory({ system, cache, os });
-    return blockchain;
+    return { ...blockchain, mocks: { cache, storage, os } };
 }
 
 function initBlocktree() {
     const blockchain = initBlockchain();
     const blocktree = blocktreeLayerFactory({ blockchain });
-    return blocktree;
+    return { ...blocktree, mocks: blockchain.mocks };
 }
 
 function initSecureBlocktree() {
@@ -45,7 +45,7 @@ function initSecureBlocktree() {
     const secureBlocktree = secureBlocktreeLayerFactory({
         blocktree, secureCache, os, certificates,
     });
-    return secureBlocktree;
+    return { ...secureBlocktree, mocks: blocktree.mocks };
 }
 
 function signAs(secureBlocktree, key) {

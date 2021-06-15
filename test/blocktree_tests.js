@@ -110,7 +110,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             assert.ok(result.nonce, 'Expected valid nonce value.');
             assert.ok(prev.nonce, 'Expected valid nonce value.');
         });
-        it('should throw an exception if writing to an invalid blocktree if validation is enabled.', async () => {
+        it('should throw an exception if writing to an invalid blocktree.', async () => {
             // arrange
             const blocktree = initBlocktree();
             const options = { validate: true };
@@ -131,12 +131,37 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             // assert
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should not throw an exception if writing to an invalid blocktree if validation is disabled.', async () => {
+        it('should throw an exception if writing to a blockchain with a newer timestamp.', async () => {
             // arrange
             const blocktree = initBlocktree();
-            const options = { validate: false };
-            const block1 = getRandomHash();
+            const options = { validate: true };
+            const data1 = Buffer.from("I'm a string!", 'utf-8');
+            const block1 = await blocktree.writeBlock({ prev: null, data: data1 }, options);
             const data2 = Buffer.from("I'm another string!", 'utf-8');
+
+            // act
+            let isExecuted = false;
+            try {
+                blocktree.mocks.os.setNextTimestamp(0);
+                await blocktree.writeBlock({ prev: block1, data: data2 }, options);
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof InvalidBlockError);
+                assert.strictEqual(err.layer, constants.layer.blockchain);
+                assert.strictEqual(err.reason, InvalidBlockError.reasons.invalidTimestamp);
+            }
+
+            // assert
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+        it('should throw an exception if writing to a blockchain with anaother block present.', async () => {
+            // arrange
+            const blocktree = initBlocktree();
+            const options = { validate: true };
+            const data1 = Buffer.from("I'm a string!", 'utf-8');
+            const block1 = await blocktree.writeBlock({ prev: null, data: data1 }, options);
+            const data2 = Buffer.from("I'm another string!", 'utf-8');
+            await blocktree.writeBlock({ prev: block1, data: data1 }, options);
 
             // act
             let isExecuted = false;
@@ -144,11 +169,13 @@ describe('Blocktree Layer 2 - Blocktree', () => {
                 await blocktree.writeBlock({ prev: block1, data: data2 }, options);
                 isExecuted = true;
             } catch (err) {
-                // ignore error.
+                assert.ok(err instanceof InvalidBlockError);
+                assert.strictEqual(err.layer, constants.layer.blockchain);
+                assert.strictEqual(err.reason, InvalidBlockError.reasons.nextBlockExists);
             }
 
             // assert
-            assert.strictEqual(isExecuted, true, 'Expected an exception to not be thrown.');
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
     });
     describe('get next block', () => {

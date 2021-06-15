@@ -39,7 +39,7 @@ const constants = {
         keys: 3,
         ledger: 4,
         log: 5,
-        option: 6,
+        options: 6,
     },
     action: {
         read: 1,
