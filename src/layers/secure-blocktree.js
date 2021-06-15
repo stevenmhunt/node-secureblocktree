@@ -747,18 +747,18 @@ module.exports = function secureBlocktreeLayerFactory({
             const rootKeys = { [constants.action.read]: ['aaaa'], [constants.action.write]: ['bbbb'] };
             const rootZoneKeys = { [constants.action.read]: ['cccc'], [constants.action.write]: ['dddd'] };
             const signAsRoot = ({ parent, prev }) => signBlock({ key: rootWriteKey, parent, prev });
-            console.log(await installRoot({ rootKeys, rootZoneKeys, signAsRoot }));
+            await env.println(await installRoot({ rootKeys, rootZoneKeys, signAsRoot }));
             return true;
         }
         case 'read-secure-block': {
             await env.resolveBlock(parameters[0], blocktree.listBlocks, async (block) => {
-                console.log(await readSecureBlock(block));
+                await env.println(await readSecureBlock(block));
             });
             return true;
         }
         case 'key-scan': {
             await env.resolveBlock(parameters[0], blocktree.listBlocks, async (block) => {
-                console.log(await performKeyScan({ block, isRecursive: true }));
+                await env.println(await performKeyScan({ block, isRecursive: true }));
             });
             return true;
         }

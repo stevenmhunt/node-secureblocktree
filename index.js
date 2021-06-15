@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+const rlp = require('readline');
 const cliFactory = require('./src/cli');
 
 // blocktree layers
@@ -25,8 +27,21 @@ if (require.main === module) {
         blocktree, secureCache, os, certificates,
     });
 
+    const rl = rlp.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    const io = {
+        input: async (level) => new Promise((resolve) => {
+            const levels = new Array(level + 1).join('...');
+            rl.question(`${levels}${level === 0 ? '>' : ''} `, (input) => resolve(input));
+        }),
+        output: async (msg) => console.log(msg),
+    };
+
     cliFactory({
-        system, blockchain, blocktree, secureBlocktree,
+        io, system, blockchain, blocktree, secureBlocktree,
     })
         .then(() => process.exit(0));
 }

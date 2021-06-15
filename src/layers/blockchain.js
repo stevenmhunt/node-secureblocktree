@@ -328,47 +328,45 @@ module.exports = function blockchainLayerFactory({ system }) {
         case 'read-block':
         {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
-                console.log(await readBlock(block));
+                await env.println(await readBlock(block));
             });
             return true;
         }
         case 'get-head-block': {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
-                console.log(await getHeadBlock(block));
+                await env.println(await getHeadBlock(block));
             });
             return true;
         }
         case 'get-root-block': {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
-                console.log(await getRootBlock(block));
+                await env.println(await getRootBlock(block));
             });
             return true;
         }
         case 'get-next-block': {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
-                console.log(await getNextBlock(block));
+                await env.println(await getNextBlock(block));
             });
             return true;
         }
         case 'validate-blockchain': {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
-                console.log(await validateBlockchain(block));
+                await env.println(await validateBlockchain(block));
             });
             return true;
         }
         case 'list-blocks': {
-            (await listBlocks()).map((i) => console.log(i));
+            await env.println(await listBlocks());
             return true;
         }
         case 'start-blockchain-event-capture': {
             await startEventCapture();
-            emitter.on('read-block', ({ parameters: paramData, result }) => {
-                console.log("Captured event 'read-block'", 'parameters:', paramData, 'result:', result);
-                console.log('----------------------------------------');
+            emitter.on('read-block', async ({ parameters: paramData, result }) => {
+                await env.println("Captured event 'read-block'", 'parameters:', paramData, 'result:', result);
             });
-            emitter.on('write-block', ({ parameters: paramData, result }) => {
-                console.log("Captured event 'write-block'", 'parameters:', paramData, 'result:', result);
-                console.log('----------------------------------------');
+            emitter.on('write-block', async ({ parameters: paramData, result }) => {
+                await env.println("Captured event 'write-block'", 'parameters:', paramData, 'result:', result);
             });
             return true;
         }

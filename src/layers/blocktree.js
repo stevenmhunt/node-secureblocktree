@@ -237,31 +237,31 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
         switch (command) {
         case 'read-tree-block': {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
-                console.log(await readBlock(block));
+                await env.println(await readBlock(block));
             });
             return true;
         }
         case 'parent-scan': {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
-                console.log(await performParentScan(block));
+                await env.println(await performParentScan(block));
             });
             return true;
         }
         case 'child-scan': {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
-                console.log(await performChildScan(block));
+                await env.println(await performChildScan(block));
             });
             return true;
         }
         case 'get-parent-block': {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
-                console.log(await getParentBlock(block));
+                await env.println(await getParentBlock(block));
             });
             return true;
         }
         case 'validate-blocktree': {
             await env.resolveBlock(parameters[0], listBlocks, async (block) => {
-                console.log(await validateBlocktree(block));
+                await env.println(await validateBlocktree(block));
             });
             return true;
         }

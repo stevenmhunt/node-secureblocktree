@@ -120,7 +120,7 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
     async function handleCommand(env, command, parameters) {
         switch (command) {
         case 'generate-hash':
-            console.log(generateHash(parameters[0]));
+            await env.println(generateHash(parameters[0]));
             return true;
         default:
             return false;

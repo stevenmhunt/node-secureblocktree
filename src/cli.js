@@ -1,17 +1,4 @@
 /* eslint-disable no-await-in-loop, no-continue */
-const rlp = require('readline');
-
-const rl = rlp.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-});
-
-function ask(level) {
-    return new Promise((resolve) => {
-        const levels = new Array(level + 1).join('...');
-        rl.question(`${levels}${level === 0 ? '>' : ''} `, (input) => resolve(input));
-    });
-}
 
 function parseCommand(cmd) {
     const [command, ...parameters] = cmd.split(' ');
@@ -20,22 +7,24 @@ function parseCommand(cmd) {
     };
 }
 
-function initializeCliEnvironment() {
+function initializeCliEnvironment({ println }) {
     const env = {
         level: 0,
         vars: {},
         async resolveBlock(value, listBlocksFn, successFn) {
             const block = await listBlocksFn(value);
             if (block.length === 0) {
-                console.log(`Error: no matching block ${value} found.`);
+                await env.println(`Error: no matching block ${value} found.`);
             } else if (block.length === 1) {
                 return successFn(block[0]);
             } else {
-                console.log(`Multiple matches found:\n${block.join('\n')}\n\nTry your request again with a more specific block value.`);
+                await env.println(`Multiple matches found:\n${block.join('\n')}\n\nTry your request again with a more specific block value.`);
             }
             return null;
         },
     };
+
+    env.println = println;
 
     env.process = function process(data) {
         const items = Array.isArray(data) ? data : [data];
@@ -55,7 +44,7 @@ function initializeCliEnvironment() {
             return true;
         }
         case 'print':
-            console.log(parameters[0]);
+            env.sendResponse(parameters[0]);
             return true;
         case '{':
             env.level += 1;
@@ -74,11 +63,13 @@ function initializeCliEnvironment() {
 }
 
 module.exports = async function cliFactory({
-    system, blockchain, blocktree, secureBlocktree,
+    io, system, blockchain, blocktree, secureBlocktree,
 }) {
-    const env = initializeCliEnvironment();
+    const env = initializeCliEnvironment({
+        println: (msg) => io.output(msg),
+    });
     for (;;) {
-        const cmd = await ask(env.level);
+        const cmd = await io.input(env.level);
         if (cmd === 'exit') {
             break;
         }
@@ -90,7 +81,7 @@ module.exports = async function cliFactory({
         if (await blocktree.handleCommand(env, command, processedParams)) { continue; }
         if (await secureBlocktree.handleCommand(env, command, processedParams)) { continue; }
         if (command && command.length > 0) {
-            console.log(`${command}: command not found.`);
+            await env.println(`${command}: command not found.`);
         }
     }
 };
