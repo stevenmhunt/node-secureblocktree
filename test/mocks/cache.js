@@ -2,7 +2,7 @@ module.exports = function cacheFactory() {
     const cache = {};
 
     /**
-     * Reads data from the system cache.
+     * Reads data from the cache.
      * @param {string} scope The scope (usually a block or blockchain hash)
      * where the value can be found.
      * @param {string} name The name of the value to locate.
@@ -14,7 +14,7 @@ module.exports = function cacheFactory() {
     }
 
     /**
-     * Writes data to the system cache.
+     * Writes data to the cache.
      * @param {string} scope The scope (usually a block or blockchain hash)
      * where the value can be found.
      * @param {string} name The name of the value to locate.
@@ -24,8 +24,23 @@ module.exports = function cacheFactory() {
         cache[`${scope || 'global'}___${name}`] = value;
     }
 
+    /**
+     * Pushes data onto the specified cache value.
+     * @param {string} scope The scope (usually a block or blockchain hash)
+     * where the value can be found.
+     * @param {string} name The name of the value to locate.
+     * @param {string} value The value to push onto to the cache.
+     */
+    async function pushCache(scope, name, value) {
+        const key = `${scope || 'global'}___${name}`;
+        const list = cache[key] || [];
+        list.push(value);
+        cache[key] = list;
+    }
+
     return {
         readCache,
         writeCache,
+        pushCache,
     };
 };

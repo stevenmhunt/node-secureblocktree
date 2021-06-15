@@ -393,7 +393,7 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             assert.strictEqual(result.reason, undefined);
             assert.strictEqual(result.block, undefined);
         });
-        it('should report that an invalid blockchain is invalid', async () => {
+        it('should report that a blockchain missing a block is invalid', async () => {
             // arrange
             const blockchain = initBlockchain();
             const options = { validate: false };
@@ -406,8 +406,27 @@ describe('Blocktree Layer 1 - Blockchain', () => {
 
             // assert
             assert.strictEqual(result.isValid, false);
-            assert.strictEqual(result.blockCount, 1);
+            assert.strictEqual(result.blockCount, 2);
             assert.strictEqual(result.reason, constants.validation.missingBlock);
+            assert.strictEqual(result.block, block1);
+        });
+        it('should report that a blockchain with inconsistent timestamps is invalid', async () => {
+            // arrange
+            const blockchain = initBlockchain();
+            const options = { validate: false };
+            const data1 = Buffer.from("I'm a string!", 'utf-8');
+            const block1 = await blockchain.writeBlock({ prev: null, data: data1 });
+            const data2 = Buffer.from("I'm another string!", 'utf-8');
+            blockchain.mocks.os.setNextTimestamp(0n);
+            const block2 = await blockchain.writeBlock({ prev: block1, data: data2 }, options);
+
+            // act
+            const result = await blockchain.validateBlockchain(block2);
+
+            // assert
+            assert.strictEqual(result.isValid, false);
+            assert.strictEqual(result.blockCount, 2);
+            assert.strictEqual(result.reason, constants.validation.invalidTimestamp);
             assert.strictEqual(result.block, block1);
         });
     });

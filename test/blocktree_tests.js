@@ -178,8 +178,81 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
     });
+    describe('parent scan', () => {
+        it('should return only the root block if no parent blocks are found', async () => {
+            // arrange
+            const blocktree = initBlocktree();
+            const data = Buffer.from("I'm a string!", 'utf-8');
+            const block = await blocktree.writeBlock({ prev: null, parent: null, data });
+
+            // act
+            const result = await blocktree.performParentScan(block);
+
+            // assert
+            assert.ok(Array.isArray(result));
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].hash, block);
+        });
+        it('should return the block as well as all parent blocks', async () => {
+            // arrange
+            const blocktree = initBlocktree();
+            const data = Buffer.from("I'm a string!", 'utf-8');
+            const block1 = await blocktree.writeBlock({ prev: null, parent: null, data });
+            const block2 = await blocktree.writeBlock({ prev: null, parent: block1, data });
+            const block3 = await blocktree.writeBlock({ prev: null, parent: block2, data });
+            const block4 = await blocktree.writeBlock({ prev: null, parent: block3, data });
+            const block5 = await blocktree.writeBlock({ prev: null, parent: block4, data });
+
+            // act
+            const result = await blocktree.performParentScan(block5);
+
+            // assert
+            assert.ok(Array.isArray(result));
+            assert.strictEqual(result.length, 5);
+            assert.strictEqual(result[0].hash, block5);
+            assert.strictEqual(result[1].hash, block4);
+            assert.strictEqual(result[2].hash, block3);
+            assert.strictEqual(result[3].hash, block2);
+            assert.strictEqual(result[4].hash, block1);
+        });
+    });
+    describe('child scan', () => {
+        it('should return an empty array if no children are found', async () => {
+            // arrange
+            const blocktree = initBlocktree();
+            const data = Buffer.from("I'm a string!", 'utf-8');
+            const block = await blocktree.writeBlock({ prev: null, parent: null, data });
+
+            // act
+            const result = await blocktree.performChildScan(block);
+
+            // assert
+            assert.ok(Array.isArray(result));
+            assert.strictEqual(result.length, 0);
+        });
+        it('should return an array of all child blocks if present', async () => {
+            // arrange
+            const blocktree = initBlocktree();
+            const data = Buffer.from("I'm a string!", 'utf-8');
+            const block1 = await blocktree.writeBlock({ prev: null, parent: null, data });
+            const block2 = await blocktree.writeBlock({ prev: null, parent: block1, data });
+            const block3 = await blocktree.writeBlock({ prev: null, parent: block1, data });
+            const block4 = await blocktree.writeBlock({ prev: null, parent: block1, data });
+            await blocktree.writeBlock({ prev: null, parent: block4, data });
+
+            // act
+            const result = await blocktree.performChildScan(block1);
+
+            // assert
+            assert.ok(Array.isArray(result));
+            assert.strictEqual(result.length, 3);
+            assert.strictEqual(result[0].hash, block2);
+            assert.strictEqual(result[1].hash, block3);
+            assert.strictEqual(result[2].hash, block4);
+        });
+    });
     describe('get parent block', () => {
-        it('should return null if no parent block found.', async () => {
+        it('should return null if no parent block found', async () => {
             // arrange
             const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", 'utf-8');
@@ -191,7 +264,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             // assert
             assert.strictEqual(result, null);
         });
-        it('should return the parent block if found.', async () => {
+        it('should return the parent block if found', async () => {
             // arrange
             const blocktree = initBlocktree();
             const data = Buffer.from("I'm a string!", 'utf-8');
@@ -213,32 +286,38 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             const block1 = await blocktree.writeBlock({ prev: null, data: data1 });
             const data2 = Buffer.from("I'm another string!", 'utf-8');
             const block2 = await blocktree.writeBlock({ prev: block1, data: data2 });
+            const data3 = Buffer.from("I'm yet another string!", 'utf-8');
+            const block3 = await blocktree.writeBlock({ parent: block2, data: data3 });
 
             // act
-            const result = await blocktree.validateBlocktree(block2);
+            const result = await blocktree.validateBlocktree(block3);
 
             // assert
             assert.strictEqual(result.isValid, true);
-            assert.strictEqual(result.blockCount, 2);
+            assert.strictEqual(result.blockCount, 3);
             assert.strictEqual(result.reason, undefined);
             assert.strictEqual(result.block, undefined);
         });
-        it('should report that an invalid blocktree is invalid', async () => {
+        it('should report that a blocktree with a missing parent is invalid', async () => {
             // arrange
             const blocktree = initBlocktree();
             const options = { validate: false };
-            const block1 = getRandomHash();
+            const block0 = getRandomHash();
+            const data1 = Buffer.from("I'm a string!", 'utf-8');
+            const block1 = await blocktree.writeBlock({ parent: block0, data: data1 }, options);
             const data2 = Buffer.from("I'm another string!", 'utf-8');
-            const block2 = await blocktree.writeBlock({ prev: block1, data: data2 }, options);
+            const block2 = await blocktree.writeBlock({ parent: block1, data: data2 });
+            const data3 = Buffer.from("I'm yet another string!", 'utf-8');
+            const block3 = await blocktree.writeBlock({ parent: block2, data: data3 });
 
             // act
-            const result = await blocktree.validateBlocktree(block2);
+            const result = await blocktree.validateBlocktree(block3);
 
             // assert
             assert.strictEqual(result.isValid, false);
-            assert.strictEqual(result.blockCount, 1);
+            assert.strictEqual(result.blockCount, 4);
             assert.strictEqual(result.reason, constants.validation.missingBlock);
-            assert.strictEqual(result.block, block1);
+            assert.strictEqual(result.block, block0);
         });
     });
 });

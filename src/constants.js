@@ -3,6 +3,7 @@ const constants = {
         headBlock: 'head block',
         rootBlock: 'root block',
         next: 'next',
+        childBlocks: 'child blocks',
     },
     secureCache: {
         rootBlock: 'root block',
@@ -22,6 +23,7 @@ const constants = {
     validation: {
         missingBlock: 'missing block',
         missingParentBlock: 'missing parent block',
+        invalidTimestamp: 'invalid timestamp',
     },
     format: {
         hash: 'hex',
@@ -51,6 +53,7 @@ const constants = {
         invalidSignature: 3,
         invalidKey: 4,
         invalidRoot: 5,
+        invalidParentBlock: 6,
     },
     layer: {
         system: 0,

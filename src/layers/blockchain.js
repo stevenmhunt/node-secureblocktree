@@ -177,7 +177,7 @@ module.exports = function blockchainLayerFactory({ system }) {
     async function writeBlock(bcBlockData, options = {}) {
         return utils.withEvent(emitter, 'write-block', { bcBlockData, options }, async () => {
             const timestamp = system.generateTimestamp();
-            if (options.validate !== false && bcBlockData.prev !== null) {
+            if (options.validate !== false && bcBlockData.prev) {
                 const prev = await readBlock(bcBlockData.prev);
                 if (!prev) {
                     throw new InvalidBlockError({
@@ -291,10 +291,13 @@ module.exports = function blockchainLayerFactory({ system }) {
      * Given a block, validates all previous blocks in the blockchain.
      * @param {string} block
      */
-    async function validateBlockchain(block) {
-        let next = block;
+    async function validateBlockchain(block, options = {}) {
+        let next = options.startFromHead
+            ? await getHeadBlock(block) : block;
         let blockCount = 0;
+        let blockBefore = null;
         do {
+            blockCount += 1;
             const nextBlock = await readBlock(next);
             if (!nextBlock) {
                 return {
@@ -304,8 +307,18 @@ module.exports = function blockchainLayerFactory({ system }) {
                     blockCount,
                 };
             }
-            blockCount += 1;
+            if (blockBefore) {
+                if (blockBefore.timestamp < nextBlock.timestamp) {
+                    return {
+                        isValid: false,
+                        reason: constants.validation.invalidTimestamp,
+                        block: next,
+                        blockCount,
+                    };
+                }
+            }
             next = (nextBlock || {}).prev;
+            blockBefore = nextBlock;
         }
         while (next != null);
         return { isValid: true, blockCount };

@@ -33,7 +33,7 @@ function initBlockchain() {
 
 function initBlocktree() {
     const blockchain = initBlockchain();
-    const blocktree = blocktreeLayerFactory({ blockchain });
+    const blocktree = blocktreeLayerFactory({ blockchain, cache: blockchain.mocks.cache });
     return { ...blocktree, mocks: blockchain.mocks };
 }
 

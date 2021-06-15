@@ -64,10 +64,10 @@ module.exports = function secureBlocktreeLayerFactory({
     /**
      * Given a key, a signature, and a block,
      * determines if the signature is valid and matches the block.
-     * @param {*} key The key to verify.
-     * @param {*} sig The signature generated when the block was signed.
-     * @param {*} parent The parent block to validate.
-     * @param {*} prev The prev block to validate.
+     * @param {string} key The key to verify.
+     * @param {string} sig The signature generated when the block was signed.
+     * @param {string} parent The parent block to validate.
+     * @param {string} prev The prev block to validate.
      * @returns {Promise<boolean>} Whether or not the signature and key are valid for the block.
      */
     async function verifySignedBlock({
@@ -250,6 +250,12 @@ module.exports = function secureBlocktreeLayerFactory({
      * @returns {Promise<string>} The hash of the newly written block.
      */
     async function writeSecureBlock(secureData) {
+        // there can only be one root key in the system.
+        if (!secureData.parent) {
+            if (await blocktree.countBlocks() > 0) {
+                throw new InvalidRootError();
+            }
+        }
         return blocktree.writeBlock(serializeSecureBlock(secureData));
     }
 

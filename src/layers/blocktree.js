@@ -5,7 +5,7 @@ const { SerializationError, InvalidBlockError } = require('../errors');
 /**
  * Blocktree Layer 2 - Blocktree
  */
-module.exports = function blocktreeLayerFactory({ blockchain }) {
+module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
     /**
      * Given a blocktree object, converts it into a blockchain object.
      * @param {Object} btBlockData The blocktree object.
@@ -69,21 +69,32 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
     }
 
     /**
-     * Writes a block to the blocktree.
-     * @param {Object} btBlockData The blocktree object.
-     * @returns {Promise<string>} The hash of the newly written block.
-     */
-    async function writeBlock(btBlockData, options = {}) {
-        return blockchain.writeBlock(serializeBlocktreeData(btBlockData), options);
-    }
-
-    /**
      * Retrieves the specified list of blocks.
      * @param {string} partial The "starts with" search to perform, or null to retrieve all blocks.
      * @returns {Promise<Array>} The list of requested blocks.
      */
     async function listBlocks(partial = null) {
         return blockchain.listBlocks(partial);
+    }
+
+    /**
+     * Writes a block to the blocktree.
+     * @param {Object} btBlockData The blocktree object.
+     * @returns {Promise<string>} The hash of the newly written block.
+     */
+    async function writeBlock(btBlockData, options = {}) {
+        if (options.validate !== false && btBlockData.parent) {
+            if ((await listBlocks(btBlockData.parent)).length === 0) {
+                throw new InvalidBlockError({ block: btBlockData.parent },
+                    InvalidBlockError.reasons.invalidParentBlock,
+                    constants.layer.blocktree);
+            }
+        }
+        const result = await blockchain.writeBlock(serializeBlocktreeData(btBlockData), options);
+        if (btBlockData.parent) {
+            await cache.pushCache(btBlockData.parent, constants.cache.childBlocks, result);
+        }
+        return result;
     }
 
     /**
@@ -152,7 +163,14 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
      * @returns {Promise<Array>} Block data for all child root blocks.
      */
     async function performChildScan(block) {
-        return findAllInBlocks((b) => b.prev === null && b.parent === block);
+        const cached = await cache.readCache(block, constants.cache.childBlocks);
+        if (cached && Array.isArray(cached)) {
+            return Promise.all(cached.map(readBlock));
+        }
+        const result = await findAllInBlocks((b) => b.prev === null && b.parent === block);
+        await cache.writeCache(block, constants.cache.childBlocks,
+            result.map((i) => i.hash));
+        return result;
     }
 
     /**
@@ -202,13 +220,16 @@ module.exports = function blocktreeLayerFactory({ blockchain }) {
      * @param {string} block
      * @returns {Promise<Object>} A validation report.
      */
-    async function validateBlocktree(block) {
+    async function validateBlocktree(block, options) {
         let next = block;
         let blockCount = 0;
         do {
-            const validation = await blockchain.validateBlockchain(next);
+            const validation = await blockchain.validateBlockchain(next, options);
             if (!validation.isValid) {
-                return validation;
+                return {
+                    ...validation,
+                    ...{ blockCount: validation.blockCount + blockCount },
+                };
             }
             blockCount += validation.blockCount;
             const nextBlock = await readBlock(next);

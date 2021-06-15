@@ -62,6 +62,7 @@ const invalidBlockErrorReasons = {
     invalidTimestamp: 2,
     nextBlockExists: 3,
     invalidParentType: 4,
+    invalidParentBlock: 5,
 };
 
 /**
@@ -86,6 +87,8 @@ class InvalidBlockError extends BlocktreeError {
                 return `The block ${block} already has a next block associated to it.`;
             case invalidBlockErrorReasons.invalidParentType:
                 return `Cannot create block type ${type} within block type ${parentType}.`;
+            case invalidBlockErrorReasons.invalidParentBlock:
+                return 'Expected parent block to be present.';
             default:
                 return 'Invalid block was found.';
             }
