@@ -10,30 +10,30 @@ const {
  * Blocktree Layer 3 - Secure Blocktree
  */
 module.exports = function secureBlocktreeLayerFactory({
-    blocktree, secureCache, os, certificates,
+    blocktree, secureCache, os, encryption,
 }) {
     /**
      * Encrypts data using the specified key.
-     * @param {string} key The key to encrypt data with.
+     * @param {PrivateKey} key The private key to encrypt data with.
      * @param {*} data The data to encrypt.
      * @returns {Promise<Buffer>} The encrypted data.
      */
     async function encryptData(key, data) {
-        return certificates.encrypt(
-            Buffer.from(key, constants.format.key),
+        return encryption.encrypt(
+            key,
             Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf-8'),
         );
     }
 
     /**
      * Decrypts data using the specified key.
-     * @param {string} key The key to decrypt data with.
+     * @param {string} key The public key to decrypt data with.
      * @param {Buffer} data The data to decrypt.
      * @param {Object} options Additional decryption options.
      * @returns {Promise<Object>} The decrypted data.
      */
     async function decryptData(key, data, options = {}) {
-        const result = await certificates.decrypt(
+        const result = await encryption.decrypt(
             Buffer.from(key, constants.format.key),
             Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf-8'),
         );
@@ -51,8 +51,8 @@ module.exports = function secureBlocktreeLayerFactory({
      * @returns {Promise<Buffer>} The signed block data.
      */
     async function signBlock({ key, parent, prev }) {
-        const result = await certificates.sign(
-            Buffer.from(key, constants.format.key),
+        const result = await encryption.sign(
+            key,
             Buffer.concat([
                 parent ? Buffer.from(parent, constants.format.hash) : Buffer.alloc(0),
                 prev ? Buffer.from(prev, constants.format.hash) : Buffer.alloc(0),
@@ -73,12 +73,11 @@ module.exports = function secureBlocktreeLayerFactory({
     async function verifySignedBlock({
         key, sig, parent, prev,
     }) {
-        const sigResult = await certificates.checkSignature(
+        return encryption.verify(
             Buffer.from(key, constants.format.key),
             Buffer.from(sig, constants.format.signature),
+            Buffer.from(`${parent || ''}${prev || ''}`, constants.format.hash),
         );
-        const sigBlock = sigResult ? sigResult.toString(constants.format.hash) : null;
-        return (parent || prev) && sigBlock !== null && sigBlock === `${parent || ''}${prev || ''}`;
     }
 
     /**
@@ -90,15 +89,15 @@ module.exports = function secureBlocktreeLayerFactory({
     function serializeKeys(keys) {
         const results = [Buffer.from([Object.keys(keys).length])];
         Object.keys(keys).forEach((key) => {
-            results.push(Buffer.from([key]));
+            results.push(Buffer.from([key.charCodeAt()]));
             const keyList = Array.isArray(keys[key]) ? keys[key] : [keys[key]];
-            results.push(Buffer.from([keyList.length]));
+            results.push(utils.fromInt16(keyList.length));
             keyList.forEach((keyItem) => {
                 let keyData = keyItem || Buffer.alloc(0);
                 if (!Buffer.isBuffer(keyData)) {
                     keyData = Buffer.from(keyData, constants.format.key);
                 }
-                results.push(Buffer.from([Buffer.byteLength(keyData)]));
+                results.push(utils.fromInt16(Buffer.byteLength(keyData)));
                 results.push(keyData);
             });
         });
@@ -141,9 +140,8 @@ module.exports = function secureBlocktreeLayerFactory({
         if (!Buffer.isBuffer(sigData)) {
             sigData = Buffer.from(sigData, constants.format.signature);
         }
-
         return Buffer.concat([
-            Buffer.from([Buffer.byteLength(sigData)]),
+            utils.fromInt16(Buffer.byteLength(sigData)),
             sigData,
         ]);
     }
@@ -186,11 +184,13 @@ module.exports = function secureBlocktreeLayerFactory({
             const actionCount = data[index++];
             const keys = {};
             for (let i = 0; i < actionCount; i += 1) {
-                const action = data[index++];
-                const keyCount = data[index++];
+                const action = String.fromCharCode(data[index++]);
+                const keyCount = utils.toInt16(data, index);
+                index += constants.size.int16;
                 const actionKeys = [];
                 for (let j = 0; j < keyCount; j += 1) {
-                    const keySize = data[index++];
+                    const keySize = utils.toInt16(data, index);
+                    index += constants.size.int16;
                     actionKeys.push(data.slice(index, index + keySize)
                         .toString(constants.format.key));
                     index += keySize;
@@ -223,7 +223,8 @@ module.exports = function secureBlocktreeLayerFactory({
             timestamp, prev, parent, nonce, hash,
         };
         result.type = data[index++];
-        const sigLength = data[index++];
+        const sigLength = utils.toInt16(data, index);
+        index += constants.size.int16;
         if (sigLength > 0) {
             result.sig = data.slice(index, index + sigLength)
                 .toString(constants.format.signature);
@@ -335,7 +336,7 @@ module.exports = function secureBlocktreeLayerFactory({
                 const actionKeys = Object.keys(secureBlock.data.keys);
                 for (let i = 0; i < actionKeys.length; i += 1) {
                     if (action === undefined
-                        || parseInt(action, 10) === parseInt(actionKeys[i], 10)) {
+                        || action === actionKeys[i]) {
                         const keyList = secureBlock.data.keys[actionKeys[i]];
                         for (let j = 0; j < keyList.length; j += 1) {
                             const key = keyList[j];
@@ -348,7 +349,7 @@ module.exports = function secureBlocktreeLayerFactory({
                                 result.push({
                                     key,
                                     block: current,
-                                    action: parseInt(actionKeys[i], 10),
+                                    action: actionKeys[i],
                                     tsInit: secureBlock.data.tsInit,
                                     tsExp: secureBlock.data.tsExp,
                                 });
@@ -378,7 +379,7 @@ module.exports = function secureBlocktreeLayerFactory({
      * @returns {Promise<boolean>} Whether or not the "parent key" is the parent of "key".
      */
     async function isKeyParentOf(parentKey, key) {
-        return certificates.isKeyParentOf(parentKey, key);
+        return encryption.isKeyParentOf(parentKey, key);
     }
 
     /**
@@ -424,7 +425,7 @@ module.exports = function secureBlocktreeLayerFactory({
     }
 
     /**
-     * Validates a key by checking the certificate chain until the root is reached.
+     * Validates a key by checking the chain until the root is reached.
      * @param {string} block The block to start validating from.
      * @param {string} key The key to validate.
      * @param {number} action The action to perform.
@@ -481,7 +482,7 @@ module.exports = function secureBlocktreeLayerFactory({
                 async (k) => validateKeysInternal({
                     block,
                     keys: keys[k],
-                    action: parseInt(k, 10),
+                    action: k,
                 }),
             ),
         );

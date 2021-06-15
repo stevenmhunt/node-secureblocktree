@@ -26,6 +26,19 @@ function fromInt32(val) {
     return buf;
 }
 
+function toInt16(buf, index) {
+    return buf.readUInt16BE(index);
+}
+
+function fromInt16(val) {
+    if (Buffer.isBuffer(val) && Buffer.byteLength(val) === constants.size.int16) {
+        return val;
+    }
+    const buf = Buffer.allocUnsafe(constants.size.int16);
+    buf.writeUInt16BE(val);
+    return buf;
+}
+
 async function withEvent(emitter, event, parameters, fn) {
     if (!emitter) {
         return fn();
@@ -50,5 +63,7 @@ module.exports = {
     toInt64,
     fromInt32,
     toInt32,
+    fromInt16,
+    toInt16,
     withEvent,
 };

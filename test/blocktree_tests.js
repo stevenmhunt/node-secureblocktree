@@ -2,7 +2,7 @@
 const assert = require('assert');
 const constants = require('../src/constants');
 const { InvalidBlockError } = require('../src/errors');
-const { initBlocktree, getRandomHash } = require('./utils');
+const { initBlocktree, getRandomHash } = require('./test-helper');
 
 describe('Blocktree Layer 2 - Blocktree', () => {
     describe('read block', () => {

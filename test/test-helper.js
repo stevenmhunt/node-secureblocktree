@@ -9,7 +9,7 @@ const systemLayerFactory = require('../src/layers/system');
 
 // mocks
 const cacheFactory = require('./mocks/cache');
-const certificatesFactory = require('./mocks/certificates');
+const encryptionFactory = require('./mocks/encryption');
 const osFactory = require('./mocks/os');
 const storageFactory = require('./mocks/storage');
 
@@ -41,11 +41,11 @@ function initSecureBlocktree() {
     const blocktree = initBlocktree();
     const secureCache = cacheFactory();
     const os = osFactory();
-    const certificates = certificatesFactory();
+    const encryption = encryptionFactory();
     const secureBlocktree = secureBlocktreeLayerFactory({
-        blocktree, secureCache, os, certificates,
+        blocktree, secureCache, os, encryption,
     });
-    return { ...secureBlocktree, mocks: blocktree.mocks };
+    return { ...secureBlocktree, mocks: blocktree.mocks, encryption };
 }
 
 function signAs(secureBlocktree, key) {
@@ -56,39 +56,37 @@ function signAs(secureBlocktree, key) {
     });
 }
 
-async function initializeSecureRoot(secureBlocktree) {
-    const rootWriteKey = 'bbbb';
-    const rootKeys = { [constants.action.read]: ['aaaa'], [constants.action.write]: ['bbbb'] };
-    const rootZoneKeys = { [constants.action.read]: ['cccc'], [constants.action.write]: ['dddd'] };
-    const signAsRoot = signAs(secureBlocktree, rootWriteKey);
-    const result = await secureBlocktree.installRoot({ rootKeys, rootZoneKeys, signAsRoot });
-    return { ...result, rootKeys, rootZoneKeys };
+const privateKeys = {};
+function getPrivateKey(publicKey) {
+    return privateKeys[publicKey];
 }
 
-const testKeys = [
-    ['eeee', 'ffff'],
-    ['gggg', 'hhhh'],
-    ['iiii', 'jjjj'],
-    ['abab', 'acac'],
-    ['adad', 'aeae'],
-    ['agag', 'afaf'],
-    ['ahah', 'aiai'],
-    ['akak', 'ajaj'],
-    ['alal', 'amam'],
-];
-let testKeyIndex = 0;
+async function generateTestKeys(encryption) {
+    const readKey = await encryption.generateKeyPair();
+    const writeKey = await encryption.generateKeyPair();
 
-function generateKeys() {
-    const [readKey, writeKey] = testKeys[testKeyIndex];
-    testKeyIndex += 1;
-    if (testKeyIndex >= testKeys.length) {
-        testKeyIndex = 0;
-    }
-    const result = {
-        [constants.action.read]: [readKey],
-        [constants.action.write]: [writeKey],
+    // FOR TESTING PURPOSES ONLY!!!!
+    const publicReadKey = readKey.publicKey.toString(constants.format.key);
+    const privateReadKey = readKey.privateKey;
+    const publicWriteKey = writeKey.publicKey.toString(constants.format.key);
+    const privateWriteKey = writeKey.privateKey;
+
+    privateKeys[publicReadKey] = privateReadKey;
+    privateKeys[publicWriteKey] = privateWriteKey;
+
+    return {
+        [constants.action.read]: [publicReadKey],
+        [constants.action.write]: [publicWriteKey],
     };
-    return result;
+}
+
+async function initializeSecureRoot(secureBlocktree) {
+    const rootKeys = await generateTestKeys(secureBlocktree.encryption);
+    const rootZoneKeys = await generateTestKeys(secureBlocktree.encryption);
+    const rootWritePrivateKey = getPrivateKey(rootKeys[constants.action.write][0]);
+    const signAsRoot = signAs(secureBlocktree, rootWritePrivateKey);
+    const result = await secureBlocktree.installRoot({ rootKeys, rootZoneKeys, signAsRoot });
+    return { ...result, rootKeys, rootZoneKeys };
 }
 
 module.exports = {
@@ -97,6 +95,7 @@ module.exports = {
     initBlocktree,
     initSecureBlocktree,
     initializeSecureRoot,
-    generateKeys,
+    generateTestKeys,
+    getPrivateKey,
     signAs,
 };

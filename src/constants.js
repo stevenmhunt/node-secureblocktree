@@ -10,6 +10,7 @@ const constants = {
         rootZone: 'root zone',
     },
     size: {
+        int16: 2,
         int32: 4,
         int64: 8,
         hash: 32,
@@ -44,8 +45,8 @@ const constants = {
         options: 6,
     },
     action: {
-        read: 1,
-        write: 2,
+        read: 'r',
+        write: 'w',
     },
     error: {
         serialization: 1,
