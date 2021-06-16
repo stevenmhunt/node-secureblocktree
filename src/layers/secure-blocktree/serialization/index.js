@@ -1,8 +1,7 @@
-/* eslint-disable no-plusplus, no-await-in-loop */
-const constants = require('../../../constants');
-const utils = require('../../../utils');
+/* eslint-disable no-plusplus */
 const blockTypes = require('./blockTypes');
 const { serializeSignature } = require('./serialize');
+const { deserializeSignature } = require('./deserialize');
 
 /**
  * @private
@@ -66,15 +65,9 @@ function deserializeSecureBlock(btBlockData) {
         timestamp, prev, parent, nonce, hash,
     };
     result.type = data[index++];
-    const sigLength = utils.toInt16(data, index);
-    index += constants.size.int16;
-    if (sigLength > 0) {
-        result.sig = data.slice(index, index + sigLength)
-            .toString(constants.format.signature);
-        index += sigLength;
-    } else {
-        result.sig = null;
-    }
+    const res = deserializeSignature(data, index);
+    result.sig = res.result;
+    index = res.index;
     result.data = deserializeSecureBlockData(result.type, data.slice(index));
     return result;
 }

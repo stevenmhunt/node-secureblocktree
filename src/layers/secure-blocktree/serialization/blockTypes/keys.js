@@ -1,9 +1,17 @@
-/* eslint-disable no-plusplus, no-await-in-loop */
+/* eslint-disable no-plusplus */
 const constants = require('../../../../constants');
-const { fromInt64, toInt16, toInt64 } = require('../../../../utils');
+const { fromInt64, toInt64 } = require('../../../../utils');
 const { serializeKey, serializeKeys } = require('../serialize');
+const { deserializeKey, deserializeKeys } = require('../deserialize');
 
+/**
+ * Serialize and deserialize functions for key blocks.
+ */
 module.exports = {
+    /**
+     * Serializes a keys block.
+     * @returns {Buffer} The serialized block.
+     */
     serialize: function serializeKeysBlock({
         parentKey, keys, tsInit, tsExp, data,
     }) {
@@ -20,39 +28,28 @@ module.exports = {
             dataValue,
         ]);
     },
+    /**
+     * Deserializes a keys block.
+     * @returns {Object} The deserialized block.
+     */
     deserialize: function deserializeKeysBlock(data, startIndex = 0) {
         const result = {};
         let index = startIndex;
+
         result.tsInit = toInt64(data, index);
         index += constants.size.int64;
+
         result.tsExp = toInt64(data, index);
         index += constants.size.int64;
-        const parentKeySize = toInt16(data, index);
-        index += constants.size.int16;
-        if (parentKeySize === 0) {
-            result.parentKey = null;
-        } else {
-            result.parentKey = data.slice(index, index + parentKeySize)
-                .toString(constants.format.key);
-            index += parentKeySize;
-        }
-        const actionCount = data[index++];
-        const keys = {};
-        for (let i = 0; i < actionCount; i += 1) {
-            const action = String.fromCharCode(data[index++]);
-            const keyCount = toInt16(data, index);
-            index += constants.size.int16;
-            const actionKeys = [];
-            for (let j = 0; j < keyCount; j += 1) {
-                const keySize = toInt16(data, index);
-                index += constants.size.int16;
-                actionKeys.push(data.slice(index, index + keySize)
-                    .toString(constants.format.key));
-                index += keySize;
-            }
-            keys[action] = actionKeys;
-        }
-        result.keys = keys;
+
+        let res = deserializeKey(data, index);
+        result.parentKey = res.result;
+        index = res.index;
+
+        res = deserializeKeys(data, index);
+        result.keys = res.result;
+        index = res.index;
+
         const additionalData = data.slice(index);
         if (Buffer.byteLength(additionalData) > 0) {
             result.data = additionalData;

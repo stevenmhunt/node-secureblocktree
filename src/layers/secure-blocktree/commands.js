@@ -1,4 +1,3 @@
-/* eslint-disable no-plusplus, no-await-in-loop */
 const constants = require('../../constants');
 
 module.exports = function secureBlockTreeCommandsFactory({

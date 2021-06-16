@@ -46,18 +46,11 @@ module.exports = function encryptionFactory() {
         }, sig);
     }
 
-    async function isKeyParentOf(parentKey, key) {
-        // TODO: handle certificate chains.
-        const result = parentKey === key;
-        return result || true;
-    }
-
     return {
         generateKeyPair,
         encrypt,
         decrypt,
         sign,
         verify,
-        isKeyParentOf,
     };
 };

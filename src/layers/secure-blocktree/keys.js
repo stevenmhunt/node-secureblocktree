@@ -3,7 +3,7 @@ const constants = require('../../constants');
 const { InvalidKeyError } = require('../../errors');
 
 module.exports = function secureBlocktreeKeysFactory({
-    os, encryption, context, blocktree,
+    os, context, blocktree,
 }) {
     /**
      * Determines whether or not a key is active.
@@ -20,21 +20,12 @@ module.exports = function secureBlocktreeKeysFactory({
     }
 
     /**
-     * Determines if the "parentKey" is the parent key of "key".
-     * @param {string} parentKey The parent key.
-     * @param {string} key The alleged child key.
-     * @returns {Promise<boolean>} Whether or not the "parent key" is the parent of "key".
-     */
-    async function isKeyParentOf(parentKey, key) {
-        return encryption.isKeyParentOf(parentKey, key);
-    }
-
-    /**
      * Given a block, scans for all specified keys in the blockchain.
      * @param {string} block The block to start scanning from.
-     * @param {boolean} isRecursive Indicates whether to scan all parent blocks as well.
-     * @param {boolean} isActive Indicates whether to only return active keys.
-     * @param {number} action The type of action to return keys for (read, write, etc.)
+     * @param {boolean} isRecursive (optional) Indicates whether to scan all parent blocks as well.
+     * @param {boolean} isActive (optional) Indicates whether to only return active keys.
+     * @param {number} action (optional) The type of action to return keys for (read, write, etc.)
+     * @param {string} key (optional) The key to look for.
      * @param {BigInt} timestamp The timestamp to use for checking active status, or "now" if null.
      * @returns {Promise<Array>} A list of keys which were collected during the scan.
      */
@@ -101,17 +92,14 @@ module.exports = function secureBlocktreeKeysFactory({
      * @param {number} action The action to perform.
      * @returns {Promise<boolean>} Whether the key is valid or not.
      */
-    async function validateKey({
-        block, key, parentKey, timestamp,
+    async function validateParentKey({
+        block, key, timestamp, isRecursive,
     }) {
-        if (!key) {
-            return false;
-        }
         const [result] = await performKeyScan({
             block,
             isActive: true,
             action: constants.action.write,
-            key: parentKey,
+            key,
             isRecursive: true,
             timestamp,
         });
@@ -119,13 +107,15 @@ module.exports = function secureBlocktreeKeysFactory({
             if (!result.parentKey) {
                 return true;
             }
-            const parent = await blocktree.getParentBlock(block);
-            if (!parent) {
-                return true;
+            if (isRecursive !== false) {
+                const parent = await blocktree.getParentBlock(block);
+                if (!parent) {
+                    return true;
+                }
+                return validateParentKey({
+                    block: parent, key: result.parentKey, timestamp, isRecursive,
+                });
             }
-            return validateKey({
-                block: parent, parentKey: result.parentKey, key: result.key, timestamp,
-            });
         }
         return false;
     }
@@ -141,13 +131,12 @@ module.exports = function secureBlocktreeKeysFactory({
     async function validateKeysInternal({
         block, keys, parentKey,
     }) {
-        const result = await Promise.all(
-            keys.map(async (k) => validateKey({
-                block,
-                parentKey,
-                key: k,
-            })),
-        );
+        const isParentValid = await validateParentKey({
+            block,
+            key: parentKey,
+            isRecursive: true,
+        });
+        const result = await Promise.all(keys.map(async (k) => !!k && isParentValid));
         return result.filter((i) => i).length;
     }
 
@@ -174,9 +163,8 @@ module.exports = function secureBlocktreeKeysFactory({
 
     return {
         isKeyActive,
-        isKeyParentOf,
         performKeyScan,
-        validateKey,
+        validateParentKey,
         validateKeys,
     };
 };
