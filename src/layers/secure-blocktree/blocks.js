@@ -30,6 +30,24 @@ module.exports = function secureBlocktreeBlocksFactory({
     }
 
     /**
+     * Deserializes the given raw block data.
+     * @param {*} buf The raw block data to deserialize.
+     * @returns {Promise<Object>} The deserialized block data.
+     */
+    async function readBlockBytes(buf) {
+        return context.deserializeSecureBlock(await blocktree.readBlockBytes(buf));
+    }
+
+    /**
+     * Reads the raw bytes from a block.
+     * @param {*} block The block hash to read.
+     * @returns {Promise<Buffer>} The requested bytes.
+     */
+    async function readRawBlock(block) {
+        return blocktree.readRawBlock(block);
+    }
+
+    /**
      * Given a block, scans the blocks in the system to find the next one.
      * @param {string} block The block to start from.
      * @returns {Promise<string>} The hash of the next block, or null.
@@ -105,6 +123,8 @@ module.exports = function secureBlocktreeBlocksFactory({
     return {
         readSecureBlock,
         writeSecureBlock,
+        readBlockBytes,
+        readRawBlock,
         getNextBlock,
         getRootBlock,
         getParentBlock,

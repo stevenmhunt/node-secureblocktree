@@ -69,6 +69,24 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
     }
 
     /**
+     * Deserializes the given raw block data.
+     * @param {*} buf The raw block data to deserialize.
+     * @returns {Promise<Object>} The deserialized block data.
+     */
+    async function readBlockBytes(buf) {
+        return deserializeBlocktreeData(await blockchain.readBlockBytes(buf));
+    }
+
+    /**
+     * Reads the raw bytes from a block.
+     * @param {*} block The block hash to read.
+     * @returns {Promise<Buffer>} The requested bytes.
+     */
+    async function readRawBlock(block) {
+        return blockchain.readRawBlock(block);
+    }
+
+    /**
      * Retrieves the specified list of blocks.
      * @param {string} partial The "starts with" search to perform, or null to retrieve all blocks.
      * @returns {Promise<Array>} The list of requested blocks.
@@ -294,6 +312,8 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
     return {
         readBlock,
         writeBlock,
+        readBlockBytes,
+        readRawBlock,
         listBlocks,
         countBlocks,
         findInBlocks,
