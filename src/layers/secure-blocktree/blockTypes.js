@@ -35,9 +35,12 @@ module.exports = function secureBlocktreeBlockTypesFactory({
             // validate the provided signature, the keys, and the parent value.
             parent = await context.validateParentBlock({ prev, type });
             signature = await context.validateSignature({ sig, prev, parent });
-            await context.verifySignedBlock({
+            if (!await context.verifySignedBlock({
                 key: parentKey, sig: signature, parent, prev,
-            });
+            })) {
+                throw new InvalidSignatureError({ signature, parentKey },
+                    InvalidSignatureError.reasons.inconsistent);
+            }
             await context.validateKeys({ block: prev, keys, parentKey });
         }
 
@@ -107,7 +110,8 @@ module.exports = function secureBlocktreeBlockTypesFactory({
         sig, block, type, data,
     }) {
         if (!sig) {
-            throw new InvalidSignatureError({ results: [] });
+            throw new InvalidSignatureError({ results: [] },
+                InvalidSignatureError.reasons.notFound);
         }
         if (!block) {
             throw new InvalidBlockError({ block }, InvalidBlockError.reasons.isNull,

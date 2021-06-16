@@ -39,7 +39,8 @@ module.exports = function secureBlocktreeSignaturesFactory({ context }) {
         );
         const result = results.find((i) => i.result) !== undefined;
         if (!result && noThrow !== true) {
-            throw new InvalidSignatureError({ results });
+            throw new InvalidSignatureError({ results },
+                InvalidSignatureError.reasons.notFound);
         }
         return result ? signature : null;
     }

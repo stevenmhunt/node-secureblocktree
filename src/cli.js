@@ -62,6 +62,9 @@ function initializeCliEnvironment({ println }) {
     return env;
 }
 
+/**
+ * Initiates the command-line interface.
+ */
 module.exports = async function cliFactory({
     io, system, blockchain, blocktree, secureBlocktree,
 }) {

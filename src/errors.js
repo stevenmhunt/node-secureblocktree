@@ -51,7 +51,6 @@ class SerializationError extends BlocktreeError {
         this.reason = reason;
     }
 }
-
 SerializationError.reasons = serializationErrorReasons;
 
 /**
@@ -97,8 +96,15 @@ class InvalidBlockError extends BlocktreeError {
         this.reason = reason;
     }
 }
-
 InvalidBlockError.reasons = invalidBlockErrorReasons;
+
+/**
+ * Reasons for invalid signature error.
+ */
+const invalidSignatureErrorReasons = {
+    notFound: 1,
+    inconsistent: 2,
+};
 
 /**
  * Invalid signature error.
@@ -108,12 +114,22 @@ class InvalidSignatureError extends BlocktreeError {
      * Constructor.
      * @param {Object} values Relevant data collected during the error.
      */
-    constructor(values) {
-        super(constants.error.invalidSignature, constants.layer.secureBlocktree,
-            'Invalid signature.');
+    constructor(values, reason) {
+        super(constants.error.invalidSignature, constants.layer.secureBlocktree, (() => {
+            switch (reason) {
+            case invalidSignatureErrorReasons.notFound:
+                return 'A valid signature could not be located.';
+            case invalidSignatureErrorReasons.inconsistent:
+                return 'The signature did not match the assigned parent key.';
+            default:
+                return 'Invalid signature was found.';
+            }
+        })());
         this.values = values;
+        this.reason = reason;
     }
 }
+InvalidSignatureError.reasons = invalidSignatureErrorReasons;
 
 /**
  * Invalid key error.
