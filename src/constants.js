@@ -24,6 +24,7 @@ const constants = {
         missingBlock: 'missing block',
         missingParentBlock: 'missing parent block',
         invalidTimestamp: 'invalid timestamp',
+        invalidSequence: 'invalid sequence',
     },
     format: {
         hash: 'hex',

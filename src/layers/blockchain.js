@@ -339,11 +339,30 @@ module.exports = function blockchainLayerFactory({ system }) {
                         blockCount,
                     };
                 }
+                if (blockBefore.seq !== nextBlock.seq + 1n) {
+                    return {
+                        isValid: false,
+                        reason: constants.validation.invalidSequence,
+                        block: next,
+                        blockCount,
+                    };
+                }
             }
+
             next = (nextBlock || {}).prev;
             blockBefore = nextBlock;
         }
         while (next != null);
+
+        if (blockBefore.seq !== 1n) {
+            return {
+                isValid: false,
+                reason: constants.validation.invalidSequence,
+                block: blockBefore.hash,
+                blockCount,
+            };
+        }
+
         return { isValid: true, blockCount };
     }
 
