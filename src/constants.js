@@ -36,7 +36,6 @@ const constants = {
         hash: 'sha256',
     },
     blockType: {
-        record: 0,
         zone: 1,
         identity: 2,
         keys: 3,
