@@ -17,7 +17,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * @returns {Promise<string>} The new block.
      */
     async function setKeys({
-        sig, block, keys, tsInit, tsExp,
+        sig, block, parentKey, keys, certificates, tsInit, tsExp,
     }) {
         const type = constants.blockType.keys;
         const init = tsInit !== undefined ? tsInit : constants.timestamp.zero;
@@ -27,7 +27,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
         let signature = null;
 
         // if attempting to initialize the root...
-        if (sig === null && prev === null) {
+        if (sig === null && prev === null && parentKey === null) {
             // there can only be one root key in the system.
             if (await blocktree.countBlocks() > 0) {
                 throw new InvalidRootError();
@@ -36,10 +36,15 @@ module.exports = function secureBlocktreeBlockTypesFactory({
             // validate the provided signature, the keys, and the parent value.
             parent = await context.validateParentBlock({ prev, type });
             signature = await context.validateSignature({ sig, prev, parent });
-            await context.validateKeys({ block: prev, keys });
+            await context.verifySignedBlock({
+                key: parentKey, sig: signature, parent, prev,
+            });
+            await context.validateKeys({ block: prev, keys, parentKey });
         }
 
-        const data = { keys, tsInit: init, tsExp: exp };
+        const data = {
+            parentKey, keys, certificates, tsInit: init, tsExp: exp,
+        };
         return context.writeSecureBlock({
             sig: signature, parent, prev, type, data,
         });
@@ -54,9 +59,17 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * @param {BigInt} tsExp The expiration timestamp for the keys.
      * @returns {Promise<string>} The new block.
      */
-    async function revokeKeys({ sig, block, keys }) {
+    async function revokeKeys({
+        sig, block, parentKey, keys, certificates,
+    }) {
         return setKeys({
-            sig, block, keys, tsInit: constants.timestamp.zero, tsExp: constants.timestamp.zero,
+            sig,
+            block,
+            keys,
+            certificates,
+            parentKey,
+            tsInit: constants.timestamp.zero,
+            tsExp: constants.timestamp.zero,
         });
     }
 

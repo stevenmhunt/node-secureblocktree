@@ -138,6 +138,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
+                parentKey: rootZoneKeys[constants.action.write][0],
                 keys: newZoneKeys,
             });
             const newKeys = await generateTestKeys(encryption);
@@ -172,6 +173,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
+                parentKey: rootZoneKeys[constants.action.write][0],
                 keys: newZoneKeys,
             });
             await secureBlocktree.revokeKeys({
@@ -179,6 +181,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
+                parentKey: rootZoneKeys[constants.action.write][0],
                 keys: newZoneKeys,
             });
             let isExecuted = false;
@@ -214,6 +217,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
+                parentKey: rootZoneKeys[constants.action.write][0],
                 keys: newZoneKeys,
             });
             const newKeys = await generateTestKeys(encryption);
@@ -223,6 +227,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
+                parentKey: rootZoneKeys[constants.action.write][0],
                 keys: newKeys,
             });
 
@@ -244,6 +249,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
+                parentKey: rootZoneKeys[constants.action.write][0],
                 keys: await generateTestKeys(encryption),
             });
             const newKeys = await generateTestKeys(encryption);
@@ -252,6 +258,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 await secureBlocktree.setKeys({
                     block: newZoneHead,
                     sig: signAs(secureBlocktree, privateKey),
+                    parentKey: invalidKey[constants.action.write][0],
                     keys: newKeys,
                 });
                 isExecuted = true;
@@ -276,6 +283,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
+                parentKey: rootZoneKeys[constants.action.write][0],
                 keys: newZoneKeys,
             });
             let isExecuted = false;
@@ -285,6 +293,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                     sig: signAs(secureBlocktree, getPrivateKey(
                         newZoneKeys[constants.action.write][0],
                     )),
+                    parentKey: rootZoneKeys[constants.action.write][0],
                     keys: await generateTestKeys(encryption),
                 });
                 isExecuted = true;
@@ -303,6 +312,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                     sig: signAs(secureBlocktree, getPrivateKey(
                         rootKeys[constants.action.write][0],
                     )),
+                    parentKey: rootKeys[constants.action.write][0],
                     keys: newKeys,
                 });
                 isExecuted = true;
@@ -324,6 +334,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                     sig: signAs(secureBlocktree, getPrivateKey(
                         rootKeys[constants.action.write][0],
                     )),
+                    parentKey: rootKeys[constants.action.write][0],
                     keys: newKeys,
                 });
                 isExecuted = true;
@@ -352,6 +363,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
+                parentKey: rootZoneKeys[constants.action.write][0],
                 keys: newZoneKeys,
             });
             const result = await secureBlocktree.revokeKeys({
@@ -359,6 +371,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
+                parentKey: rootZoneKeys[constants.action.write][0],
                 keys: newZoneKeys,
             });
 
@@ -381,6 +394,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
+                parentKey: rootZoneKeys[constants.action.write][0],
                 keys: newZoneKeys,
             });
             let isExecuted = false;
@@ -388,6 +402,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 await secureBlocktree.revokeKeys({
                     block: newZone,
                     sig: signAs(secureBlocktree, privateKey),
+                    parentKey: invalidKey[constants.action.write][0],
                     keys: newZoneKeys,
                 });
                 isExecuted = true;
@@ -412,6 +427,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
+                parentKey: rootZoneKeys[constants.action.write][0],
                 keys: newZoneKeys,
             });
             let isExecuted = false;
@@ -421,6 +437,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                     sig: signAs(secureBlocktree, getPrivateKey(
                         newZoneKeys[constants.action.write][0],
                     )),
+                    parentKey: newZoneKeys[constants.action.write][0],
                     keys: newZoneKeys,
                 });
                 isExecuted = true;

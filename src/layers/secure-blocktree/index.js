@@ -1,7 +1,7 @@
 /* eslint-disable no-plusplus, no-await-in-loop */
+const serialization = require('./serialization');
 
 const sbtEncryptionFactory = require('./encryption');
-const sbtSerializationFactory = require('./serialization');
 const sbtBlocksFactory = require('./blocks');
 const sbtKeysFactory = require('./keys');
 const sbtSignaturesFactory = require('./signatures');
@@ -16,8 +16,7 @@ module.exports = function secureBlocktreeLayerFactory({
     blocktree, secureCache, os, encryption,
 }) {
     let context = sbtEncryptionFactory({ encryption });
-    context = { ...context, ...sbtSerializationFactory() };
-    context = { ...context, ...sbtBlocksFactory({ context, blocktree }) };
+    context = { ...context, ...sbtBlocksFactory({ blocktree, serialization }) };
     context = {
         ...context,
         ...sbtKeysFactory({

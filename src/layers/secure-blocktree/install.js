@@ -22,6 +22,7 @@ module.exports = function secureBlocktreeInstallFactory({
         const rootBlock = await context.setKeys({
             sig: null,
             block: null,
+            parentKey: null,
             keys: rootKeys,
         });
         await secureCache.writeCache(null, constants.secureCache.rootBlock, rootBlock);
@@ -37,6 +38,7 @@ module.exports = function secureBlocktreeInstallFactory({
         await context.setKeys({
             sig: signAsRoot,
             block: rootZone,
+            parentKey: rootKeys[constants.action.write][0],
             keys: rootZoneKeys,
         });
         return { rootBlock, rootZone };

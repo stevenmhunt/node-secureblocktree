@@ -65,6 +65,9 @@ module.exports = function secureBlocktreeEncryptionFactory({
     async function verifySignedBlock({
         key, sig, parent, prev,
     }) {
+        if (!key || !sig) {
+            return false;
+        }
         return encryption.verify(
             Buffer.from(key, constants.format.key),
             Buffer.from(sig, constants.format.signature),

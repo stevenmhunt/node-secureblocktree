@@ -3,7 +3,7 @@ const constants = require('../../constants');
 const { InvalidRootError, InvalidBlockError } = require('../../errors');
 
 module.exports = function secureBlocktreeBlocksFactory({
-    context, blocktree,
+    blocktree, serialization,
 }) {
     /**
      * Reads a secure block from the blocktree.
@@ -11,7 +11,7 @@ module.exports = function secureBlocktreeBlocksFactory({
      * @returns {Promise<Object>} The requested secure data.
      */
     async function readSecureBlock(block) {
-        return context.deserializeSecureBlock(await blocktree.readBlock(block));
+        return serialization.deserializeSecureBlock(await blocktree.readBlock(block));
     }
 
     /**
@@ -26,7 +26,7 @@ module.exports = function secureBlocktreeBlocksFactory({
                 throw new InvalidRootError();
             }
         }
-        return blocktree.writeBlock(context.serializeSecureBlock(secureData));
+        return blocktree.writeBlock(serialization.serializeSecureBlock(secureData));
     }
 
     /**
@@ -35,7 +35,7 @@ module.exports = function secureBlocktreeBlocksFactory({
      * @returns {Promise<Object>} The deserialized block data.
      */
     async function readBlockBytes(buf) {
-        return context.deserializeSecureBlock(await blocktree.readBlockBytes(buf));
+        return serialization.deserializeSecureBlock(await blocktree.readBlockBytes(buf));
     }
 
     /**

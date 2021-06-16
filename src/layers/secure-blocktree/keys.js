@@ -12,7 +12,7 @@ module.exports = function secureBlocktreeKeysFactory({
      * @param {BigInt} timestamp The timestamp to check with, or "now" if null.
      * @returns {Promise<boolean>} Whether or not the key is active.
      */
-    async function isKeyActive({
+    function isKeyActive({
         tsInit, tsExp, timestamp,
     }) {
         const ts = !timestamp ? os.generateTimestamp() : timestamp;
@@ -39,7 +39,7 @@ module.exports = function secureBlocktreeKeysFactory({
      * @returns {Promise<Array>} A list of keys which were collected during the scan.
      */
     async function performKeyScan({
-        block, isRecursive, isActive, action, timestamp,
+        block, isRecursive, isActive, action, key, timestamp,
     } = {}) {
         if (!block) {
             return [];
@@ -57,20 +57,24 @@ module.exports = function secureBlocktreeKeysFactory({
                         || action === actionKeys[i]) {
                         const keyList = secureBlock.data.keys[actionKeys[i]];
                         for (let j = 0; j < keyList.length; j += 1) {
-                            const key = keyList[j];
+                            const currentKey = keyList[j];
                             const { tsInit, tsExp } = secureBlock.data;
                             if (isActive === true
-                                && !(await isKeyActive({ tsInit, tsExp, timestamp }))) {
-                                inactiveKeys[key] = true;
+                                && !isKeyActive({ tsInit, tsExp, timestamp })) {
+                                inactiveKeys[currentKey] = true;
                             }
-                            if (!inactiveKeys[key]) {
+                            if (!inactiveKeys[currentKey]) {
                                 result.push({
-                                    key,
+                                    key: currentKey,
                                     block: current,
                                     action: actionKeys[i],
+                                    parentKey: secureBlock.data.parentKey,
                                     tsInit: secureBlock.data.tsInit,
                                     tsExp: secureBlock.data.tsExp,
                                 });
+                                if (key && key === currentKey) {
+                                    return result;
+                                }
                             }
                         }
                     }
@@ -98,25 +102,30 @@ module.exports = function secureBlocktreeKeysFactory({
      * @returns {Promise<boolean>} Whether the key is valid or not.
      */
     async function validateKey({
-        block, key, action, timestamp,
+        block, key, parentKey, timestamp,
     }) {
-        const keyData = await performKeyScan({
+        if (!key) {
+            return false;
+        }
+        const [result] = await performKeyScan({
             block,
+            isActive: true,
+            action: constants.action.write,
+            key: parentKey,
             isRecursive: true,
+            timestamp,
         });
-        for (let i = 0; i < keyData.length; i += 1) {
-            const { tsInit, tsExp } = keyData[i];
-            if (keyData[i].action === action
-                && await isKeyActive({ tsInit, tsExp, timestamp })
-                && await isKeyParentOf(keyData[i].key, key)) {
-                const parent = await blocktree.getParentBlock(block);
-                if (!parent) {
-                    return true;
-                }
-                return validateKey({
-                    block: parent, key: keyData[i].key, action, timestamp,
-                });
+        if (result) {
+            if (!result.parentKey) {
+                return true;
             }
+            const parent = await blocktree.getParentBlock(block);
+            if (!parent) {
+                return true;
+            }
+            return validateKey({
+                block: parent, parentKey: result.parentKey, key: result.key, timestamp,
+            });
         }
         return false;
     }
@@ -129,9 +138,15 @@ module.exports = function secureBlocktreeKeysFactory({
      * @param {number} action The action to perform.
      * @returns {Promise<boolean>} Whether the key is valid or not.
      */
-    async function validateKeysInternal({ block, keys, action }) {
+    async function validateKeysInternal({
+        block, keys, parentKey,
+    }) {
         const result = await Promise.all(
-            keys.map(async (k) => validateKey({ block, key: k, action })),
+            keys.map(async (k) => validateKey({
+                block,
+                parentKey,
+                key: k,
+            })),
         );
         return result.filter((i) => i).length;
     }
@@ -142,13 +157,13 @@ module.exports = function secureBlocktreeKeysFactory({
      * @param {string} keys The key sets to validate.
      * @returns {Promise<boolean>} Whether the key is valid or not.
      */
-    async function validateKeys({ block, keys }) {
+    async function validateKeys({ block, keys, parentKey }) {
         const results = await Promise.all(
             Object.keys(keys).map(
                 async (k) => validateKeysInternal({
                     block,
                     keys: keys[k],
-                    action: k,
+                    parentKey,
                 }),
             ),
         );
