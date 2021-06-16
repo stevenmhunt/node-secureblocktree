@@ -56,7 +56,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      */
     async function revokeKeys({ sig, block, keys }) {
         return setKeys({
-            sig, block, keys, tsInit: constants.timestamp.min, tsExp: constants.timestamp.min,
+            sig, block, keys, tsInit: constants.timestamp.zero, tsExp: constants.timestamp.zero,
         });
     }
 

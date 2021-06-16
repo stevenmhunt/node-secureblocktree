@@ -37,11 +37,14 @@ function initBlocktree() {
     return { ...blocktree, mocks: blockchain.mocks };
 }
 
-function initSecureBlocktree() {
+function getEncryption() {
+    return encryptionFactory();
+}
+
+function initSecureBlocktree(encryption) {
     const blocktree = initBlocktree();
     const secureCache = cacheFactory();
     const os = osFactory();
-    const encryption = encryptionFactory();
     const secureBlocktree = secureBlocktreeLayerFactory({
         blocktree, secureCache, os, encryption,
     });
@@ -80,13 +83,10 @@ async function generateTestKeys(encryption) {
     };
 }
 
-async function initializeSecureRoot(secureBlocktree) {
-    const rootKeys = await generateTestKeys(secureBlocktree.encryption);
-    const rootZoneKeys = await generateTestKeys(secureBlocktree.encryption);
+async function initializeSecureRoot(secureBlocktree, rootKeys, rootZoneKeys) {
     const rootWritePrivateKey = getPrivateKey(rootKeys[constants.action.write][0]);
     const signAsRoot = signAs(secureBlocktree, rootWritePrivateKey);
-    const result = await secureBlocktree.installRoot({ rootKeys, rootZoneKeys, signAsRoot });
-    return { ...result, rootKeys, rootZoneKeys };
+    return secureBlocktree.installRoot({ rootKeys, rootZoneKeys, signAsRoot });
 }
 
 module.exports = {
@@ -95,6 +95,7 @@ module.exports = {
     initBlocktree,
     initSecureBlocktree,
     initializeSecureRoot,
+    getEncryption,
     generateTestKeys,
     getPrivateKey,
     signAs,

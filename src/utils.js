@@ -1,7 +1,7 @@
 const constants = require('./constants');
 
 function toInt64(buf, index) {
-    return buf.readBigInt64BE(index);
+    return buf.readBigInt64BE(index) + (2n ** 63n);
 }
 
 function fromInt64(val) {
@@ -9,7 +9,7 @@ function fromInt64(val) {
         return val;
     }
     const buf = Buffer.allocUnsafe(constants.size.int64);
-    buf.writeBigInt64BE(val);
+    buf.writeBigInt64BE(val - (2n ** 63n));
     return buf;
 }
 

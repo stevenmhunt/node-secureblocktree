@@ -4,16 +4,24 @@ const constants = require('../src/constants');
 const { InvalidBlockError, InvalidSignatureError } = require('../src/errors');
 const {
     initSecureBlocktree, initializeSecureRoot, generateTestKeys, signAs, getPrivateKey,
+    getEncryption,
 } = require('./test-helper');
 
 describe('Blocktree Layer 3 - Secure Blocktree', () => {
     let secureBlocktree; let encryption; let
         secureRoot;
+    let rootKeys; let
+        rootZoneKeys;
+
+    before(async () => {
+        encryption = getEncryption();
+        rootKeys = await generateTestKeys(encryption);
+        rootZoneKeys = await generateTestKeys(encryption);
+    });
 
     beforeEach(async () => {
-        secureBlocktree = initSecureBlocktree();
-        encryption = secureBlocktree.encryption;
-        secureRoot = await initializeSecureRoot(secureBlocktree);
+        secureBlocktree = initSecureBlocktree(encryption);
+        secureRoot = await initializeSecureRoot(secureBlocktree, rootKeys, rootZoneKeys);
     });
 
     describe('read secure block', () => {
@@ -44,7 +52,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
     });
     describe('create zone', () => {
         it('should support new zones within the root zone', async () => {
-            const { rootZone, rootZoneKeys } = secureRoot;
+            const { rootZone } = secureRoot;
             const newZone = await secureBlocktree.createZone({
                 block: rootZone,
                 sig: signAs(secureBlocktree, getPrivateKey(
@@ -61,7 +69,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });
         it('should not create a zone without a parent', async () => {
-            const { rootZoneKeys } = secureRoot;
             let isExecuted = false;
             try {
                 await secureBlocktree.createZone({
@@ -81,7 +88,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
         it('should not create a zone adjacent to the root zone', async () => {
-            const { rootBlock, rootZoneKeys } = secureRoot;
+            const { rootBlock } = secureRoot;
             let isExecuted = false;
             try {
                 await secureBlocktree.createZone({
@@ -117,7 +124,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
         it('should not create a zone with an unassigned key', async () => {
-            const { rootZone, rootZoneKeys } = secureRoot;
+            const { rootZone } = secureRoot;
             const newZoneKeys = await generateTestKeys(encryption);
             const newZone = await secureBlocktree.createZone({
                 block: rootZone,
@@ -151,7 +158,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
         it('should not create a zone with a revoked key', async () => {
-            const { rootZone, rootZoneKeys } = secureRoot;
+            const { rootZone } = secureRoot;
             const newZoneKeys = await generateTestKeys(encryption);
             const newZone = await secureBlocktree.createZone({
                 block: rootZone,
@@ -193,7 +200,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
     });
     describe('set keys', () => {
         it('should allow setting keys for a zone using the parent key', async () => {
-            const { rootZone, rootZoneKeys } = secureRoot;
+            const { rootZone } = secureRoot;
             const newZoneKeys = await generateTestKeys(encryption);
             const newZone = await secureBlocktree.createZone({
                 block: rootZone,
@@ -224,7 +231,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
         it('should not allow setting keys without a known signature', async () => {
             const invalidKey = await generateTestKeys(encryption);
             const privateKey = getPrivateKey(invalidKey[constants.action.write][0]);
-            const { rootZone, rootZoneKeys } = secureRoot;
+            const { rootZone } = secureRoot;
             const newZone = await secureBlocktree.createZone({
                 block: rootZone,
                 sig: signAs(secureBlocktree, getPrivateKey(
@@ -255,7 +262,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
         it('should not allow setting keys with the blockchain\'s own key', async () => {
-            const { rootZone, rootZoneKeys } = secureRoot;
+            const { rootZone } = secureRoot;
             const newZoneKeys = await generateTestKeys(encryption);
             const newZone = await secureBlocktree.createZone({
                 block: rootZone,
@@ -288,7 +295,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
         it('should not allow setting keys without a parent', async () => {
-            const { rootKeys } = secureRoot;
             const newKeys = await generateTestKeys(encryption);
             let isExecuted = false;
             try {
@@ -309,7 +315,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
         it('should not allow setting keys onto the root block', async () => {
-            const { rootBlock, rootKeys } = secureRoot;
+            const { rootBlock } = secureRoot;
             const newKeys = await generateTestKeys(encryption);
             let isExecuted = false;
             try {
@@ -332,7 +338,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
     });
     describe('revoke keys', () => {
         it('should allow revoke keys for a zone using the parent key', async () => {
-            const { rootZone, rootZoneKeys } = secureRoot;
+            const { rootZone } = secureRoot;
             const newZoneKeys = await generateTestKeys(encryption);
             const newZone = await secureBlocktree.createZone({
                 block: rootZone,
@@ -361,7 +367,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
         it('should not allow revoking keys without a known signature', async () => {
             const invalidKey = await generateTestKeys(encryption);
             const privateKey = getPrivateKey(invalidKey[constants.action.write][0]);
-            const { rootZone, rootZoneKeys } = secureRoot;
+            const { rootZone } = secureRoot;
             const newZoneKeys = await generateTestKeys(encryption);
             const newZone = await secureBlocktree.createZone({
                 block: rootZone,
@@ -392,7 +398,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
         it('should not allow revoking keys with the blockchain\'s own key', async () => {
-            const { rootZone, rootZoneKeys } = secureRoot;
+            const { rootZone } = secureRoot;
             const newZoneKeys = await generateTestKeys(encryption);
             const newZone = await secureBlocktree.createZone({
                 block: rootZone,

@@ -20,7 +20,7 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @param {Object} bcBlockData The blockchain object.
      * @returns {Buffer} The binary representation of the block.
      */
-    function serializeBlockchainData(bcBlockData, timestamp) {
+    function serializeBlockchainData(bcBlockData, timestamp, seq) {
         let prev = bcBlockData.prev || Buffer.alloc(constants.size.hash);
         if (!Buffer.isBuffer(prev)) {
             prev = Buffer.from(prev, constants.format.hash);
@@ -32,6 +32,8 @@ module.exports = function blockchainLayerFactory({ system }) {
         }
         const nonce = system.generateNonce();
         const buf = Buffer.concat([
+            // sequence
+            utils.fromInt64(seq),
             // previous hash
             prev,
             // uniqueness
@@ -56,6 +58,8 @@ module.exports = function blockchainLayerFactory({ system }) {
         }
         let index = 0;
         const result = {};
+        result.seq = utils.toInt64(buf, index);
+        index += constants.size.int64;
         result.prev = buf.slice(index, index + constants.size.hash);
         index += constants.size.hash;
         // handle the case where prev is null.
@@ -195,8 +199,9 @@ module.exports = function blockchainLayerFactory({ system }) {
     async function writeBlock(bcBlockData, options = {}) {
         return utils.withEvent(emitter, 'write-block', { bcBlockData, options }, async () => {
             const timestamp = system.generateTimestamp();
+            const prev = bcBlockData.prev ? await readBlock(bcBlockData.prev) : null;
+            const seq = (prev || { seq: 0n }).seq + 1n;
             if (options.validate !== false && bcBlockData.prev) {
-                const prev = await readBlock(bcBlockData.prev);
                 if (!prev) {
                     throw new InvalidBlockError({
                         block: bcBlockData.prev,
@@ -221,7 +226,7 @@ module.exports = function blockchainLayerFactory({ system }) {
                 }
             }
             const block = await system.writeStorage(
-                serializeBlockchainData(bcBlockData, timestamp),
+                serializeBlockchainData(bcBlockData, timestamp, seq),
             );
             if (options.cacheRoot !== false) {
                 const root = await cacheRootBlock(block, bcBlockData);

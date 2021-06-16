@@ -17,9 +17,8 @@ const constants = {
         signature: 32,
     },
     timestamp: {
-        min: -(2n ** 63n),
         zero: 0n,
-        max: 2n ** 63n - 1n,
+        max: 2n ** 64n - 1n,
     },
     validation: {
         missingBlock: 'missing block',
