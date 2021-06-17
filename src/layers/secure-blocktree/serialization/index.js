@@ -1,8 +1,8 @@
 /* eslint-disable no-plusplus */
 const constants = require('../../../constants');
 const blockTypes = require('./blockTypes');
-const { serializeSignature } = require('./serialize');
-const { deserializeSignature } = require('./deserialize');
+const { serializeSignature, serializeKey } = require('./serialize');
+const { deserializeSignature, deserializeKey } = require('./deserialize');
 
 /**
  * @private
@@ -12,10 +12,20 @@ const { deserializeSignature } = require('./deserialize');
  * @returns {Buffer} A binary representation of the secure data.
  */
 function serializeSecureBlockData(type, data) {
-    if (data && blockTypes[type]) {
-        return blockTypes[type].serialize(data);
+    if (data && data.isEncrypted && data.key && Buffer.isBuffer(data.encryptedData)) {
+        return Buffer.concat([
+            Buffer.from([constants.secureBlockData.encrypted]),
+            serializeKey(data.key),
+            data.encryptedData,
+        ]);
     }
-    return Buffer.alloc(0);
+    if (data && blockTypes[type]) {
+        return Buffer.concat([
+            Buffer.from([constants.secureBlockData.unencrypted]),
+            blockTypes[type].serialize(data),
+        ]);
+    }
+    return Buffer.from([constants.secureBlockData.null]);
 }
 
 /**
@@ -48,10 +58,28 @@ function serializeSecureBlock(secureData) {
  * @returns {Object} The deserialized secure block data.
  */
 function deserializeSecureBlockData(type, data) {
-    if (data && blockTypes[type]) {
-        return blockTypes[type].deserialize(data);
+    if (!data || !Buffer.isBuffer(data)) {
+        return null;
     }
-    return null;
+    switch (data[0]) {
+    case constants.secureBlockData.null:
+        return null;
+    case constants.secureBlockData.unencrypted:
+        if (data && blockTypes[type]) {
+            return blockTypes[type].deserialize(data, 1);
+        }
+        return null;
+    case constants.secureBlockData.encrypted: {
+        const key = deserializeKey(data, 1);
+        return {
+            isEncrypted: true,
+            key: key.result,
+            data: data.slice(key.index),
+        };
+    }
+    default:
+        return null;
+    }
 }
 
 /**

@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const constants = require('./constants');
 
 /**
@@ -94,6 +95,22 @@ async function withEvent(emitter, event, parameters, fn) {
     }
 }
 
+/**
+ * Generates hashes for block data.
+ * @param {string} value
+ */
+function generateHash(value) {
+    return crypto.createHash(constants.block.hash).update(value).digest(constants.format.hash);
+}
+
+/**
+ * Generates a cryptographically random 64 bit integer.
+ * @returns {Buffer} A random 64 bit integer.
+ */
+function generateNonce() {
+    return crypto.randomBytes(constants.size.int64);
+}
+
 module.exports = {
     fromInt64,
     toInt64,
@@ -102,4 +119,6 @@ module.exports = {
     fromInt16,
     toInt16,
     withEvent,
+    generateHash,
+    generateNonce,
 };

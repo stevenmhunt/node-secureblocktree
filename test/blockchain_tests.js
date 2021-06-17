@@ -101,7 +101,7 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             const data2 = Buffer.from("I'm another string!", 'utf-8');
             let isExecuted = false;
             try {
-                blockchain.mocks.os.setNextTimestamp(0);
+                blockchain.mocks.time.setNextTimestamp(0);
                 await blockchain.writeBlock({ prev: block1, data: data2 }, options);
                 isExecuted = true;
             } catch (err) {
@@ -304,7 +304,7 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             const data1 = Buffer.from("I'm a string!", 'utf-8');
             const block1 = await blockchain.writeBlock({ prev: null, data: data1 });
             const data2 = Buffer.from("I'm another string!", 'utf-8');
-            blockchain.mocks.os.setNextTimestamp(0n);
+            blockchain.mocks.time.setNextTimestamp(0n);
             const block2 = await blockchain.writeBlock({ prev: block1, data: data2 }, options);
             const result = await blockchain.validateBlockchain(block2);
 

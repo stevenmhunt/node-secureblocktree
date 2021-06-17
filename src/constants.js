@@ -43,6 +43,11 @@ const constants = {
         log: 5,
         options: 6,
     },
+    secureBlockData: {
+        null: 0,
+        unencrypted: 1,
+        encrypted: 2,
+    },
     action: {
         read: 'r',
         write: 'w',

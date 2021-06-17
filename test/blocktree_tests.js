@@ -101,7 +101,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             const data2 = Buffer.from("I'm another string!", 'utf-8');
             let isExecuted = false;
             try {
-                blocktree.mocks.os.setNextTimestamp(0);
+                blocktree.mocks.time.setNextTimestamp(0);
                 await blocktree.writeBlock({ prev: block1, data: data2 }, options);
                 isExecuted = true;
             } catch (err) {

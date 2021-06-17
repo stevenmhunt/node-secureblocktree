@@ -10,7 +10,7 @@ const systemLayerFactory = require('../src/layers/system');
 // mocks
 const cacheFactory = require('./mocks/cache');
 const encryptionFactory = require('./mocks/encryption');
-const osFactory = require('./mocks/os');
+const timeFactory = require('./mocks/time');
 const storageFactory = require('./mocks/storage');
 
 function getRandomHash() {
@@ -19,16 +19,16 @@ function getRandomHash() {
 
 function initSystem() {
     const cache = cacheFactory();
-    const os = osFactory();
+    const time = timeFactory();
     const storage = storageFactory();
-    return { cache, os, storage };
+    return { cache, time, storage };
 }
 
 function initBlockchain() {
-    const { cache, storage, os } = initSystem();
-    const system = systemLayerFactory({ cache, storage, os });
-    const blockchain = blockchainLayerFactory({ system, cache, os });
-    return { ...blockchain, mocks: { cache, storage, os } };
+    const { cache, storage, time } = initSystem();
+    const system = systemLayerFactory({ cache, storage, time });
+    const blockchain = blockchainLayerFactory({ system, cache, time });
+    return { ...blockchain, mocks: { cache, storage, time } };
 }
 
 function initBlocktree() {
@@ -44,9 +44,9 @@ function getEncryption() {
 function initSecureBlocktree(encryption) {
     const blocktree = initBlocktree();
     const secureCache = cacheFactory();
-    const os = osFactory();
+    const time = timeFactory();
     const secureBlocktree = secureBlocktreeLayerFactory({
-        blocktree, secureCache, os, encryption,
+        blocktree, secureCache, time, encryption,
     });
     return { ...secureBlocktree, mocks: blocktree.mocks, encryption };
 }

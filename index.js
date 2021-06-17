@@ -11,20 +11,20 @@ const systemLayerFactory = require('./src/layers/system');
 // mocks
 const cacheFactory = require('./test/mocks/cache');
 const encryptionFactory = require('./test/mocks/encryption');
-const osFactory = require('./test/mocks/os');
+const timeFactory = require('./test/mocks/time');
 const storageFactory = require('./test/mocks/storage');
 
 if (require.main === module) {
     const cache = cacheFactory();
-    const os = osFactory();
+    const time = timeFactory();
     const storage = storageFactory();
-    const system = systemLayerFactory({ cache, storage, os });
-    const blockchain = blockchainLayerFactory({ system, cache, os });
+    const system = systemLayerFactory({ cache, storage, time });
+    const blockchain = blockchainLayerFactory({ system, cache, time });
     const blocktree = blocktreeLayerFactory({ blockchain });
     const secureCache = cacheFactory();
     const encryption = encryptionFactory();
     const secureBlocktree = secureBlocktreeLayerFactory({
-        blocktree, secureCache, os, encryption,
+        blocktree, secureCache, time, encryption,
     });
 
     const rl = rlp.createInterface({

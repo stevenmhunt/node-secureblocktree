@@ -3,7 +3,7 @@ const constants = require('../../constants');
 const { InvalidKeyError } = require('../../errors');
 
 module.exports = function secureBlocktreeKeysFactory({
-    os, context, blocktree,
+    time, context, blocktree,
 }) {
     /**
      * Determines whether or not a key is active.
@@ -15,7 +15,7 @@ module.exports = function secureBlocktreeKeysFactory({
     function isKeyActive({
         tsInit, tsExp, timestamp,
     }) {
-        const ts = !timestamp ? os.generateTimestamp() : timestamp;
+        const ts = !timestamp ? time.generateTimestamp() : timestamp;
         return ts >= tsInit && ts < tsExp;
     }
 

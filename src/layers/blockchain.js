@@ -30,7 +30,7 @@ module.exports = function blockchainLayerFactory({ system }) {
                     constants.layer.blockchain);
             }
         }
-        const nonce = system.generateNonce();
+        const nonce = utils.generateNonce();
         const buf = Buffer.concat([
             // sequence
             utils.fromInt64(seq),
@@ -73,7 +73,7 @@ module.exports = function blockchainLayerFactory({ system }) {
         result.timestamp = utils.toInt64(buf, index);
         index += constants.size.int64;
         result.data = buf.slice(index);
-        result.hash = system.generateHash(buf);
+        result.hash = utils.generateHash(buf);
         return result;
     }
 
@@ -157,7 +157,7 @@ module.exports = function blockchainLayerFactory({ system }) {
 
         // 3) if found, cache it for next time.
         if (value) {
-            const result = system.generateHash(value);
+            const result = utils.generateHash(value);
             await system.writeCache(block, constants.cache.next, result);
             return result;
         }

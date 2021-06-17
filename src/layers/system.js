@@ -1,29 +1,15 @@
+const { generateHash } = require('../utils');
+
 /**
  * Blocktree Level 0 - System
  */
-module.exports = function systemLayerFactory({ cache, storage, os }) {
-    /**
-     * Generates hashes for block data.
-     * @param {string} value
-     */
-    function generateHash(value) {
-        return os.generateHash(value);
-    }
-
+module.exports = function systemLayerFactory({ cache, storage, time }) {
     /**
      * Generates a 64 bit integer representing UTC epoch time.
      * @returns {BigInt} A UTC epoch timestamp.
      */
     function generateTimestamp() {
-        return os.generateTimestamp();
-    }
-
-    /**
-     * Generates a cryptographically random 32 bit integer.
-     * @returns {Buffer} A random 32 bit integer.
-     */
-    function generateNonce() {
-        return os.generateNonce();
+        return time.generateTimestamp();
     }
 
     /**
@@ -136,9 +122,7 @@ module.exports = function systemLayerFactory({ cache, storage, os }) {
         countInStorage,
         readCache,
         writeCache,
-        generateHash,
         generateTimestamp,
-        generateNonce,
         handleCommand,
     };
 };
