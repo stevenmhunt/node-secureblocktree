@@ -1,5 +1,6 @@
 /* eslint-disable no-plusplus */
 const constants = require('../../../constants');
+const { fromByte } = require('../../../utils');
 const blockTypes = require('./blockTypes');
 const { serializeSignature, serializeKey } = require('./serialize');
 const { deserializeSignature, deserializeKey } = require('./deserialize');
@@ -14,18 +15,18 @@ const { deserializeSignature, deserializeKey } = require('./deserialize');
 function serializeSecureBlockData(type, data) {
     if (data && data.isEncrypted && data.key && Buffer.isBuffer(data.encryptedData)) {
         return Buffer.concat([
-            Buffer.from([constants.secureBlockData.encrypted]),
+            fromByte(constants.secureBlockData.encrypted),
             serializeKey(data.key),
             data.encryptedData,
         ]);
     }
     if (data && blockTypes[type]) {
         return Buffer.concat([
-            Buffer.from([constants.secureBlockData.unencrypted]),
+            fromByte(constants.secureBlockData.unencrypted),
             blockTypes[type].serialize(data),
         ]);
     }
-    return Buffer.from([constants.secureBlockData.null]);
+    return fromByte(constants.secureBlockData.null);
 }
 
 /**
@@ -37,7 +38,7 @@ function serializeSecureBlock(secureData) {
     const { prev, parent, layer } = secureData;
     const data = Buffer.concat([
         // secure block type
-        Buffer.from([secureData.type]),
+        fromByte(secureData.type),
         // signature data
         serializeSignature(secureData.sig),
         // data

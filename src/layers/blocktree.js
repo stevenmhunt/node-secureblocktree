@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop, no-plusplus */
 const constants = require('../constants');
 const { SerializationError, InvalidBlockError } = require('../errors');
+const { fromByte } = require('../utils');
 
 /**
  * Blocktree Layer 2 - Blocktree
@@ -26,7 +27,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
             // parent hash
             parent,
             // layer
-            Buffer.from([btBlockData.layer || constants.layer.blocktree]),
+            fromByte(btBlockData.layer || constants.layer.blocktree, 'layer'),
             // data
             btBlockData.data,
         ]);

@@ -13,7 +13,7 @@ module.exports = {
      * @returns {Buffer} The serialized block.
      */
     serialize: function serializeKeysBlock({
-        parentKey, keys, tsInit, tsExp, data,
+        parentKey, keys, storedKeys, tsInit, tsExp, data,
     }) {
         const dataValue = data || Buffer.alloc(0);
         return Buffer.concat([
@@ -24,6 +24,8 @@ module.exports = {
             serializeKey(parentKey),
             // keys to add
             serializeKeys(keys),
+            // stored keys to add
+            serializeKeys(storedKeys),
             // (optional) additional data
             dataValue,
         ]);
@@ -48,6 +50,10 @@ module.exports = {
 
         res = deserializeKeys(data, index);
         result.keys = res.result;
+        index = res.index;
+
+        res = deserializeKeys(data, index);
+        result.storedKeys = res.result;
         index = res.index;
 
         const additionalData = data.slice(index);

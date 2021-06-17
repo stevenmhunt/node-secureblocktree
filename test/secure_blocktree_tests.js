@@ -58,7 +58,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
-                name: 'test zone',
             });
             const result = await secureBlocktree.readSecureBlock(newZone);
 
@@ -76,7 +75,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                     sig: signAs(secureBlocktree, getPrivateKey(
                         rootZoneKeys[constants.action.write][0],
                     )),
-                    name: 'test zone',
                 });
                 isExecuted = true;
             } catch (err) {
@@ -96,7 +94,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                     sig: signAs(secureBlocktree, getPrivateKey(
                         rootZoneKeys[constants.action.write][0],
                     )),
-                    name: 'test zone',
                 });
                 isExecuted = true;
             } catch (err) {
@@ -114,7 +111,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 await secureBlocktree.createZone({
                     block: rootZone,
                     sig: signAs(secureBlocktree, privateKey),
-                    name: 'test zone',
                 });
                 isExecuted = true;
             } catch (err) {
@@ -131,7 +127,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
-                name: 'test zone',
             });
             await secureBlocktree.setKeys({
                 block: newZone,
@@ -166,7 +161,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
-                name: 'test zone',
             });
             await secureBlocktree.setKeys({
                 block: newZone,
@@ -210,7 +204,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
-                name: 'test zone',
             });
             await secureBlocktree.setKeys({
                 block: newZone,
@@ -241,7 +234,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
-                name: 'test zone',
             });
             await secureBlocktree.setKeys({
                 block: newZone,
@@ -272,7 +264,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
-                name: 'test zone',
             });
             await secureBlocktree.setKeys({
                 block: newZone,
@@ -311,7 +302,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
-                name: 'test zone',
             });
             const newZoneHead = await secureBlocktree.setKeys({
                 block: newZone,
@@ -345,7 +335,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
-                name: 'test zone',
             });
             await secureBlocktree.setKeys({
                 block: newZone,
@@ -425,7 +414,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
-                name: 'test zone',
             });
             await secureBlocktree.setKeys({
                 block: newZone,
@@ -456,7 +444,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
-                name: 'test zone',
             });
             await secureBlocktree.setKeys({
                 block: newZone,
@@ -489,7 +476,6 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 sig: signAs(secureBlocktree, getPrivateKey(
                     rootZoneKeys[constants.action.write][0],
                 )),
-                name: 'test zone',
             });
             await secureBlocktree.setKeys({
                 block: newZone,
@@ -512,6 +498,141 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 isExecuted = true;
             } catch (err) {
                 assert.ok(err instanceof InvalidSignatureError);
+            }
+
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+    });
+    describe('set options', () => {
+        it('should succeed for a zone using the parent key', async () => {
+            const { rootZone } = secureRoot;
+            const newZone = await secureBlocktree.createZone({
+                block: rootZone,
+                sig: signAs(secureBlocktree, getPrivateKey(
+                    rootZoneKeys[constants.action.write][0],
+                )),
+            });
+            const result = await secureBlocktree.setOptions({
+                block: newZone,
+                sig: signAs(secureBlocktree, getPrivateKey(
+                    rootZoneKeys[constants.action.write][0],
+                )),
+                options: { name: 'NEW NAME' },
+            });
+
+            assert.ok(result !== null, 'Expected a valid block to be returned.');
+        });
+        it('should succeed for a zone using the root key', async () => {
+            const { rootZone } = secureRoot;
+            const newZone = await secureBlocktree.createZone({
+                block: rootZone,
+                sig: signAs(secureBlocktree, getPrivateKey(
+                    rootZoneKeys[constants.action.write][0],
+                )),
+            });
+            const result = await secureBlocktree.setOptions({
+                block: newZone,
+                sig: signAs(secureBlocktree, getPrivateKey(
+                    rootKeys[constants.action.write][0],
+                )),
+                options: { name: 'NEW NAME' },
+            });
+
+            assert.ok(result !== null, 'Expected a valid block to be returned.');
+        });
+        it('should fail without a known signature', async () => {
+            const invalidKey = await generateTestKeys(encryption);
+            const privateKey = getPrivateKey(invalidKey[constants.action.write][0]);
+            const { rootZone } = secureRoot;
+            const newZone = await secureBlocktree.createZone({
+                block: rootZone,
+                sig: signAs(secureBlocktree, getPrivateKey(
+                    rootZoneKeys[constants.action.write][0],
+                )),
+            });
+            let isExecuted = false;
+            try {
+                await secureBlocktree.setOptions({
+                    block: newZone,
+                    sig: signAs(secureBlocktree, privateKey),
+                    options: { name: 'NEW NAME' },
+                });
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof InvalidSignatureError);
+            }
+
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+        it('should fail with the blockchain\'s own key', async () => {
+            const { rootZone } = secureRoot;
+            const newZoneKeys = await generateTestKeys(encryption);
+            const newZone = await secureBlocktree.createZone({
+                block: rootZone,
+                sig: signAs(secureBlocktree, getPrivateKey(
+                    rootZoneKeys[constants.action.write][0],
+                )),
+                name: 'test zone',
+            });
+            await secureBlocktree.setKeys({
+                block: newZone,
+                sig: signAs(secureBlocktree, getPrivateKey(
+                    rootZoneKeys[constants.action.write][0],
+                )),
+                parentKey: rootZoneKeys[constants.action.write][0],
+                keys: newZoneKeys,
+            });
+            let isExecuted = false;
+            try {
+                await secureBlocktree.setOptions({
+                    block: newZone,
+                    sig: signAs(secureBlocktree, getPrivateKey(
+                        newZoneKeys[constants.action.write][0],
+                    )),
+                    options: { name: 'NEW NAME' },
+                });
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof InvalidSignatureError);
+            }
+
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+        it('should fail without a parent', async () => {
+            let isExecuted = false;
+            try {
+                await secureBlocktree.setOptions({
+                    block: null,
+                    sig: signAs(secureBlocktree, getPrivateKey(
+                        rootKeys[constants.action.write][0],
+                    )),
+                    options: { name: 'NEW NAME' },
+                });
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof InvalidBlockError);
+                assert.strictEqual(err.layer, constants.layer.secureBlocktree);
+                assert.strictEqual(err.reason, InvalidBlockError.reasons.isNull);
+            }
+
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+        it('should fail onto the root block', async () => {
+            const { rootBlock } = secureRoot;
+            let isExecuted = false;
+            try {
+                await secureBlocktree.setOptions({
+                    block: rootBlock,
+                    sig: signAs(secureBlocktree, getPrivateKey(
+                        rootKeys[constants.action.write][0],
+                    )),
+                    options: { name: 'NEW NAME' },
+                });
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof InvalidBlockError);
+                assert.strictEqual(err.layer, constants.layer.secureBlocktree);
+                assert.strictEqual(err.reason, InvalidBlockError.reasons.isNull);
             }
 
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');

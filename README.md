@@ -78,7 +78,7 @@ Starting from the provided block, scans through the blockchain to ensure that al
 Adds an additional reference to a "parent" block to every block, which allows for additional tree-based functionality. Also, any blocks generated within this layer or higher will have a "layer" value set to them, so that each layer can make appropriate validation decisions when reading and writing blocks.
 
 #### Key Concepts
-- *blocktree* - A hierarchical structure, where each node in the tree is a blockchain. In order to maintain data integrity, all blocks in a given blocktree have a reference to the parent block.
+- *blocktree* - A tree-like structure, where each node in the tree is a blockchain. In order to maintain data integrity, all blocks in a given blocktree have a reference to the parent block.
 - *parent* - A reference to the parent block in the blocktree.
 - *parent scan* - A procedure which reads the specified block as well as all parent blocks until the root of the blocktree is reached.
 - *child scan* - A procedure which identifies the root block of all child blockchains belonging the specified block.
@@ -112,15 +112,18 @@ Given a block hash, reads from storage and returns a *blocktree object*.
 ### Layer 3 - Secure Blockchain
 
 #### Key Concepts
+- *actor* - A user or computer performing actions against the system.
+- *action* - An activity performed by an actor within the system, typically *read* or *write*.
 - *key* - Refers to either a public key (encrypting, verifying signatures) or private key (decrypting, signing data).
-- *signature* - A digital signature, generated using a private key.
-- *zone* - Represents a container of permissions in the blocktree, and controls the scope of a key's ability to perform actions.
-- *identity* - Represents an actor (user, computer, etc.) who has some sort of valid interaction with the data.
-- *keys block* - A block designed to store public keys and certificates.
-- *keystore block* - A block designed to store encrypted private keys.
+- *read key* - A key which is used to encrypt stored data, so that the key is required in order to read it. If any actors other than the creator of the data require access, then the private key must be encrypted using the parent's public key and written to a keystore.
+- *write key* - A key which is used to digitally sign a block in order to verify the authenticity of it.
+- *signature* - A digital signature, generated using a private key. Typically, signatures are created using a *write key*.
+- *zone* - Represents a container of permissions in the blocktree, and controls the scope of a key's ability to perform actions. It is also a block type.
+- *identity* - Represents a specific actor (user, computer, etc.) who has some sort of interaction with the system. It is also a block type.
+- *ledger* - Represents a traditional blockchain which exists in the context of the permission model. Ledgers are intended to be used for storing application records data.
+- *keys (block)* - A block type designed to store public keys and certificates, as well as encrypted keystores. It also records which actions a key can perform and controls the timeframe that a key is valid for use.
 - *trust* - Allows an identity or zone to perform an action on an object that it would not normally have permission to do so on.
 - *trusted read* - A procedure where, if allowed by a trust, encrypted block data is temporarily decrypted using the relevant private key from a keystore, and recrypted using the public key of the trusted object's key before being transmitted. This allows for trusted identities and zones to read encrypted blocks without having direct access to a private key.
-- *ledger* - Represents a traditional blockchain which exists in the context of the permission model. Ledgers are intended to be used for storing application records data.
 - *key scan* - A procedure which reads the specified blockchain as well as all parents, looking for all available public keys.
 - *key seek* - A procedure which reads the specified blobkchain and all parents until the specified key is found.
 - *root block* - The only block in the blocktree without a parent; sets the root key for the system.

@@ -1,5 +1,5 @@
 const constants = require('../../../constants');
-const { fromInt16 } = require('../../../utils');
+const { fromInt16, fromByte } = require('../../../utils');
 
 /**
  * @private
@@ -27,9 +27,13 @@ function serializeKey(key) {
  * @returns {Buffer} A binary representation of the array.
  */
 function serializeKeys(keys) {
-    const results = [Buffer.from([Object.keys(keys).length])];
+    const size = Object.keys(keys || {}).length;
+    if (size === 0) {
+        return fromByte(size);
+    }
+    const results = [fromByte(size)];
     Object.keys(keys).forEach((key) => {
-        results.push(Buffer.from([key.charCodeAt()]));
+        results.push(fromByte(key.charCodeAt()));
         const keyList = Array.isArray(keys[key]) ? keys[key] : [keys[key]];
         results.push(fromInt16(keyList.length));
         keyList.forEach((keyItem) => {

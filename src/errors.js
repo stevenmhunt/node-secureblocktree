@@ -25,6 +25,7 @@ class BlocktreeError extends Error {
  */
 const serializationErrorReasons = {
     invalidHash: 1,
+    argumentOutOfBounds: 2,
 };
 
 /**

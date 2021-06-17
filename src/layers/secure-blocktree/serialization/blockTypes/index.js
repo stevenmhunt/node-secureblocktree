@@ -6,4 +6,5 @@ const constants = require('../../../../constants');
  */
 module.exports = {
     [constants.blockType.keys]: require('./keys'),
+    [constants.blockType.options]: require('./options'),
 };

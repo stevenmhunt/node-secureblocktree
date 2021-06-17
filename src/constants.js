@@ -10,11 +10,18 @@ const constants = {
         rootZone: 'root zone',
     },
     size: {
+        byte: 1,
         int16: 2,
         int32: 4,
         int64: 8,
         hash: 32,
         signature: 32,
+    },
+    max: {
+        byte: 2 ** 8 - 1,
+        int16: 2 ** 16 - 1,
+        int32: 2 ** 32 - 1,
+        int64: 2n ** 64n - 1n,
     },
     timestamp: {
         zero: 0n,
@@ -71,6 +78,7 @@ const constants = {
 constants.parentBlockTypes = {
     [constants.blockType.zone]: [constants.blockType.zone],
     [constants.blockType.keys]: [constants.blockType.zone],
+    [constants.blockType.options]: [constants.blockType.zone],
 };
 
 module.exports = constants;
