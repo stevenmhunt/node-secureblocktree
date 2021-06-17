@@ -95,14 +95,15 @@ module.exports = function secureBlocktreeKeysFactory({
     async function validateParentKey({
         block, key, timestamp, isRecursive,
     }) {
-        const [result] = await performKeyScan({
+        const [result] = (await performKeyScan({
             block,
             isActive: true,
             action: constants.action.write,
             key,
             isRecursive: true,
             timestamp,
-        });
+        })).slice(-1);
+
         if (result) {
             if (!result.parentKey) {
                 return true;

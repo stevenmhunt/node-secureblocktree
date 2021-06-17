@@ -1,4 +1,5 @@
 const constants = require('../../constants');
+const { deserializeKey } = require('./serialization/deserialize');
 const {
     InvalidSignatureError, InvalidBlockError, InvalidRootError,
 } = require('../../errors');
@@ -16,7 +17,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * @returns {Promise<string>} The new block.
      */
     async function setKeys({
-        sig, block, parentKey, keys, certificates, tsInit, tsExp,
+        sig, block, keys, certificates, tsInit, tsExp,
     }) {
         const type = constants.blockType.keys;
         const init = tsInit !== undefined ? tsInit : constants.timestamp.zero;
@@ -24,6 +25,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
         const prev = block ? await blocktree.getHeadBlock(block) : block;
         let parent = null;
         let signature = null;
+        let parentKey = null;
 
         // if attempting to initialize the root...
         if (sig === null && prev === null && parentKey === null) {
@@ -35,12 +37,8 @@ module.exports = function secureBlocktreeBlockTypesFactory({
             // validate the provided signature, the keys, and the parent value.
             parent = await context.validateParentBlock({ prev, type });
             signature = await context.validateSignature({ sig, prev, parent });
-            if (!await context.verifySignedBlock({
-                key: parentKey, sig: signature, parent, prev,
-            })) {
-                throw new InvalidSignatureError({ signature, parentKey },
-                    InvalidSignatureError.reasons.inconsistent);
-            }
+            const keyData = deserializeKey(Buffer.from(signature, constants.format.signature));
+            parentKey = keyData.result;
             await context.validateKeys({ block: prev, keys, parentKey });
         }
 

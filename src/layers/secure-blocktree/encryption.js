@@ -90,11 +90,12 @@ module.exports = function secureBlocktreeEncryptionFactory({
             Buffer.from(`${parent || ''}${prev || ''}`, constants.format.hash),
         ]);
 
-        return encryption.verify(
+        const result = await encryption.verify(
             sigKey,
             signature,
             message,
-        ) && key === sigKey.toString(constants.format.key);
+        ) && (!key || key === sigKey.toString(constants.format.key));
+        return result;
     }
 
     return {

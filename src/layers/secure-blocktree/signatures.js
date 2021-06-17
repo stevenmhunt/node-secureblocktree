@@ -1,5 +1,6 @@
 const constants = require('../../constants');
 const { InvalidSignatureError } = require('../../errors');
+const { deserializeKey } = require('./serialization/deserialize');
 
 module.exports = function secureBlocktreeSignaturesFactory({ context }) {
     /**
@@ -16,31 +17,28 @@ module.exports = function secureBlocktreeSignaturesFactory({ context }) {
     }) {
         const block = requireParent !== false ? parent : (parent || prev);
         const signature = typeof sig === 'function' ? await sig({ prev, parent }) : sig;
+        const { result: key } = deserializeKey(Buffer.from(signature, constants.format.signature));
 
-        // get the public keys for this action.
-        const keyList = (await context.performKeyScan({
+        // perform a "key seek" to verify that the key is registered.
+        const [keySeek] = (await context.performKeyScan({
             block,
+            key,
             isActive: true,
             isRecursive: true,
             action: action || constants.action.write,
-        })).map((i) => i.key);
+        })).slice(-1);
 
-        // keep trying until a key is found, or there aren't any left.
-        const results = await Promise.all(
-            keyList.map(async (key) => ({
-                result: await context.verifySignedBlock({
-                    key, sig: signature, parent, prev,
-                }),
-                key,
-                sig: signature,
-                parent,
-                prev,
-            })),
-        );
-        const result = results.find((i) => i.result) !== undefined;
+        const result = keySeek && keySeek.key === key
+            && (await context.verifySignedBlock({
+                key, sig: signature, parent, prev,
+            }));
         if (!result && noThrow !== true) {
-            throw new InvalidSignatureError({ results },
-                InvalidSignatureError.reasons.notFound);
+            if (!keySeek || !keySeek.key === key) {
+                throw new InvalidSignatureError({ block, key },
+                    InvalidSignatureError.reasons.notFound);
+            }
+            throw new InvalidSignatureError({ block, key, sig: signature },
+                InvalidSignatureError.reasons.doesNotMatch);
         }
         return result ? signature : null;
     }

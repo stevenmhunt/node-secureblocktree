@@ -56,10 +56,10 @@ function getPrivateKey(key) {
     return privateKeys[key];
 }
 
-function signAs(secureBlocktree, key) {
+function signAs(secureBlocktree, key, altKey) {
     return ({ parent, prev }) => secureBlocktree.signBlock({
         secret: getPrivateKey(key),
-        key,
+        key: altKey || key,
         parent,
         prev,
     });

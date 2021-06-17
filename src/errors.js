@@ -104,7 +104,7 @@ InvalidBlockError.reasons = invalidBlockErrorReasons;
  */
 const invalidSignatureErrorReasons = {
     notFound: 1,
-    inconsistent: 2,
+    doesNotMatch: 2,
 };
 
 /**
@@ -120,8 +120,8 @@ class InvalidSignatureError extends BlocktreeError {
             switch (reason) {
             case invalidSignatureErrorReasons.notFound:
                 return 'A valid signature could not be located.';
-            case invalidSignatureErrorReasons.inconsistent:
-                return 'The signature did not match the assigned parent key.';
+            case invalidSignatureErrorReasons.doesNotMatch:
+                return 'The signature did not match the associated key.';
             default:
                 return 'Invalid signature was found.';
             }
