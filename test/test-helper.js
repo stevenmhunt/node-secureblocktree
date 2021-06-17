@@ -51,17 +51,18 @@ function initSecureBlocktree(encryption) {
     return { ...secureBlocktree, mocks: blocktree.mocks, encryption };
 }
 
+const privateKeys = {};
+function getPrivateKey(key) {
+    return privateKeys[key];
+}
+
 function signAs(secureBlocktree, key) {
     return ({ parent, prev }) => secureBlocktree.signBlock({
+        secret: getPrivateKey(key),
         key,
         parent,
         prev,
     });
-}
-
-const privateKeys = {};
-function getPrivateKey(publicKey) {
-    return privateKeys[publicKey];
 }
 
 async function generateTestKeys(encryption) {
@@ -84,8 +85,7 @@ async function generateTestKeys(encryption) {
 }
 
 async function initializeSecureRoot(secureBlocktree, rootKeys, rootZoneKeys) {
-    const rootWritePrivateKey = getPrivateKey(rootKeys[constants.action.write][0]);
-    const signAsRoot = signAs(secureBlocktree, rootWritePrivateKey);
+    const signAsRoot = signAs(secureBlocktree, rootKeys[constants.action.write][0]);
     return secureBlocktree.installRoot({ rootKeys, rootZoneKeys, signAsRoot });
 }
 

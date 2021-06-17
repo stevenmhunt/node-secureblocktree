@@ -2,15 +2,18 @@
 const constants = require('../../../constants');
 const { toInt16 } = require('../../../utils');
 
-function deserializeKey(data, startIndex) {
+function deserializeKey(data, startIndex, format = constants.format.key) {
     let index = startIndex;
     let result = null;
     const keySize = toInt16(data, index);
     index += constants.size.int16;
     if (keySize > 0) {
-        result = data.slice(index, index + keySize)
-            .toString(constants.format.key);
+        result = data.slice(index, index + keySize);
         index += keySize;
+    }
+
+    if (result && format) {
+        result = result.toString(format);
     }
     return { result, index };
 }

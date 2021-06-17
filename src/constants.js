@@ -44,11 +44,11 @@ const constants = {
     },
     blockType: {
         zone: 1,
-        identity: 2,
-        keys: 3,
-        ledger: 4,
-        log: 5,
-        options: 6,
+        keys: 2,
+        options: 3,
+        identity: 4,
+        ledger: 5,
+        log: 6,
     },
     secureBlockData: {
         null: 0,
@@ -65,7 +65,6 @@ const constants = {
         invalidSignature: 3,
         invalidKey: 4,
         invalidRoot: 5,
-        invalidParentBlock: 6,
     },
     layer: {
         system: 0,
