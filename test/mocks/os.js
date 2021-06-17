@@ -29,11 +29,11 @@ module.exports = function osFactory() {
     }
 
     /**
-     * Generates a cryptographically random 32 bit integer.
-     * @returns {Buffer} A random 32 bit integer.
+     * Generates a cryptographically random 64 bit integer.
+     * @returns {Buffer} A random 64 bit integer.
      */
     function generateNonce() {
-        return crypto.randomBytes(4);
+        return crypto.randomBytes(constants.size.int64);
     }
 
     return {

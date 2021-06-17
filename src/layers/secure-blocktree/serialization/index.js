@@ -1,4 +1,5 @@
 /* eslint-disable no-plusplus */
+const constants = require('../../../constants');
 const blockTypes = require('./blockTypes');
 const { serializeSignature } = require('./serialize');
 const { deserializeSignature } = require('./deserialize');
@@ -23,7 +24,7 @@ function serializeSecureBlockData(type, data) {
  * @returns {Object} A blocktree object.
  */
 function serializeSecureBlock(secureData) {
-    const { prev, parent } = secureData;
+    const { prev, parent, layer } = secureData;
     const data = Buffer.concat([
         // secure block type
         Buffer.from([secureData.type]),
@@ -32,7 +33,12 @@ function serializeSecureBlock(secureData) {
         // data
         serializeSecureBlockData(secureData.type, secureData.data),
     ].filter((i) => i));
-    return { prev, parent, data };
+    return {
+        prev,
+        parent,
+        data,
+        layer: layer >= constants.layer.secureBlocktree ? layer : constants.layer.secureBlocktree,
+    };
 }
 
 /**
@@ -58,11 +64,17 @@ function deserializeSecureBlock(btBlockData) {
         return null;
     }
     const {
-        timestamp, prev, parent, nonce, hash, data,
+        timestamp, prev, parent, nonce, hash, layer, data,
     } = btBlockData;
+
+    // check the layer number.
+    if (layer < constants.layer.secureBlocktree) {
+        return null;
+    }
+
     let index = 0;
     const result = {
-        timestamp, prev, parent, nonce, hash,
+        timestamp, prev, parent, nonce, hash, layer,
     };
     result.type = data[index++];
     const res = deserializeSignature(data, index);

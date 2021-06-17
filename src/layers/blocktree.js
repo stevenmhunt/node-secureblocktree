@@ -1,4 +1,4 @@
-/* eslint-disable no-await-in-loop */
+/* eslint-disable no-await-in-loop, no-plusplus */
 const constants = require('../constants');
 const { SerializationError, InvalidBlockError } = require('../errors');
 
@@ -25,6 +25,8 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
         const data = Buffer.concat([
             // parent hash
             parent,
+            // layer
+            Buffer.from([btBlockData.layer || constants.layer.blocktree]),
             // data
             btBlockData.data,
         ]);
@@ -55,6 +57,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
         } else {
             result.parent = result.parent.toString(constants.format.hash);
         }
+        result.layer = data[index++];
         result.data = data.slice(index);
         return result;
     }

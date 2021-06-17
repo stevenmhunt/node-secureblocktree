@@ -37,7 +37,7 @@ module.exports = function blockchainLayerFactory({ system }) {
             // previous hash
             prev,
             // uniqueness
-            utils.fromInt32(nonce),
+            utils.fromInt64(nonce),
             // timestamp
             utils.fromInt64(timestamp),
             // data
@@ -68,8 +68,8 @@ module.exports = function blockchainLayerFactory({ system }) {
         } else {
             result.prev = result.prev.toString(constants.format.hash);
         }
-        result.nonce = utils.toInt32(buf, index);
-        index += constants.size.int32;
+        result.nonce = utils.toInt64(buf, index);
+        index += constants.size.int64;
         result.timestamp = utils.toInt64(buf, index);
         index += constants.size.int64;
         result.data = buf.slice(index);
