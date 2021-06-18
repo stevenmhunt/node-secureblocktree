@@ -8,7 +8,8 @@ const blockchainLayerFactory = require('../src/layers/blockchain');
 const systemLayerFactory = require('../src/layers/system');
 
 // mocks
-const cacheFactory = require('./mocks/no-cache');
+const cacheFactory = require('./mocks/cache');
+const noCacheFactory = require('./mocks/no-cache');
 const encryptionFactory = require('./mocks/encryption');
 const timeFactory = require('./mocks/time');
 const storageFactory = require('./mocks/storage');
@@ -17,15 +18,15 @@ function getRandomHash() {
     return crypto.randomBytes(constants.size.hash);
 }
 
-function initSystem() {
-    const cache = cacheFactory();
+function initSystem(withCache) {
+    const cache = withCache ? cacheFactory() : noCacheFactory();
     const time = timeFactory();
     const storage = storageFactory();
     return { cache, time, storage };
 }
 
-function initBlockchain() {
-    const { cache, storage, time } = initSystem();
+function initBlockchain(withCache) {
+    const { cache, storage, time } = initSystem(withCache);
     const system = systemLayerFactory({ cache, storage, time });
     const blockchain = blockchainLayerFactory({ system, cache, time });
     return { ...blockchain, mocks: { cache, storage, time } };
@@ -95,6 +96,11 @@ async function initializeSecureRoot(secureBlocktree, rootKeys, rootZoneKeys) {
     return secureBlocktree.installRoot({ rootKeys, rootZoneKeys, signAsRoot });
 }
 
+const loadTests = (fn, context) => () => {
+    const tests = fn(context);
+    Object.keys(tests).forEach((test) => it(test, tests[test]));
+};
+
 module.exports = {
     getRandomHash,
     initBlockchain,
@@ -105,4 +111,5 @@ module.exports = {
     generateTestKeys,
     getPrivateKey,
     signAs,
+    loadTests,
 };
