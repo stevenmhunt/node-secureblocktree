@@ -1,8 +1,7 @@
 const constants = require('../../constants');
-const { InvalidRootError } = require('../../errors');
 
 module.exports = function secureBlocktreeInstallFactory({
-    context, blocktree, secureCache,
+    context, secureCache,
 }) {
     /**
      * Performs the initial configuration of a secure blocktree.
@@ -12,19 +11,10 @@ module.exports = function secureBlocktreeInstallFactory({
      * @returns {Promise<Object>} The root and root zone blocks.
      */
     async function installRoot({ rootKeys, rootZoneKeys, signAsRoot }) {
-        // there can only be one root key in the system.
-        if (await blocktree.countBlocks() > 0) {
-            throw new InvalidRootError();
-        }
-
         // create the root block.
-        const rootBlock = await context.setKeys({
-            sig: null,
-            block: null,
-            parentKey: null,
+        const rootBlock = await context.createRoot({
             keys: rootKeys,
         });
-        await secureCache.writeCache(null, constants.secureCache.rootBlock, rootBlock);
 
         // establish the root zone.
         const rootZone = await context.createZone({

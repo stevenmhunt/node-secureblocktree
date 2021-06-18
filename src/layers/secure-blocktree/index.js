@@ -23,7 +23,7 @@ module.exports = function secureBlocktreeLayerFactory({
     };
     context = { ...context, ...sbtSignaturesFactory({ context }) };
     context = { ...context, ...sbtDataFactory({ context }) };
-    context = { ...context, ...sbtBlockTypesFactory({ context, blocktree }) };
+    context = { ...context, ...sbtBlockTypesFactory({ context, blocktree, secureCache }) };
     context = { ...context, ...sbtInstallFactory({ context, blocktree, secureCache }) };
     context = { ...context, ...sbtCommandsFactory({ context, blocktree }) };
 

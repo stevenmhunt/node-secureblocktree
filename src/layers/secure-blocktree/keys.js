@@ -41,7 +41,7 @@ module.exports = function secureBlocktreeKeysFactory({
         const inactiveKeys = {};
         while (current != null) {
             secureBlock = await context.readSecureBlock(current);
-            if (secureBlock.type === constants.blockType.keys) {
+            if (secureBlock.type <= constants.blockType.keys) {
                 const actionKeys = Object.keys(secureBlock.data.keys);
                 for (let i = 0; i < actionKeys.length; i += 1) {
                     if (action === undefined

@@ -5,13 +5,15 @@ const {
 } = require('../../errors');
 
 module.exports = function secureBlocktreeBlockTypesFactory({
-    context, blocktree,
+    context, blocktree, secureCache,
 }) {
     /**
      * Writes new keys to the specified blockchain.
      * @param {string} sig The signature to use.
      * @param {string} block The block to add keys to.
      * @param {Object} keys A set of actions with associated keys.
+     * @param {Object} storedKeys Encrypted keystore used for trusted reads.
+     * @param {Object} certificates A set of actions with associated certificates.
      * @param {BigInt} tsInit The initializion timestamp for the keys.
      * @param {BigInt} tsExp The expiration timestamp for the keys.
      * @returns {Promise<string>} The new block.
@@ -55,6 +57,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * @param {string} sig The signature to use.
      * @param {string} block The block to add keys to.
      * @param {Object} keys A set of actions with associated keys.
+     * @param {Object} certificates A set of actions with associated certificates.
      * @param {BigInt} tsInit The initializion timestamp for the keys.
      * @param {BigInt} tsExp The expiration timestamp for the keys.
      * @returns {Promise<string>} The new block.
@@ -92,6 +95,39 @@ module.exports = function secureBlocktreeBlockTypesFactory({
         return context.writeSecureBlock({
             sig: signature, parent, prev, type, data: options,
         });
+    }
+
+    /**
+     * Creates the root block in the secure blocktree.
+     * @param {Object} keys A set of actions with associated keys.
+     * @param {Object} storedKeys Encrypted keystore used for trusted reads.
+     * @param {Object} certificates A set of actions with associated certificates.
+     * @returns {Promise<string>} The root block.
+     */
+    async function createRoot({
+        keys, storedKeys, certificates,
+    }) {
+        // there can only be one root key in the system.
+        if (await blocktree.countBlocks() > 0) {
+            throw new InvalidRootError();
+        }
+
+        const type = constants.blockType.root;
+        const tsInit = constants.timestamp.zero;
+        const tsExp = constants.timestamp.max;
+        const parent = null;
+        const prev = null;
+        const signature = null;
+        const parentKey = null;
+
+        const data = {
+            parentKey, keys, storedKeys, certificates, tsInit, tsExp,
+        };
+        const result = await context.writeSecureBlock({
+            sig: signature, parent, prev, type, data,
+        });
+        await secureCache.writeCache(null, constants.secureCache.rootBlock, result);
+        return result;
     }
 
     /**
@@ -191,6 +227,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
         setKeys,
         revokeKeys,
         setOptions,
+        createRoot,
         createZone,
         createIdentity,
         createLedger,

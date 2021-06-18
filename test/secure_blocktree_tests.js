@@ -36,7 +36,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
             assert.strictEqual(result.prev, null);
             assert.strictEqual(result.parent, null);
-            assert.strictEqual(result.type, constants.blockType.keys);
+            assert.strictEqual(result.type, constants.blockType.root);
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });
         it('should retrieve block data if found from the root zone', async () => {

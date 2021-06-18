@@ -46,8 +46,9 @@ const constants = {
         hash: 'sha256',
     },
     blockType: {
-        zone: 1,
-        keys: 2,
+        root: 0,
+        keys: 1,
+        zone: 2,
         options: 3,
         identity: 4,
         ledger: 5,
