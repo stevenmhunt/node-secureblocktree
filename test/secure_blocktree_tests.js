@@ -4,7 +4,7 @@ const constants = require('../src/constants');
 const { InvalidBlockError, InvalidSignatureError } = require('../src/errors');
 const {
     initSecureBlocktree, initializeSecureRoot, generateTestKeys, signAs,
-    getEncryption, getPrivateKey,
+    getEncryption,
 } = require('./test-helper');
 
 describe('Blocktree Layer 3 - Secure Blocktree', () => {
@@ -670,7 +670,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 assert.strictEqual(err.layer, constants.layer.secureBlocktree);
                 assert.strictEqual(err.reason, InvalidBlockError.reasons.isNull);
             }
-    
+
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
         it('should fail adjacent to the root zone', async () => {
@@ -686,7 +686,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             } catch (err) {
                 assert.ok(err instanceof InvalidBlockError);
             }
-    
+
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
         it('should fail with an inconsistent signature', async () => {
@@ -703,7 +703,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 assert.ok(err instanceof InvalidSignatureError);
                 assert.strictEqual(err.reason, InvalidSignatureError.reasons.doesNotMatch);
             }
-    
+
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
         it('should fail without a known createLedger', async () => {
@@ -719,7 +719,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             } catch (err) {
                 assert.ok(err instanceof InvalidSignatureError);
             }
-    
+
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
         it('should fail with an unassigned key', async () => {
@@ -748,7 +748,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             } catch (err) {
                 assert.ok(err instanceof InvalidSignatureError);
             }
-    
+
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
         it('should fail with a revoked key', async () => {
@@ -782,8 +782,8 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             } catch (err) {
                 assert.ok(err instanceof InvalidSignatureError);
             }
-    
+
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
-        });    
+        });
     });
 });

@@ -56,7 +56,7 @@ function getPrivateKey(key, isExport = false) {
     if (isExport) {
         return privateKeys[key].export({
             type: 'pkcs1',
-            format: 'der'
+            format: 'der',
         });
     }
     return privateKeys[key];

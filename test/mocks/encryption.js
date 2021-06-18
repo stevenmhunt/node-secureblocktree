@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const { promisify } = require('util');
-const constants = require('../../src/constants');;
+const constants = require('../../src/constants');
 
 const generateKeyPairRSA = promisify(crypto.generateKeyPair);
 

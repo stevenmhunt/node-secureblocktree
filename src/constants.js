@@ -1,6 +1,6 @@
 const constants = {
     crypto: {
-        keysize: 512
+        keysize: 512,
     },
     cache: {
         headBlock: 'head block',
