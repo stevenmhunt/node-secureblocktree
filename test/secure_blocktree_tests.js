@@ -645,10 +645,10 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
     });
-    describe('create ledger', () => {
+    describe('create collection', () => {
         it('should succeed within a zone using the parent key', async () => {
             const { rootZone } = secureRoot;
-            const result = await secureBlocktree.createLedger({
+            const result = await secureBlocktree.createCollection({
                 block: rootZone,
                 sig: signAs(secureBlocktree,
                     rootZoneKeys[constants.action.write][0]),
@@ -656,10 +656,130 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
 
             assert.ok(result !== null, 'Expected a valid block to be returned.');
         });
+        it('should allow records in a collection using the root key', async () => {
+            const { rootZone } = secureRoot;
+            const collection = await secureBlocktree.createCollection({
+                block: rootZone,
+                sig: signAs(secureBlocktree,
+                    rootKeys[constants.action.write][0]),
+            });
+            const result = await secureBlocktree.addRecord({
+                block: collection,
+                sig: signAs(secureBlocktree,
+                    rootKeys[constants.action.write][0]),
+                data: Buffer.from('this is a string!', 'utf-8'),
+            });
+
+            assert.ok(result !== null, 'Expected a valid block to be returned.');
+        });
+        it('should allow records in a collection using the root zone key', async () => {
+            const { rootZone } = secureRoot;
+            const collection = await secureBlocktree.createCollection({
+                block: rootZone,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+            });
+            const result = await secureBlocktree.addRecord({
+                block: collection,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+                data: Buffer.from('this is a string!', 'utf-8'),
+            });
+
+            assert.ok(result !== null, 'Expected a valid block to be returned.');
+        });
+        it('should allow records in a collection using the local zone key', async () => {
+            const { rootZone } = secureRoot;
+            const localZoneKeys = await generateTestKeys(encryption);
+            const localZone = await secureBlocktree.createZone({
+                block: rootZone,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+            });
+            await secureBlocktree.setKeys({
+                block: localZone,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+                keys: localZoneKeys,
+            });
+            const collection = await secureBlocktree.createCollection({
+                block: localZone,
+                sig: signAs(secureBlocktree,
+                    localZoneKeys[constants.action.write][0]),
+            });
+            const result = await secureBlocktree.addRecord({
+                block: collection,
+                sig: signAs(secureBlocktree,
+                    localZoneKeys[constants.action.write][0]),
+                data: Buffer.from('this is a string!', 'utf-8'),
+            });
+
+            assert.ok(result !== null, 'Expected a valid block to be returned.');
+        });
+        it('should allow records in a collection using the local collection keys', async () => {
+            const { rootZone } = secureRoot;
+            const collectionKeys = await generateTestKeys(encryption);
+            const localZoneKeys = await generateTestKeys(encryption);
+            const localZone = await secureBlocktree.createZone({
+                block: rootZone,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+            });
+            await secureBlocktree.setKeys({
+                block: localZone,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+                keys: localZoneKeys,
+            });
+            const collection = await secureBlocktree.createCollection({
+                block: localZone,
+                sig: signAs(secureBlocktree,
+                    localZoneKeys[constants.action.write][0]),
+            });
+            await secureBlocktree.setKeys({
+                block: collection,
+                sig: signAs(secureBlocktree,
+                    localZoneKeys[constants.action.write][0]),
+                keys: collectionKeys,
+            });
+            const result = await secureBlocktree.addRecord({
+                block: collection,
+                sig: signAs(secureBlocktree,
+                    collectionKeys[constants.action.write][0]),
+                data: Buffer.from('this is a string!', 'utf-8'),
+            });
+
+            assert.ok(result !== null, 'Expected a valid block to be returned.');
+        });
+        it('should support 100 records in a collection', async () => {
+            const { rootZone } = secureRoot;
+            const collectionKeys = await generateTestKeys(encryption);
+            const collection = await secureBlocktree.createCollection({
+                block: rootZone,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+            });
+            let next = await secureBlocktree.setKeys({
+                block: collection,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+                keys: collectionKeys,
+            });
+            for (let i = 0; i < 100; i += 1) {
+                next = await secureBlocktree.addRecord({
+                    block: next,
+                    sig: signAs(secureBlocktree,
+                        collectionKeys[constants.action.write][0]),
+                    data: Buffer.from('this is a string!', 'utf-8'),
+                });
+            }
+
+            assert.ok(next !== null, 'Expected a valid block to be returned.');
+        });
         it('should fail without a parent', async () => {
             let isExecuted = false;
             try {
-                await secureBlocktree.createLedger({
+                await secureBlocktree.createCollection({
                     block: null,
                     sig: signAs(secureBlocktree,
                         rootZoneKeys[constants.action.write][0]),
@@ -677,7 +797,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             const { rootBlock } = secureRoot;
             let isExecuted = false;
             try {
-                await secureBlocktree.createLedger({
+                await secureBlocktree.createCollection({
                     block: rootBlock,
                     sig: signAs(secureBlocktree,
                         rootZoneKeys[constants.action.write][0]),
@@ -693,7 +813,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             const { rootZone } = secureRoot;
             let isExecuted = false;
             try {
-                await secureBlocktree.createLedger({
+                await secureBlocktree.createCollection({
                     block: rootZone,
                     sig: signAs(secureBlocktree, rootZoneKeys[constants.action.write][0],
                         rootKeys[constants.action.write][0]),
@@ -706,7 +826,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
 
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
-        it('should fail without a known createLedger', async () => {
+        it('should fail without a known signature', async () => {
             const invalidKey = await generateTestKeys(encryption);
             const { rootZone } = secureRoot;
             let isExecuted = false;
@@ -739,7 +859,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             const newKeys = await generateTestKeys(encryption);
             let isExecuted = false;
             try {
-                await secureBlocktree.createLedger({
+                await secureBlocktree.createCollection({
                     block: newZone,
                     sig: signAs(secureBlocktree,
                         newKeys[constants.action.write][0]),
@@ -773,7 +893,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             });
             let isExecuted = false;
             try {
-                await secureBlocktree.createLedger({
+                await secureBlocktree.createCollection({
                     block: newZone,
                     sig: signAs(secureBlocktree,
                         newZoneKeys[constants.action.write][0]),

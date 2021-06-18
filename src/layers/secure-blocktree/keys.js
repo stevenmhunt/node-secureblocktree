@@ -79,7 +79,7 @@ module.exports = function secureBlocktreeKeysFactory({
                 return result;
             }
             return [...result, ...await performKeyScan({
-                block: parent, isRecursive, isActive, action, timestamp,
+                block: parent, isRecursive, isActive, action, key, timestamp,
             })];
         }
         return result;

@@ -98,6 +98,29 @@ module.exports = function secureBlocktreeBlockTypesFactory({
     }
 
     /**
+     * Adds a record to a collection.
+     * @param {string} sig The signature to use.
+     * @param {string} block The block to add keys to.
+     * @param {Object} data The key/value pairs to set.
+     * @returns {Promise<string>} The new block.
+     */
+    async function addRecord({
+        sig, block, data,
+    }) {
+        const type = constants.blockType.record;
+        // validate the provided signature and the parent value.
+        const prev = block ? await blocktree.getHeadBlock(block) : block;
+        const parent = await context.validateParentBlock({ prev, type });
+        const signature = await context.validateSignature({
+            sig, prev, parent, requireParent: false,
+        });
+
+        return context.writeSecureBlock({
+            sig: signature, parent, prev, type, data,
+        });
+    }
+
+    /**
      * Creates the root block in the secure blocktree.
      * @param {Object} keys A set of actions with associated keys.
      * @param {Object} storedKeys Encrypted keystore used for trusted reads.
@@ -205,20 +228,20 @@ module.exports = function secureBlocktreeBlockTypesFactory({
     }
 
     /**
-     * Creates a new ledger, which represents a blockchain for storing data.
+     * Creates a new collection, which represents a blockchain for storing data.
      * @param {string} sig The signature to use.
-     * @param {string} block The block to add a ledger to.
+     * @param {string} block The block to add a collection to.
      * @param {Object} keys A set of actions with associated keys, or null if no zone keys.
-     * @param {string} name The name of the ledger.
+     * @param {string} name The name of the collection.
      * @returns {Promise<string>} The new block.
      */
-    async function createLedger({
+    async function createCollection({
         sig, block, options,
     }) {
         return createChildBlockInternal({
             sig,
             block,
-            type: constants.blockType.ledger,
+            type: constants.blockType.collection,
             data: options,
         });
     }
@@ -227,9 +250,10 @@ module.exports = function secureBlocktreeBlockTypesFactory({
         setKeys,
         revokeKeys,
         setOptions,
+        addRecord,
         createRoot,
         createZone,
         createIdentity,
-        createLedger,
+        createCollection,
     };
 };

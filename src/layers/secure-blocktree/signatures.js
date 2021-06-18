@@ -15,7 +15,7 @@ module.exports = function secureBlocktreeSignaturesFactory({ context }) {
     async function validateSignature({
         sig, parent, prev, action, noThrow, requireParent,
     }) {
-        const block = requireParent !== false ? parent : (parent || prev);
+        const block = requireParent !== false ? parent : (prev || parent);
         const signature = typeof sig === 'function' ? await sig({ prev, parent }) : sig;
         const { result: key } = deserializeKey(Buffer.from(signature, constants.format.signature));
 

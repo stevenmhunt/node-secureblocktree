@@ -48,11 +48,11 @@ const constants = {
     blockType: {
         root: 0,
         keys: 1,
-        zone: 2,
-        options: 3,
+        options: 2,
+        zone: 3,
         identity: 4,
-        ledger: 5,
-        log: 6,
+        collection: 5,
+        record: 6,
     },
     secureBlockData: {
         null: 0,
@@ -79,15 +79,16 @@ const constants = {
 };
 
 constants.parentBlockTypes = {
-    [constants.blockType.zone]: [constants.blockType.zone],
     [constants.blockType.keys]: [
         constants.blockType.zone,
         constants.blockType.identity,
-        constants.blockType.ledger],
-    [constants.blockType.ledger]: [
+        constants.blockType.collection],
+    [constants.blockType.zone]: [constants.blockType.zone],
+    [constants.blockType.options]: Object.values(constants.blockType),
+    [constants.blockType.collection]: [
         constants.blockType.zone,
         constants.blockType.identity],
-    [constants.blockType.options]: Object.values(constants.blockType),
+    [constants.blockType.record]: [constants.blockType.collection],
 };
 
 module.exports = constants;

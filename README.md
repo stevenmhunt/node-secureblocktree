@@ -120,7 +120,7 @@ Given a block hash, reads from storage and returns a *blocktree object*.
 - *signature* - A digital signature, generated using a private key. Typically, signatures are created using a *write key*.
 - *zone* - Represents a container of permissions in the blocktree, and controls the scope of a key's ability to perform actions. It is also a block type.
 - *identity* - Represents a specific actor (user, computer, etc.) who has some sort of interaction with the system. It is also a block type.
-- *ledger* - Represents a traditional blockchain which exists in the context of the permission model. Ledgers are intended to be used for storing application records data.
+- *collection* - Represents a traditional blockchain which exists in the context of the permission model. Collections are intended to be used for storing application records data.
 - *keys (block)* - A block type designed to store public keys and certificates, as well as encrypted keystores. It also records which actions a key can perform and controls the timeframe that a key is valid for use.
 - *trust* - Allows an identity or zone to perform an action on an object that it would not normally have permission to do so on.
 - *trusted read* - A procedure where, if allowed by a trust, encrypted block data is temporarily decrypted using the relevant private key from a keystore, and recrypted using the public key of the trusted object's key before being transmitted. This allows for trusted identities and zones to read encrypted blocks without having direct access to a private key.
