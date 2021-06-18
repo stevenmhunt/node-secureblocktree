@@ -42,9 +42,9 @@ function getEncryption() {
     return encryptionFactory();
 }
 
-function initSecureBlocktree(encryption) {
-    const blocktree = initBlocktree();
-    const secureCache = cacheFactory();
+function initSecureBlocktree(encryption, withCache) {
+    const blocktree = initBlocktree(withCache);
+    const secureCache = withCache ? cacheFactory() : noCacheFactory();
     const time = timeFactory();
     const secureBlocktree = secureBlocktreeLayerFactory({
         blocktree, secureCache, time, encryption,
