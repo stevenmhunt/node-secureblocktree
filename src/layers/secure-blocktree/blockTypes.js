@@ -9,8 +9,8 @@ module.exports = function secureBlocktreeBlockTypesFactory({
 }) {
     /**
      * Writes new keys to the specified blockchain.
-     * @param {string} sig The signature to use.
-     * @param {string} block The block to add keys to.
+     * @param {Buffer} sig The signature to use.
+     * @param {Buffer} block The block to add keys to.
      * @param {Object} keys A set of actions with associated keys.
      * @param {Object} storedKeys Encrypted keystore used for trusted reads.
      * @param {Object} certificates A set of actions with associated certificates.
@@ -54,8 +54,8 @@ module.exports = function secureBlocktreeBlockTypesFactory({
 
     /**
      * Revokes keys from the specified blockchain.
-     * @param {string} sig The signature to use.
-     * @param {string} block The block to add keys to.
+     * @param {Buffer} sig The signature to use.
+     * @param {Buffer} block The block to add keys to.
      * @param {Object} keys A set of actions with associated keys.
      * @param {Object} certificates A set of actions with associated certificates.
      * @param {BigInt} tsInit The initializion timestamp for the keys.
@@ -78,8 +78,8 @@ module.exports = function secureBlocktreeBlockTypesFactory({
 
     /**
      * Specifies configuration options for the specified blockchain.
-     * @param {string} sig The signature to use.
-     * @param {string} block The block to add keys to.
+     * @param {Buffer} sig The signature to use.
+     * @param {Buffer} block The block to add keys to.
      * @param {Object} options The key/value pairs to set.
      * @returns {Promise<string>} The new block.
      */
@@ -99,8 +99,8 @@ module.exports = function secureBlocktreeBlockTypesFactory({
 
     /**
      * Adds a record to a collection.
-     * @param {string} sig The signature to use.
-     * @param {string} block The block to add keys to.
+     * @param {Buffer} sig The signature to use.
+     * @param {Buffer} block The block to add keys to.
      * @param {Object} data The key/value pairs to set.
      * @returns {Promise<string>} The new block.
      */
@@ -156,8 +156,8 @@ module.exports = function secureBlocktreeBlockTypesFactory({
     /**
      * @private
      * Creates a child block.
-     * @param {string} sig The signature to use.
-     * @param {string} block The block to add a child block to.
+     * @param {Buffer} sig The signature to use.
+     * @param {Buffer} block The block to add a child block to.
      * @param {number} type The secure block type to create.
      * @param {object} data The block type data to write.
      * @returns {Promise<string>} The new block.
@@ -190,8 +190,8 @@ module.exports = function secureBlocktreeBlockTypesFactory({
 
     /**
      * Creates a new zone, which acts as a permission container for managing keys and data.
-     * @param {string} sig The signature to use.
-     * @param {string} block The block to add a zone to.
+     * @param {Buffer} sig The signature to use.
+     * @param {Buffer} block The block to add a zone to.
      * @param {Object} keys A set of actions with associated keys, or null if no zone keys.
      * @param {string} name The name of the zone.
      * @returns {Promise<string>} The new block.
@@ -210,8 +210,8 @@ module.exports = function secureBlocktreeBlockTypesFactory({
 
     /**
      * Creates a new identity, which represents a user or system.
-     * @param {string} sig The signature to use.
-     * @param {string} block The block to add an identity to.
+     * @param {Buffer} sig The signature to use.
+     * @param {Buffer} block The block to add an identity to.
      * @param {Object} keys A set of actions with associated keys, or null if no zone keys.
      * @param {string} name The name of the identity.
      * @returns {Promise<string>} The new block.
@@ -229,8 +229,8 @@ module.exports = function secureBlocktreeBlockTypesFactory({
 
     /**
      * Creates a new collection, which represents a blockchain for storing data.
-     * @param {string} sig The signature to use.
-     * @param {string} block The block to add a collection to.
+     * @param {Buffer} sig The signature to use.
+     * @param {Buffer} block The block to add a collection to.
      * @param {Object} keys A set of actions with associated keys, or null if no zone keys.
      * @param {string} name The name of the collection.
      * @returns {Promise<string>} The new block.

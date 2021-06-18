@@ -1,3 +1,6 @@
+/**
+ * Mock cache factory (in-memory, using a vanilla JS object)
+ */
 module.exports = function cacheFactory() {
     const cache = {};
 
@@ -9,7 +12,8 @@ module.exports = function cacheFactory() {
      * @returns {Promise<string>} The located cache value, or null.
      */
     async function readCache(scope, name) {
-        const result = cache[`${scope || 'global'}___${name}`];
+        const key = Buffer.isBuffer(scope) ? scope.toString('hex') : scope;
+        const result = cache[`${key || 'global'}___${name}`];
         return result === undefined ? null : result;
     }
 
@@ -21,7 +25,8 @@ module.exports = function cacheFactory() {
      * @param {string} value The value to write to the cache.
      */
     async function writeCache(scope, name, value) {
-        cache[`${scope || 'global'}___${name}`] = value;
+        const key = Buffer.isBuffer(scope) ? scope.toString('hex') : scope;
+        cache[`${key || 'global'}___${name}`] = value;
     }
 
     /**
@@ -32,7 +37,8 @@ module.exports = function cacheFactory() {
      * @param {string} value The value to push onto to the cache.
      */
     async function pushCache(scope, name, value) {
-        const key = `${scope || 'global'}___${name}`;
+        const scopeKey = Buffer.isBuffer(scope) ? scope.toString('hex') : scope;
+        const key = `${scopeKey || 'global'}___${name}`;
         const list = cache[key] || [];
         list.push(value);
         cache[key] = list;

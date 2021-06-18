@@ -17,7 +17,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
         const parent = btBlockData.parent || Buffer.alloc(constants.size.hash);
         if (Buffer.byteLength(parent) !== constants.size.hash) {
             throw new SerializationError({ data: parent },
-                SerializationError.reasons.invalidHash,
+                SerializationError.reasons.invalidBlockHash,
                 constants.layer.blocktree);
         }
         const data = Buffer.concat([
@@ -59,7 +59,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
 
     /**
      * Reads a block from the blocktree.
-     * @param {string} block The block hash to read.
+     * @param {Buffer} block The block hash to read.
      * @returns {Promise<Object>} The requested blocktree data.
      */
     async function readBlock(block) {
@@ -155,7 +155,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
 
     /**
      * Given a block, returns its data as well as data for all parent blocks.
-     * @param {string} block The block to start from.
+     * @param {Buffer} block The block to start from.
      * @returns {Promise<Array>} Block data for the block and all parents.
      */
     async function performParentScan(block) {
@@ -183,7 +183,8 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
         if (cached && Array.isArray(cached)) {
             return Promise.all(cached.map(readBlock));
         }
-        const result = await findAllInBlocks((b) => b.prev === null && b.parent === block);
+        const result = await findAllInBlocks((b) => b.prev === null
+         && b.parent && block && Buffer.compare(b.parent, block) === 0);
         await cache.writeCache(block, constants.cache.childBlocks,
             result.map((i) => i.hash));
         return result;
@@ -191,7 +192,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
 
     /**
      * Given a block, scans the blocks in the system to find the next one.
-     * @param {string} block The block to start from.
+     * @param {Buffer} block The block to start from.
      * @returns {Promise<string>} The hash of the next block, or null.
      */
     async function getNextBlock(block) {
@@ -201,7 +202,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
     /**
      * Given a block, locates the root block of the blockchain.
      * If block is null, retries the root of the blocktree.
-     * @param {string} block The block to start from.
+     * @param {Buffer} block The block to start from.
      * @returns {Promise<string>} The root block of the blockchain or blocktree, or null.
      */
     async function getRootBlock(block) {
@@ -210,7 +211,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
 
     /**
      * Given a block, locates the parent of this block on the blocktree.
-     * @param {string} block The block to start from.
+     * @param {Buffer} block The block to start from.
      * @returns {Promise<string>} The parent block of the specified block, or null.
      */
     async function getParentBlock(block) {
@@ -224,7 +225,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
 
     /**
      * Given a block, finds the head block in the blockchain.
-     * @param {string} block The block to start with.
+     * @param {Buffer} block The block to start with.
      * @returns {Promise<string>} The head block of the blockchain.
      */
     async function getHeadBlock(block) {
@@ -233,7 +234,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
 
     /**
      * Given a block, validates all previous blocks in the blocktree.
-     * @param {string} block
+     * @param {Buffer} block
      * @returns {Promise<Object>} A validation report.
      */
     async function validateBlocktree(block, options) {

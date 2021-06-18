@@ -5,10 +5,10 @@ const { deserializeKey } = require('./serialization/deserialize');
 module.exports = function secureBlocktreeSignaturesFactory({ context }) {
     /**
      * Validates a signature based on the provided block and action to perform.
-     * @param {string} sig The signature to validate.
-     * @param {string} parent The parent block.
-     * @param {string} prev The previous block.
-     * @param {number} action The action to validate.
+     * @param {Buffer} sig The signature to validate.
+     * @param {Buffer} parent The parent block.
+     * @param {Buffer} prev The previous block.
+     * @param {string} action The action to validate.
      * @param {boolean} noThrow Whether or not to throw an exception if validation fails.
      * @returns {Promise<string>} The valid signature, or null.
      */
@@ -26,12 +26,12 @@ module.exports = function secureBlocktreeSignaturesFactory({ context }) {
             key,
         });
 
-        const result = keySeek && Buffer.compare(keySeek.key, key) === 0
+        const result = keySeek
             && (await context.verifySignedBlock({
                 key, sig: signature, parent, prev,
             }));
         if (!result && noThrow !== true) {
-            if (!keySeek || !keySeek.key === key) {
+            if (!keySeek) {
                 throw new InvalidSignatureError({ block, key },
                     InvalidSignatureError.reasons.notFound);
             }

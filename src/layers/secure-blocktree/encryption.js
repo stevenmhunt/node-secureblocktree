@@ -21,7 +21,7 @@ module.exports = function secureBlocktreeEncryptionFactory({
 
     /**
      * Decrypts data using the specified key.
-     * @param {string} key The public key to decrypt data with.
+     * @param {Buffer} key The public key to decrypt data with.
      * @param {Buffer} data The data to decrypt.
      * @param {Object} options Additional decryption options.
      * @returns {Promise<Object>} The decrypted data.
@@ -40,9 +40,9 @@ module.exports = function secureBlocktreeEncryptionFactory({
     /**
      * Digitally signs a block using the specified key.
      * @param {string} secret The private key to sign the block with (usually a write key).
-     * @param {string} key The public key being signed with.
-     * @param {string} parent The parent of the block to sign.
-     * @param {string} prev The previous block of the block to sign.
+     * @param {Buffer} key The public key being signed with.
+     * @param {Buffer} parent The parent of the block to sign.
+     * @param {Buffer} prev The previous block of the block to sign.
      * @returns {Promise<Buffer>} The signed block data.
      */
     async function signBlock({
@@ -65,10 +65,10 @@ module.exports = function secureBlocktreeEncryptionFactory({
     /**
      * Given a key, a signature, and a block,
      * determines if the signature is valid and matches the block.
-     * @param {string} sig The signature generated when the block was signed.
-     * @param {string} key The key to validate.
-     * @param {string} parent The parent block to validate.
-     * @param {string} prev The prev block to validate.
+     * @param {Buffer} sig The signature generated when the block was signed.
+     * @param {Buffer} key The key to validate.
+     * @param {Buffer} parent The parent block to validate.
+     * @param {Buffer} prev The prev block to validate.
      * @returns {Promise<boolean>} Whether or not the signature and key are valid for the block.
      */
     async function verifySignedBlock({

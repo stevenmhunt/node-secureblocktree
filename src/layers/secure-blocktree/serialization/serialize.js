@@ -4,7 +4,7 @@ const { fromInt16, fromByte } = require('../../../utils');
 /**
  * @private
  * Serializes a key.
- * @param {string} key The key to serialize.
+ * @param {Buffer} key The key to serialize.
  */
 function serializeKey(key) {
     if (!key) {

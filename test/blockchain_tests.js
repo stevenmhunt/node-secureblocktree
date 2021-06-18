@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 const assert = require('assert');
 const constants = require('../src/constants');
-const { InvalidBlockError } = require('../src/errors');
+const { InvalidBlockError, SerializationError } = require('../src/errors');
 const { initBlockchain, getRandomHash } = require('./test-helper');
 
 describe('Blocktree Layer 1 - Blockchain', () => {
@@ -45,6 +45,19 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
             assert.ok(Buffer.compare(result.prev, block1) === 0);
             assert.ok(result.nonce, 'Expected valid nonce value.');
+        });
+        it('should fail if the requested block hash is an incorrect size', async () => {
+            const invalidBlock = Buffer.from('aabbccdd', 'utf-8');
+            let isExecuted = false;
+            try {
+                await blockchain.readBlock(invalidBlock);
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof SerializationError);
+                assert.strictEqual(err.layer, constants.layer.blockchain);
+                assert.strictEqual(err.reason, SerializationError.reasons.invalidBlockHash);
+            }
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
     });
     describe('write block', () => {
@@ -202,7 +215,7 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             const prev = await blockchain.readBlock(result.prev);
             const next = await blockchain.getNextBlock(result.prev);
 
-            assert.strictEqual(next, block);
+            assert.ok(Buffer.compare(next, block) === 0);
             assert.ok(Buffer.compare(data, result.data) === 0, 'Expected data to match.');
             assert.ok(Buffer.compare(data, prev.data) === 0, 'Expected data to match.');
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');

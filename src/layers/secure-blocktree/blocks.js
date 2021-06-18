@@ -6,7 +6,7 @@ module.exports = function secureBlocktreeBlocksFactory({
 }) {
     /**
      * Reads a secure block from the blocktree.
-     * @param {string} block The block hash to read.
+     * @param {Buffer} block The block hash to read.
      * @returns {Promise<Object>} The requested secure data.
      */
     async function readSecureBlock(block) {
@@ -48,7 +48,7 @@ module.exports = function secureBlocktreeBlocksFactory({
 
     /**
      * Given a block, scans the blocks in the system to find the next one.
-     * @param {string} block The block to start from.
+     * @param {Buffer} block The block to start from.
      * @returns {Promise<string>} The hash of the next block, or null.
      */
     async function getNextBlock(block) {
@@ -58,7 +58,7 @@ module.exports = function secureBlocktreeBlocksFactory({
     /**
      * Given a block, locates the root block of the blockchain.
      * If block is null, retries the root of the blocktree.
-     * @param {string} block The block to start from.
+     * @param {Buffer} block The block to start from.
      * @returns {Promise<string>} The root block of the blockchain or blocktree, or null.
      */
     async function getRootBlock(block) {
@@ -67,7 +67,7 @@ module.exports = function secureBlocktreeBlocksFactory({
 
     /**
      * Given a block, locates the parent of this block on the blocktree.
-     * @param {string} block The block to start from.
+     * @param {Buffer} block The block to start from.
      * @returns {Promise<string>} The parent block of the specified block, or null.
      */
     async function getParentBlock(block) {
@@ -76,7 +76,7 @@ module.exports = function secureBlocktreeBlocksFactory({
 
     /**
      * Given a block, finds the head block in the blockchain.
-     * @param {string} block The block to start with.
+     * @param {Buffer} block The block to start with.
      * @returns {Promise<string>} The head block of the blockchain.
      */
     async function getHeadBlock(block) {
@@ -85,7 +85,7 @@ module.exports = function secureBlocktreeBlocksFactory({
 
     /**
      * Given a block, verifies that the block has a parent.
-     * @param {string} block The block to check
+     * @param {Buffer} block The block to check
      * @returns {Promise<string>} The parent block, or throws an exception.
      */
     async function validateParentBlock({ prev, parent, type }) {

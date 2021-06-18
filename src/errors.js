@@ -24,7 +24,7 @@ class BlocktreeError extends Error {
  * Reasons for serialization errors.
  */
 const serializationErrorReasons = {
-    invalidHash: 1,
+    invalidBlockHash: 1,
     argumentOutOfBounds: 2,
 };
 
@@ -42,8 +42,8 @@ class SerializationError extends BlocktreeError {
         super(constants.error.serialization, layer, (() => {
             const { data } = values;
             switch (reason) {
-            case serializationErrorReasons.invalidHash:
-                return `Unexpected byte length for SHA-256 hash: ${data.toString('hex')}`;
+            case serializationErrorReasons.invalidBlockHash:
+                return `Unexpected byte length for SHA-256 block hash: ${data.toString('hex')}`;
             default:
                 return 'Serialization error occurred.';
             }

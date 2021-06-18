@@ -21,11 +21,11 @@ module.exports = function secureBlocktreeKeysFactory({
 
     /**
      * Given a block, scans for all specified keys in the blockchain.
-     * @param {string} block The block to start scanning from.
+     * @param {Buffer} block The block to start scanning from.
      * @param {boolean} isRecursive (optional) Indicates whether to scan all parent blocks as well.
      * @param {boolean} isActive (optional) Indicates whether to only return active keys.
-     * @param {number} action (optional) The type of action to return keys for (read, write, etc.)
-     * @param {string} key (optional) The key to look for.
+     * @param {string} action (optional) The type of action to return keys for (read, write, etc.)
+     * @param {Buffer} key (optional) The key to look for.
      * @param {BigInt} timestamp The timestamp to use for checking active status, or "now" if null.
      * @returns {Promise<Array>} A list of keys which were collected during the scan.
      */
@@ -87,9 +87,9 @@ module.exports = function secureBlocktreeKeysFactory({
 
     /**
      * Given a block, scans for all specified keys in the blockchain.
-     * @param {string} block The block to start scanning from.
-     * @param {number} action (optional) The type of action to return keys for (read, write, etc.)
-     * @param {string} key The key to look for.
+     * @param {Buffer} block The block to start scanning from.
+     * @param {string} action (optional) The type of action to return keys for (read, write, etc.)
+     * @param {Buffer} key The key to look for.
      * @returns {Promise<Object>} The key data to seek, or null.
      */
     async function performKeySeek({
@@ -97,16 +97,18 @@ module.exports = function secureBlocktreeKeysFactory({
     } = {}) {
         const [result] = (await performKeyScan({
             block, isRecursive: true, isActive: true, action, key,
-        }))
-            .slice(-1);
-        return result || null;
+        })).slice(-1);
+        if (result && result.key && Buffer.compare(result.key, key) === 0) {
+            return result;
+        }
+        return null;
     }
 
     /**
      * Validates a key by checking the chain until the root is reached.
-     * @param {string} block The block to start validating from.
-     * @param {string} key The key to validate.
-     * @param {number} action The action to perform.
+     * @param {Buffer} block The block to start validating from.
+     * @param {Buffer} key The key to validate.
+     * @param {string} action The action to perform.
      * @returns {Promise<boolean>} Whether the key is valid or not.
      */
     async function validateParentKey({
@@ -137,9 +139,9 @@ module.exports = function secureBlocktreeKeysFactory({
     /**
      * @private
      * Validates a list of keys.
-     * @param {string} block The block to start validating from.
-     * @param {string} keys The keys to validate.
-     * @param {number} action The action to perform.
+     * @param {Buffer} block The block to start validating from.
+     * @param {Buffer} keys The keys to validate.
+     * @param {string} action The action to perform.
      * @returns {Promise<boolean>} Whether the key is valid or not.
      */
     async function validateKeysInternal({
@@ -156,8 +158,8 @@ module.exports = function secureBlocktreeKeysFactory({
 
     /**
      * Given a set of keys and actions, validates all given keys.
-     * @param {string} block The block to start validating from.
-     * @param {string} keys The key sets to validate.
+     * @param {Buffer} block The block to start validating from.
+     * @param {Buffer} keys The key sets to validate.
      * @returns {Promise<boolean>} Whether the key is valid or not.
      */
     async function validateKeys({ block, keys, parentKey }) {

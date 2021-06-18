@@ -14,6 +14,18 @@ module.exports = function blockchainLayerFactory({ system }) {
      */
     let emitter = null;
 
+    function checkBlockHash(block) {
+        if (!block) {
+            return constants.block.zero;
+        }
+        if (Buffer.byteLength(block) !== constants.size.hash) {
+            throw new SerializationError({ data: block },
+                SerializationError.reasons.invalidBlockHash,
+                constants.layer.blockchain);
+        }
+        return block;
+    }
+
     /**
      * @private
      * Given a blockchain object, converts it into a Buffer.
@@ -21,26 +33,18 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Buffer} The binary representation of the block.
      */
     function serializeBlockchainData(bcBlockData, timestamp, seq) {
-        const prev = bcBlockData.prev || constants.block.zero;
-        if (Buffer.byteLength(prev) !== constants.size.hash) {
-            throw new SerializationError({ data: prev },
-                SerializationError.reasons.invalidHash,
-                constants.layer.blockchain);
-        }
-        const nonce = utils.generateNonce();
-        const buf = Buffer.concat([
+        return Buffer.concat([
             // sequence
             utils.fromInt64(seq),
             // previous hash
-            prev,
+            checkBlockHash(bcBlockData.prev),
             // uniqueness
-            utils.fromInt64(nonce),
+            utils.fromInt64(utils.generateNonce()),
             // timestamp
             utils.fromInt64(timestamp),
             // data
             bcBlockData.data,
         ]);
-        return buf;
     }
 
     /**
@@ -73,13 +77,15 @@ module.exports = function blockchainLayerFactory({ system }) {
 
     /**
      * Reads a block from storage.
-     * @param {string} block The block hash to read.
+     * @param {Buffer} block The block hash to read.
      * @returns {Promise<Object>} The requested blockchain data.
      */
     async function readBlock(block) {
         return utils.withEvent(emitter, 'read-block', {
             block,
-        }, async () => deserializeBlockchainData(await system.readStorage(block)));
+        }, async () => deserializeBlockchainData(
+            await system.readStorage(checkBlockHash(block)),
+        ));
     }
 
     /**
@@ -97,7 +103,7 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promise<Buffer>} The requested bytes.
      */
     async function readRawBlock(block) {
-        return system.readStorage(block);
+        return system.readStorage(checkBlockHash(block));
     }
 
     /**
@@ -111,12 +117,12 @@ module.exports = function blockchainLayerFactory({ system }) {
 
     /**
      * Given a block, locates the root block of the blockchain.
-     * @param {string} block The block to start from.
+     * @param {Buffer} block The block to start from.
      * @returns {Promise<string>} The root block of the blockchain.
      */
     async function getRootBlock(block) {
-        let result = block;
-        let next = block;
+        let result = checkBlockHash(block);
+        let next = result;
         do {
             const nextBlock = await readBlock(next);
             next = (nextBlock || {}).prev;
@@ -131,12 +137,13 @@ module.exports = function blockchainLayerFactory({ system }) {
 
     /**
      * Given a block, scans the blocks in the system to find the next one.
-     * @param {string} block The block to start from.
+     * @param {Buffer} block The block to start from.
      * @returns {Promise<string>} The hash of the next block, or null.
      */
     async function getNextBlock(block) {
+        const blockHash = checkBlockHash(block);
         // 1) try to locate the value in cache.
-        const cached = await system.readCache(block, constants.cache.next);
+        const cached = await system.readCache(blockHash, constants.cache.next);
         if (cached) {
             if (cached === 'null') {
                 return null;
@@ -146,13 +153,17 @@ module.exports = function blockchainLayerFactory({ system }) {
 
         // 2) otherwise, walk through all the blocks to find the next one.
         const value = await system.findInStorage(
-            (buf) => Buffer.compare(deserializeBlockchainData(buf).prev, block) === 0,
+            (buf) => {
+                const prevData = deserializeBlockchainData(buf).prev;
+                return (!blockHash && !prevData)
+                    || (blockHash && prevData && Buffer.compare(prevData, blockHash) === 0);
+            },
         );
 
         // 3) if found, cache it for next time.
         if (value) {
             const result = utils.generateHash(value);
-            await system.writeCache(block, constants.cache.next, result);
+            await system.writeCache(blockHash, constants.cache.next, result);
             return result;
         }
         return null;
@@ -161,27 +172,29 @@ module.exports = function blockchainLayerFactory({ system }) {
     /**
      * @private
      * Handles caching of the root block.
-     * @param {string} block The block to update caches for.
+     * @param {Buffer} block The block to update caches for.
      * @param {Object} bcBlockData The blockchain object.
      * @returns {Promis<string>} The root block of the blockchain.
      */
     async function cacheRootBlock(block, bcBlockData) {
+        const blockHash = checkBlockHash(block);
         // 1) if this block IS the root node, then cache itself.
         if (!bcBlockData.prev) {
-            await system.writeCache(block, constants.cache.rootBlock, block);
+            await system.writeCache(blockHash, constants.cache.rootBlock, blockHash);
             return block;
         }
 
         // 2) check if the previous node in the blockchain knows who the root is.
-        const cached = await system.readCache(bcBlockData.prev, constants.cache.rootBlock);
+        const cached = await system.readCache(checkBlockHash(bcBlockData.prev),
+            constants.cache.rootBlock);
         if (cached) {
-            await system.writeCache(block, constants.cache.rootBlock, cached);
+            await system.writeCache(blockHash, constants.cache.rootBlock, cached);
             return cached;
         }
 
         // 3) otherwise, walk across the blocks to the beginning of the blockchain.
-        const root = await getRootBlock(block);
-        await system.writeCache(block, constants.cache.rootBlock, root);
+        const root = await getRootBlock(blockHash);
+        await system.writeCache(blockHash, constants.cache.rootBlock, root);
         return root;
     }
 
@@ -219,9 +232,9 @@ module.exports = function blockchainLayerFactory({ system }) {
                     constants.layer.blockchain);
                 }
             }
-            const block = await system.writeStorage(
+            const block = checkBlockHash(await system.writeStorage(
                 serializeBlockchainData(bcBlockData, timestamp, seq),
-            );
+            ));
             if (options.cacheRoot !== false) {
                 const root = await cacheRootBlock(block, bcBlockData);
                 await system.writeCache(root, constants.cache.headBlock, block);
@@ -276,11 +289,11 @@ module.exports = function blockchainLayerFactory({ system }) {
 
     /**
      * Given a block, finds the head block in the blockchain.
-     * @param {string} block The block to start with.
+     * @param {Buffer} block The block to start with.
      * @returns {Promise<string>} The head block of the blockchain.
      */
     async function getHeadBlock(block) {
-        const bc = await getRootBlock(block);
+        const bc = await getRootBlock(checkBlockHash(block));
         if (!bc) {
             return null;
         }
@@ -288,29 +301,25 @@ module.exports = function blockchainLayerFactory({ system }) {
         if (cached) {
             return cached;
         }
-        let result = bc;
+        // optimization: start from 'block' instead of the root.
+        let result = block;
         let next = null;
-        let count = 0;
         do {
             next = await getNextBlock(result);
             result = next || result;
-            count += 1;
         }
         while (next != null);
-        if (count > 1) {
-            await system.writeCache(bc, constants.cache.headBlock, result);
-            return result;
-        }
-        return null;
+        await system.writeCache(bc, constants.cache.headBlock, result);
+        return result;
     }
 
     /**
      * Given a block, validates all previous blocks in the blockchain.
-     * @param {string} block
+     * @param {Buffer} block
      */
     async function validateBlockchain(block, options = {}) {
         let next = options.startFromHead
-            ? await getHeadBlock(block) : block;
+            ? await getHeadBlock(block) : checkBlockHash(block);
         let blockCount = 0;
         let blockBefore = null;
         do {

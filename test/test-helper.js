@@ -8,7 +8,7 @@ const blockchainLayerFactory = require('../src/layers/blockchain');
 const systemLayerFactory = require('../src/layers/system');
 
 // mocks
-const cacheFactory = require('./mocks/cache');
+const cacheFactory = require('./mocks/no-cache');
 const encryptionFactory = require('./mocks/encryption');
 const timeFactory = require('./mocks/time');
 const storageFactory = require('./mocks/storage');
