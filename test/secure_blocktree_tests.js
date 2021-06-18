@@ -196,6 +196,153 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
             assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
     });
+    describe('create identity', () => {
+        it('should succeed within the root zone', async () => {
+            const { rootZone } = secureRoot;
+            const newId = await secureBlocktree.createIdentity({
+                block: rootZone,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+            });
+            const result = await secureBlocktree.readSecureBlock(newId);
+
+            assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
+            assert.strictEqual(result.prev, null);
+            assert.ok(Buffer.compare(result.parent, rootZone) === 0);
+            assert.strictEqual(result.type, constants.blockType.identity);
+            assert.ok(result.nonce, 'Expected valid nonce value.');
+        });
+        it('should fail without a parent', async () => {
+            let isExecuted = false;
+            try {
+                await secureBlocktree.createIdentity({
+                    block: null,
+                    sig: signAs(secureBlocktree,
+                        rootZoneKeys[constants.action.write][0]),
+                });
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof InvalidBlockError);
+                assert.strictEqual(err.layer, constants.layer.secureBlocktree);
+                assert.strictEqual(err.reason, InvalidBlockError.reasons.isNull);
+            }
+
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+        it('should fail adjacent to the root zone', async () => {
+            const { rootBlock } = secureRoot;
+            let isExecuted = false;
+            try {
+                await secureBlocktree.createIdentity({
+                    block: rootBlock,
+                    sig: signAs(secureBlocktree,
+                        rootKeys[constants.action.write][0]),
+                });
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof InvalidBlockError);
+                assert.strictEqual(err.reason, InvalidBlockError.reasons.invalidParentType);
+            }
+
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+        it('should fail with an inconsistent signature', async () => {
+            const { rootZone } = secureRoot;
+            let isExecuted = false;
+            try {
+                await secureBlocktree.createIdentity({
+                    block: rootZone,
+                    sig: signAs(secureBlocktree, rootZoneKeys[constants.action.write][0],
+                        rootKeys[constants.action.write][0]),
+                });
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof InvalidSignatureError);
+                assert.strictEqual(err.reason, InvalidSignatureError.reasons.doesNotMatch);
+            }
+
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+        it('should fail without a known signature', async () => {
+            const invalidKey = await generateTestKeys(encryption);
+            const { rootZone } = secureRoot;
+            let isExecuted = false;
+            try {
+                await secureBlocktree.createIdentity({
+                    block: rootZone,
+                    sig: signAs(secureBlocktree, invalidKey[constants.action.write][0]),
+                });
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof InvalidSignatureError);
+            }
+
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+        it('should fail with an unassigned key', async () => {
+            const { rootZone } = secureRoot;
+            const newZoneKeys = await generateTestKeys(encryption);
+            const newZone = await secureBlocktree.createZone({
+                block: rootZone,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+            });
+            await secureBlocktree.setKeys({
+                block: newZone,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+                keys: newZoneKeys,
+            });
+            const newKeys = await generateTestKeys(encryption);
+            let isExecuted = false;
+            try {
+                await secureBlocktree.createIdentity({
+                    block: newZone,
+                    sig: signAs(secureBlocktree,
+                        newKeys[constants.action.write][0]),
+                });
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof InvalidSignatureError);
+            }
+
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+        it('should fail with a revoked key', async () => {
+            const { rootZone } = secureRoot;
+            const newZoneKeys = await generateTestKeys(encryption);
+            const newZone = await secureBlocktree.createZone({
+                block: rootZone,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+            });
+            await secureBlocktree.setKeys({
+                block: newZone,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+                keys: newZoneKeys,
+            });
+            await secureBlocktree.revokeKeys({
+                block: newZone,
+                sig: signAs(secureBlocktree,
+                    rootZoneKeys[constants.action.write][0]),
+                keys: newZoneKeys,
+            });
+            let isExecuted = false;
+            try {
+                await secureBlocktree.createIdentity({
+                    block: newZone,
+                    sig: signAs(secureBlocktree,
+                        newZoneKeys[constants.action.write][0]),
+                });
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof InvalidSignatureError);
+            }
+
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
+    });
     describe('set keys', () => {
         it('should succeed for a zone using the parent key', async () => {
             const { rootZone } = secureRoot;
@@ -800,7 +947,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
                 await secureBlocktree.createCollection({
                     block: rootBlock,
                     sig: signAs(secureBlocktree,
-                        rootZoneKeys[constants.action.write][0]),
+                        rootKeys[constants.action.write][0]),
                 });
                 isExecuted = true;
             } catch (err) {

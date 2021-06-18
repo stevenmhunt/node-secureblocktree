@@ -87,6 +87,7 @@ constants.parentBlockTypes = {
         constants.blockType.identity,
         constants.blockType.collection],
     [constants.blockType.zone]: [constants.blockType.zone],
+    [constants.blockType.identity]: [constants.blockType.zone],
     [constants.blockType.options]: Object.values(constants.blockType),
     [constants.blockType.collection]: [
         constants.blockType.zone,
