@@ -32,8 +32,8 @@ function initBlockchain(withCache) {
     return { ...blockchain, mocks: { cache, storage, time } };
 }
 
-function initBlocktree() {
-    const blockchain = initBlockchain();
+function initBlocktree(withCache) {
+    const blockchain = initBlockchain(withCache);
     const blocktree = blocktreeLayerFactory({ blockchain, cache: blockchain.mocks.cache });
     return { ...blocktree, mocks: blockchain.mocks };
 }
