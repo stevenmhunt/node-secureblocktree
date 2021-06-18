@@ -1,4 +1,7 @@
 const constants = {
+    crypto: {
+        keysize: 1024
+    },
     cache: {
         headBlock: 'head block',
         rootBlock: 'root block',
@@ -36,7 +39,7 @@ const constants = {
     format: {
         hash: 'hex',
         signature: 'hex',
-        key: 'hex',
+        key: 'utf-8',
     },
     block: {
         zero: Buffer.alloc(32),
@@ -76,8 +79,14 @@ const constants = {
 
 constants.parentBlockTypes = {
     [constants.blockType.zone]: [constants.blockType.zone],
-    [constants.blockType.keys]: [constants.blockType.zone],
-    [constants.blockType.options]: [constants.blockType.zone],
+    [constants.blockType.keys]: [
+        constants.blockType.zone,
+        constants.blockType.identity,
+        constants.blockType.ledger],
+    [constants.blockType.ledger]: [
+        constants.blockType.zone,
+        constants.blockType.identity],
+    [constants.blockType.options]: Object.values(constants.blockType),
 };
 
 module.exports = constants;

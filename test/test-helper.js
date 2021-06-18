@@ -52,7 +52,13 @@ function initSecureBlocktree(encryption) {
 }
 
 const privateKeys = {};
-function getPrivateKey(key) {
+function getPrivateKey(key, isExport = false) {
+    if (isExport) {
+        return privateKeys[key].export({
+            type: 'pkcs1',
+            format: 'der'
+        });
+    }
     return privateKeys[key];
 }
 

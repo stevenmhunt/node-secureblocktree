@@ -17,7 +17,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * @returns {Promise<string>} The new block.
      */
     async function setKeys({
-        sig, block, keys, certificates, tsInit, tsExp,
+        sig, block, keys, storedKeys, certificates, tsInit, tsExp,
     }) {
         const type = constants.blockType.keys;
         const init = tsInit !== undefined ? tsInit : constants.timestamp.zero;
@@ -43,7 +43,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
         }
 
         const data = {
-            parentKey, keys, certificates, tsInit: init, tsExp: exp,
+            parentKey, keys, storedKeys, certificates, tsInit: init, tsExp: exp,
         };
         return context.writeSecureBlock({
             sig: signature, parent, prev, type, data,
@@ -138,16 +138,14 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * @returns {Promise<string>} The new block.
      */
     async function createZone({
-        sig, block, keys, name,
+        sig, block, keys, options,
     }) {
         return createChildBlockInternal({
             sig,
             block,
             keys,
             type: constants.blockType.zone,
-            data: {
-                name,
-            },
+            data: options,
         });
     }
 
@@ -160,16 +158,13 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * @returns {Promise<string>} The new block.
      */
     async function createIdentity({
-        sig, block, keys, name,
+        sig, block, options,
     }) {
         return createChildBlockInternal({
             sig,
             block,
-            keys,
             type: constants.blockType.identity,
-            data: {
-                name,
-            },
+            data: options,
         });
     }
 
@@ -182,16 +177,13 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * @returns {Promise<string>} The new block.
      */
     async function createLedger({
-        sig, block, keys, name,
+        sig, block, options,
     }) {
         return createChildBlockInternal({
             sig,
             block,
-            keys,
             type: constants.blockType.ledger,
-            data: {
-                name,
-            },
+            data: options,
         });
     }
 

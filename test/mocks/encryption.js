@@ -1,15 +1,16 @@
 const crypto = require('crypto');
 const { promisify } = require('util');
+const constants = require('../../src/constants');;
 
 const generateKeyPairRSA = promisify(crypto.generateKeyPair);
 
 module.exports = function encryptionFactory() {
     async function generateKeyPair() {
         return generateKeyPairRSA('rsa', {
-            modulusLength: 2048,
+            modulusLength: constants.crypto.keysize,
             publicKeyEncoding: {
                 type: 'pkcs1',
-                format: 'der',
+                format: 'pem',
             },
         });
     }
@@ -41,8 +42,6 @@ module.exports = function encryptionFactory() {
         return crypto.verify('sha256', data, {
             key: publicKey,
             padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-            type: 'pkcs1',
-            format: 'der',
         }, sig);
     }
 
