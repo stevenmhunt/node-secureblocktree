@@ -19,7 +19,7 @@ module.exports = function systemLayerFactory({ cache, storage, time }) {
      */
     async function readStorage(hash) {
         const result = await storage.readStorage(hash);
-        if (result && generateHash(result) !== hash) {
+        if (result && Buffer.compare(generateHash(result), hash) !== 0) {
             return null;
         }
         return result;
@@ -37,13 +37,13 @@ module.exports = function systemLayerFactory({ cache, storage, time }) {
 
     /**
      * Retrieves the specified list of keys.
-     * @param {string} partial The "starts with" search to perform, or null to retrieve all keys.
+     * @param {string} partial The search to perform, or null to retrieve all keys.
      * @returns {Promise<Array>} The list of requested keys.
      */
     async function readKeys(partial = null) {
         const result = await storage.readKeys();
         if (partial) {
-            return result.filter((i) => i.startsWith(partial));
+            return result.filter((i) => i.includes(partial));
         }
         return result;
     }

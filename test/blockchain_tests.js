@@ -43,7 +43,7 @@ describe('Blocktree Layer 1 - Blockchain', () => {
 
             assert.ok(Buffer.compare(data2, result.data) === 0, 'Expected data to match.');
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
-            assert.strictEqual(result.prev, block1);
+            assert.ok(Buffer.compare(result.prev, block1) === 0);
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });
     });
@@ -74,7 +74,7 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             assert.ok(Buffer.compare(data, prev.data) === 0, 'Expected data to match.');
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
             assert.ok(prev.timestamp > 0, 'Expected timestamp to be valid.');
-            assert.strictEqual(result.prev, prev.hash);
+            assert.ok(Buffer.compare(result.prev, prev.hash) === 0);
             assert.ok(result.nonce, 'Expected valid nonce value.');
             assert.ok(prev.nonce, 'Expected valid nonce value.');
         });
@@ -152,7 +152,8 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             for (let i = 0; i < blockCount; i += 1) {
                 block = await blockchain.writeBlock({ prev: block, data });
             }
-            const partial = block.substring(0, 10);
+            const partial = Buffer.allocUnsafe(10);
+            block.copy(partial, 0, 0, 10);
             const result = await blockchain.listBlocks(partial);
 
             assert.ok(Array.isArray(result), 'Expected result to be an array.');
@@ -206,7 +207,7 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             assert.ok(Buffer.compare(data, prev.data) === 0, 'Expected data to match.');
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
             assert.ok(prev.timestamp > 0, 'Expected timestamp to be valid.');
-            assert.strictEqual(result.prev, prev.hash);
+            assert.ok(Buffer.compare(result.prev, prev.hash) === 0);
             assert.ok(result.nonce, 'Expected valid nonce value.');
             assert.ok(prev.nonce, 'Expected valid nonce value.');
         });
@@ -240,7 +241,7 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             const headBlock = await blockchain.readBlock(head);
 
             assert.ok(head !== null);
-            assert.strictEqual(headBlock.prev, result.prev);
+            assert.ok(Buffer.compare(result.prev, headBlock.prev) === 0);
             assert.strictEqual(headBlock.timestamp, result.timestamp);
             assert.strictEqual(headBlock.nonce, result.nonce);
             assert.ok(Buffer.compare(data, result.data) === 0, 'Expected data to match.');
@@ -265,7 +266,7 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             const rootBlock = await blockchain.readBlock(root);
 
             assert.ok(root !== null);
-            assert.strictEqual(root, first);
+            assert.ok(Buffer.compare(root, first) === 0);
             assert.ok(rootBlock !== null);
             assert.strictEqual(rootBlock.prev, null);
         });
@@ -297,7 +298,7 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             assert.strictEqual(result.isValid, false);
             assert.strictEqual(result.blockCount, 2);
             assert.strictEqual(result.reason, constants.validation.missingBlock);
-            assert.strictEqual(result.block, block1);
+            assert.ok(Buffer.compare(result.block, block1) === 0);
         });
         it('should report that a blockchain with inconsistent timestamps is invalid', async () => {
             const options = { validate: false };
@@ -311,7 +312,7 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             assert.strictEqual(result.isValid, false);
             assert.strictEqual(result.blockCount, 2);
             assert.strictEqual(result.reason, constants.validation.invalidTimestamp);
-            assert.strictEqual(result.block, block1);
+            assert.ok(Buffer.compare(result.block, block1) === 0);
         });
     });
 });

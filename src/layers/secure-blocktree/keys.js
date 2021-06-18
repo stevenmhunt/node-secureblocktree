@@ -63,7 +63,7 @@ module.exports = function secureBlocktreeKeysFactory({
                                     tsInit: secureBlock.data.tsInit,
                                     tsExp: secureBlock.data.tsExp,
                                 });
-                                if (key && key === currentKey) {
+                                if (key && Buffer.compare(key, currentKey) === 0) {
                                     return result;
                                 }
                             }

@@ -28,7 +28,7 @@ module.exports = function secureBlocktreeSignaturesFactory({ context }) {
             action: action || constants.action.write,
         })).slice(-1);
 
-        const result = keySeek && keySeek.key === key
+        const result = keySeek && Buffer.compare(keySeek.key, key) === 0
             && (await context.verifySignedBlock({
                 key, sig: signature, parent, prev,
             }));

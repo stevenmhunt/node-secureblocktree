@@ -14,14 +14,11 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
      */
     function serializeBlocktreeData(btBlockData) {
         const { prev } = btBlockData;
-        let parent = btBlockData.parent || Buffer.alloc(constants.size.hash);
-        if (!Buffer.isBuffer(parent)) {
-            parent = Buffer.from(parent, constants.format.hash);
-            if (Buffer.byteLength(parent) !== constants.size.hash) {
-                throw new SerializationError({ data: parent },
-                    SerializationError.reasons.invalidHash,
-                    constants.layer.blocktree);
-            }
+        const parent = btBlockData.parent || Buffer.alloc(constants.size.hash);
+        if (Buffer.byteLength(parent) !== constants.size.hash) {
+            throw new SerializationError({ data: parent },
+                SerializationError.reasons.invalidHash,
+                constants.layer.blocktree);
         }
         const data = Buffer.concat([
             // parent hash
@@ -52,11 +49,8 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
         };
         result.parent = data.slice(index, index + constants.size.hash);
         index += constants.size.hash;
-        // handle the case where parent is null.
-        if (Buffer.compare(result.parent, Buffer.alloc(constants.size.hash)) === 0) {
+        if (Buffer.compare(result.parent, constants.block.zero) === 0) {
             result.parent = null;
-        } else {
-            result.parent = result.parent.toString(constants.format.hash);
         }
         result.layer = data[index++];
         result.data = data.slice(index);

@@ -2,7 +2,7 @@
 const constants = require('../../../constants');
 const { toInt16 } = require('../../../utils');
 
-function deserializeKey(data, startIndex = 0, format = constants.format.key) {
+function deserializeKey(data, startIndex = 0) {
     let index = startIndex;
     let result = null;
     const keySize = toInt16(data, index);
@@ -10,10 +10,6 @@ function deserializeKey(data, startIndex = 0, format = constants.format.key) {
     if (keySize > 0) {
         result = data.slice(index, index + keySize);
         index += keySize;
-    }
-
-    if (result && format) {
-        result = result.toString(format);
     }
     return { result, index };
 }
@@ -57,8 +53,7 @@ function deserializeSignature(data, startIndex = 0) {
     const sigLength = toInt16(data, index);
     index += constants.size.int16;
     if (sigLength > 0) {
-        result = data.slice(index, index + sigLength)
-            .toString(constants.format.signature);
+        result = data.slice(index, index + sigLength);
         index += sigLength;
     }
     return { result, index };

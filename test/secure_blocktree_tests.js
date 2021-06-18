@@ -45,7 +45,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
 
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
             assert.strictEqual(result.prev, null);
-            assert.strictEqual(result.parent, rootBlock);
+            assert.ok(Buffer.compare(result.parent, rootBlock) === 0);
             assert.strictEqual(result.type, constants.blockType.zone);
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });
@@ -62,7 +62,7 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
 
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
             assert.strictEqual(result.prev, null);
-            assert.strictEqual(result.parent, rootZone);
+            assert.ok(Buffer.compare(result.parent, rootZone) === 0);
             assert.strictEqual(result.type, constants.blockType.zone);
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });

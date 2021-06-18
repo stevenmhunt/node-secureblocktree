@@ -179,7 +179,7 @@ async function withEvent(emitter, event, parameters, fn) {
  * @param {string} value
  */
 function generateHash(value) {
-    return crypto.createHash(constants.block.hash).update(value).digest(constants.format.hash);
+    return crypto.createHash(constants.block.hash).update(value).digest();
 }
 
 /**

@@ -7,11 +7,11 @@
     "test": "./node_modules/mocha/bin/mocha --timeout 10000",
     "start": "node ./index.js",
     "lint": "./node_modules/.bin/eslint . --fix"
-
   },
   "author": "Steven Hunt",
   "license": "MIT",
   "dependencies": {
+    "@ronomon/hash-table": "^2.0.7",
     "object-hash": "^2.2.0"
   },
   "devDependencies": {

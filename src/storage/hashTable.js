@@ -1,10 +1,13 @@
 /* eslint-disable no-await-in-loop */
+const HashTable = require('@ronomon/hash-table');
 
-/**
- * Mock storage factory (in-memory, using a vanilla JS object)
- */
+const keySize = 32;
+const valueSize = 2 ** 16 - 1 + 2;
+const elementsMin = 1024; // Optional. Reserve space for at least 1,024 elements.
+const elementsMax = 65536; // Optional. Expect at most 65,536 elements.
+
 module.exports = function storageFactory() {
-    const data = {};
+    const hashTable = new HashTable(keySize, valueSize, elementsMin, elementsMax);
     const keys = [];
 
     /**
@@ -16,7 +19,12 @@ module.exports = function storageFactory() {
         if (!hash) {
             return null;
         }
-        return data[hash.toString('base64')];
+        const result = Buffer.alloc(valueSize);
+        if (!hashTable.get(hash, 0, result, 0)) {
+            return null;
+        }
+        const size = result.readUInt16BE(0);
+        return result.slice(2, size + 2);
     }
 
     /**
@@ -25,7 +33,9 @@ module.exports = function storageFactory() {
      * @returns {Promise<string>} The hash of the written block.
      */
     async function writeStorage(hash, value) {
-        data[hash.toString('base64')] = value;
+        const size = Buffer.allocUnsafe(2);
+        size.writeUInt16BE(Buffer.byteLength(value), 0);
+        hashTable.set(hash, 0, Buffer.concat([size, value]), 0);
         keys.push(hash);
         return hash;
     }
@@ -68,7 +78,7 @@ module.exports = function storageFactory() {
      * @returns {Promise<number>} The number of blocks in storage.
      */
     async function countInStorage() {
-        return keys.length;
+        return hashTable.length;
     }
 
     return {

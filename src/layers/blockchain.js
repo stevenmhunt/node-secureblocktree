@@ -21,14 +21,11 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Buffer} The binary representation of the block.
      */
     function serializeBlockchainData(bcBlockData, timestamp, seq) {
-        let prev = bcBlockData.prev || Buffer.alloc(constants.size.hash);
-        if (!Buffer.isBuffer(prev)) {
-            prev = Buffer.from(prev, constants.format.hash);
-            if (Buffer.byteLength(prev) !== constants.size.hash) {
-                throw new SerializationError({ data: prev },
-                    SerializationError.reasons.invalidHash,
-                    constants.layer.blockchain);
-            }
+        const prev = bcBlockData.prev || constants.block.zero;
+        if (Buffer.byteLength(prev) !== constants.size.hash) {
+            throw new SerializationError({ data: prev },
+                SerializationError.reasons.invalidHash,
+                constants.layer.blockchain);
         }
         const nonce = utils.generateNonce();
         const buf = Buffer.concat([
@@ -61,13 +58,10 @@ module.exports = function blockchainLayerFactory({ system }) {
         result.seq = utils.toInt64(buf, index);
         index += constants.size.int64;
         result.prev = buf.slice(index, index + constants.size.hash);
-        index += constants.size.hash;
-        // handle the case where prev is null.
-        if (Buffer.compare(result.prev, Buffer.alloc(constants.size.hash)) === 0) {
+        if (Buffer.compare(result.prev, constants.block.zero) === 0) {
             result.prev = null;
-        } else {
-            result.prev = result.prev.toString(constants.format.hash);
         }
+        index += constants.size.hash;
         result.nonce = utils.toInt64(buf, index);
         index += constants.size.int64;
         result.timestamp = utils.toInt64(buf, index);
@@ -152,7 +146,7 @@ module.exports = function blockchainLayerFactory({ system }) {
 
         // 2) otherwise, walk through all the blocks to find the next one.
         const value = await system.findInStorage(
-            (buf) => deserializeBlockchainData(buf).prev === block,
+            (buf) => Buffer.compare(deserializeBlockchainData(buf).prev, block) === 0,
         );
 
         // 3) if found, cache it for next time.

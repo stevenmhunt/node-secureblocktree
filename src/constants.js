@@ -45,6 +45,9 @@ const constants = {
         zero: Buffer.alloc(32),
         hash: 'sha256',
     },
+    key: {
+        zero: Buffer.alloc(0),
+    },
     blockType: {
         root: 0,
         keys: 1,

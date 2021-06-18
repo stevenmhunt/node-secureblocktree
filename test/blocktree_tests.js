@@ -43,7 +43,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
 
             assert.ok(Buffer.compare(data2, result.data) === 0, 'Expected data to match.');
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
-            assert.strictEqual(result.prev, block1);
+            assert.ok(Buffer.compare(result.prev, block1) === 0);
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });
     });
@@ -74,7 +74,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             assert.ok(Buffer.compare(data, prev.data) === 0, 'Expected data to match.');
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
             assert.ok(prev.timestamp > 0, 'Expected timestamp to be valid.');
-            assert.strictEqual(result.prev, prev.hash);
+            assert.ok(Buffer.compare(result.prev, prev.hash) === 0);
             assert.ok(result.nonce, 'Expected valid nonce value.');
             assert.ok(prev.nonce, 'Expected valid nonce value.');
         });
@@ -139,7 +139,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
 
             assert.ok(Array.isArray(result));
             assert.strictEqual(result.length, 1);
-            assert.strictEqual(result[0].hash, block);
+            assert.ok(Buffer.compare(result[0].hash, block) === 0);
         });
         it('should return the block as well as all parent blocks', async () => {
             const data = Buffer.from("I'm a string!", 'utf-8');
@@ -152,11 +152,11 @@ describe('Blocktree Layer 2 - Blocktree', () => {
 
             assert.ok(Array.isArray(result));
             assert.strictEqual(result.length, 5);
-            assert.strictEqual(result[0].hash, block5);
-            assert.strictEqual(result[1].hash, block4);
-            assert.strictEqual(result[2].hash, block3);
-            assert.strictEqual(result[3].hash, block2);
-            assert.strictEqual(result[4].hash, block1);
+            assert.ok(Buffer.compare(result[0].hash, block5) === 0);
+            assert.ok(Buffer.compare(result[1].hash, block4) === 0);
+            assert.ok(Buffer.compare(result[2].hash, block3) === 0);
+            assert.ok(Buffer.compare(result[3].hash, block2) === 0);
+            assert.ok(Buffer.compare(result[4].hash, block1) === 0);
         });
     });
     describe('child scan', () => {
@@ -179,9 +179,9 @@ describe('Blocktree Layer 2 - Blocktree', () => {
 
             assert.ok(Array.isArray(result));
             assert.strictEqual(result.length, 3);
-            assert.strictEqual(result[0].hash, block2);
-            assert.strictEqual(result[1].hash, block3);
-            assert.strictEqual(result[2].hash, block4);
+            assert.ok(Buffer.compare(result[0].hash, block2) === 0);
+            assert.ok(Buffer.compare(result[1].hash, block3) === 0);
+            assert.ok(Buffer.compare(result[2].hash, block4) === 0);
         });
     });
     describe('get parent block', () => {
@@ -198,7 +198,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             const block = await blocktree.writeBlock({ prev: null, parent, data });
             const result = await blocktree.getParentBlock(block);
 
-            assert.strictEqual(result, parent);
+            assert.ok(Buffer.compare(result, parent) === 0);
         });
     });
     describe('validate blocktree', () => {
@@ -230,7 +230,7 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             assert.strictEqual(result.isValid, false);
             assert.strictEqual(result.blockCount, 4);
             assert.strictEqual(result.reason, constants.validation.missingBlock);
-            assert.strictEqual(result.block, block0);
+            assert.ok(Buffer.compare(result.block, block0) === 0);
         });
     });
 });

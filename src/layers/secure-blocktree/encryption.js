@@ -52,17 +52,14 @@ module.exports = function secureBlocktreeEncryptionFactory({
         const result = await encryption.sign(
             secret,
             Buffer.concat([
-                nonce,
-                parent ? Buffer.from(parent, constants.format.hash) : Buffer.alloc(0),
-                prev ? Buffer.from(prev, constants.format.hash) : Buffer.alloc(0),
+                nonce, parent || Buffer.alloc(0), prev || Buffer.alloc(0),
             ]),
         );
-        const sig = Buffer.concat([
+        return Buffer.concat([
             serializeKey(key),
             nonce,
             result,
         ]);
-        return sig.toString(constants.format.signature);
     }
 
     /**
@@ -86,15 +83,14 @@ module.exports = function secureBlocktreeEncryptionFactory({
         const nonce = sigData.slice(keyData.index, keyData.index + constants.size.int64);
         const signature = sigData.slice(keyData.index + constants.size.int64);
         const message = Buffer.concat([
-            nonce,
-            Buffer.from(`${parent || ''}${prev || ''}`, constants.format.hash),
+            nonce, parent || Buffer.alloc(0), prev || Buffer.alloc(0),
         ]);
 
         const result = await encryption.verify(
             sigKey,
             signature,
             message,
-        ) && (!key || key === sigKey.toString(constants.format.key));
+        ) && (!key || Buffer.compare(key, sigKey) === 0);
         return result;
     }
 

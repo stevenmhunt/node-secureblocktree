@@ -14,7 +14,7 @@ const timeFactory = require('./mocks/time');
 const storageFactory = require('./mocks/storage');
 
 function getRandomHash() {
-    return crypto.randomBytes(constants.size.hash).toString(constants.format.hash);
+    return crypto.randomBytes(constants.size.hash);
 }
 
 function initSystem() {
@@ -76,9 +76,9 @@ async function generateTestKeys(encryption) {
     const writeKey = await encryption.generateKeyPair();
 
     // FOR TESTING PURPOSES ONLY!!!!
-    const publicReadKey = readKey.publicKey.toString(constants.format.key);
+    const publicReadKey = readKey.publicKey;
     const privateReadKey = readKey.privateKey;
-    const publicWriteKey = writeKey.publicKey.toString(constants.format.key);
+    const publicWriteKey = writeKey.publicKey;
     const privateWriteKey = writeKey.privateKey;
 
     privateKeys[publicReadKey] = privateReadKey;
