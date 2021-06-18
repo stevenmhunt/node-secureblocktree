@@ -86,6 +86,23 @@ module.exports = function secureBlocktreeKeysFactory({
     }
 
     /**
+     * Given a block, scans for all specified keys in the blockchain.
+     * @param {string} block The block to start scanning from.
+     * @param {number} action (optional) The type of action to return keys for (read, write, etc.)
+     * @param {string} key The key to look for.
+     * @returns {Promise<Object>} The key data to seek, or null.
+     */
+    async function performKeySeek({
+        block, action, key,
+    } = {}) {
+        const [result] = (await performKeyScan({
+            block, isRecursive: true, isActive: true, action, key,
+        }))
+            .slice(-1);
+        return result || null;
+    }
+
+    /**
      * Validates a key by checking the chain until the root is reached.
      * @param {string} block The block to start validating from.
      * @param {string} key The key to validate.
@@ -95,15 +112,11 @@ module.exports = function secureBlocktreeKeysFactory({
     async function validateParentKey({
         block, key, timestamp, isRecursive,
     }) {
-        const [result] = (await performKeyScan({
+        const result = await performKeySeek({
             block,
-            isActive: true,
             action: constants.action.write,
             key,
-            isRecursive: true,
-            timestamp,
-        })).slice(-1);
-
+        });
         if (result) {
             if (!result.parentKey) {
                 return true;
@@ -165,6 +178,7 @@ module.exports = function secureBlocktreeKeysFactory({
     return {
         isKeyActive,
         performKeyScan,
+        performKeySeek,
         validateParentKey,
         validateKeys,
     };

@@ -20,13 +20,11 @@ module.exports = function secureBlocktreeSignaturesFactory({ context }) {
         const { result: key } = deserializeKey(Buffer.from(signature, constants.format.signature));
 
         // perform a "key seek" to verify that the key is registered.
-        const [keySeek] = (await context.performKeyScan({
+        const keySeek = await context.performKeySeek({
             block,
-            key,
-            isActive: true,
-            isRecursive: true,
             action: action || constants.action.write,
-        })).slice(-1);
+            key,
+        });
 
         const result = keySeek && Buffer.compare(keySeek.key, key) === 0
             && (await context.verifySignedBlock({
