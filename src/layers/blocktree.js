@@ -8,27 +8,42 @@ const { fromByte } = require('../utils');
  */
 module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
     /**
+     * @private
+     * Checks the block hash value.
+     * @param {Buffer} block The block to check.
+     * @returns {Buffer} the hash (or throws an error if invalid)
+     */
+    function checkBlockHash(block) {
+        if (!block) {
+            return constants.block.zero;
+        }
+        if (Buffer.byteLength(block) !== constants.size.hash) {
+            throw new SerializationError({ data: block },
+                SerializationError.reasons.invalidBlockHash,
+                constants.layer.blocktree);
+        }
+        return block;
+    }
+
+    /**
      * Given a blocktree object, converts it into a blockchain object.
      * @param {Object} btBlockData The blocktree object.
      * @returns {Object} A blockchain object.
      */
-    function serializeBlocktreeData(btBlockData) {
-        const { prev } = btBlockData;
-        const parent = btBlockData.parent || Buffer.alloc(constants.size.hash);
-        if (Buffer.byteLength(parent) !== constants.size.hash) {
-            throw new SerializationError({ data: parent },
-                SerializationError.reasons.invalidBlockHash,
-                constants.layer.blocktree);
-        }
-        const data = Buffer.concat([
-            // parent hash
-            parent,
-            // layer
-            fromByte(btBlockData.layer || constants.layer.blocktree, 'layer'),
-            // data
-            btBlockData.data,
-        ]);
-        return { prev, data };
+    function serializeBlocktreeData({
+        prev, parent, layer, data,
+    }) {
+        return {
+            prev,
+            data: Buffer.concat([
+                // parent hash
+                checkBlockHash(parent),
+                // layer
+                fromByte(layer || constants.layer.blocktree, 'layer'),
+                // data
+                data,
+            ]),
+        };
     }
 
     /**
@@ -63,7 +78,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
      * @returns {Promise<Object>} The requested blocktree data.
      */
     async function readBlock(block) {
-        return deserializeBlocktreeData(await blockchain.readBlock(block));
+        return deserializeBlocktreeData(await blockchain.readBlock(checkBlockHash(block)));
     }
 
     /**
@@ -81,7 +96,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
      * @returns {Promise<Buffer>} The requested bytes.
      */
     async function readRawBlock(block) {
-        return blockchain.readRawBlock(block);
+        return blockchain.readRawBlock(checkBlockHash(block));
     }
 
     /**
@@ -160,7 +175,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
      */
     async function performParentScan(block) {
         const result = [];
-        let next = block;
+        let next = checkBlockHash(block);
         do {
             const nextBlock = await readBlock(next);
             if (next && !nextBlock) {
@@ -175,17 +190,18 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
 
     /**
      * Given a block, locates all child root blocks.
-     * @param {*} block The block to start from.
+     * @param {Buffer} block The block to start from.
      * @returns {Promise<Array>} Block data for all child root blocks.
      */
     async function performChildScan(block) {
-        const cached = await cache.readCache(block, constants.cache.childBlocks);
+        const blockHash = checkBlockHash(block);
+        const cached = await cache.readCache(blockHash, constants.cache.childBlocks);
         if (cached && Array.isArray(cached)) {
             return Promise.all(cached.map(readBlock));
         }
         const result = await findAllInBlocks((b) => b.prev === null
-         && b.parent && block && Buffer.compare(b.parent, block) === 0);
-        await cache.writeCache(block, constants.cache.childBlocks,
+         && b.parent && blockHash && Buffer.compare(b.parent, blockHash) === 0);
+        await cache.writeCache(blockHash, constants.cache.childBlocks,
             result.map((i) => i.hash));
         return result;
     }
@@ -196,7 +212,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
      * @returns {Promise<string>} The hash of the next block, or null.
      */
     async function getNextBlock(block) {
-        return blockchain.getNextBlock(block);
+        return blockchain.getNextBlock(checkBlockHash(block));
     }
 
     /**
@@ -206,7 +222,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
      * @returns {Promise<string>} The root block of the blockchain or blocktree, or null.
      */
     async function getRootBlock(block) {
-        return blockchain.getRootBlock(block);
+        return blockchain.getRootBlock(checkBlockHash(block));
     }
 
     /**
@@ -215,7 +231,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
      * @returns {Promise<string>} The parent block of the specified block, or null.
      */
     async function getParentBlock(block) {
-        const blockData = await readBlock(block);
+        const blockData = await readBlock(checkBlockHash(block));
         if (!blockData) {
             throw new InvalidBlockError({ block }, InvalidBlockError.reasons.isNull,
                 constants.layer.blocktree);
@@ -229,7 +245,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
      * @returns {Promise<string>} The head block of the blockchain.
      */
     async function getHeadBlock(block) {
-        return blockchain.getHeadBlock(block);
+        return blockchain.getHeadBlock(checkBlockHash(block));
     }
 
     /**
@@ -238,7 +254,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
      * @returns {Promise<Object>} A validation report.
      */
     async function validateBlocktree(block, options) {
-        let next = block;
+        let next = checkBlockHash(block);
         let blockCount = 0;
         do {
             const validation = await blockchain.validateBlockchain(next, options);

@@ -237,6 +237,19 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
             assert.ok(result.nonce, 'Expected valid nonce value.');
         });
+        it('should fail if the requested block hash is an incorrect size', async () => {
+            const invalidBlock = Buffer.from('aabbccdd', 'utf-8');
+            let isExecuted = false;
+            try {
+                await blockchain.getNextBlock(invalidBlock);
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof SerializationError);
+                assert.strictEqual(err.layer, constants.layer.blockchain);
+                assert.strictEqual(err.reason, SerializationError.reasons.invalidBlockHash);
+            }
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
     });
     describe('get head block', () => {
         it('should scan the blocks to find the last one in the chain', async () => {
@@ -263,6 +276,19 @@ describe('Blocktree Layer 1 - Blockchain', () => {
             const head = await blockchain.getHeadBlock(constants.block.zero);
             assert.strictEqual(head, null);
         });
+        it('should fail if the requested block hash is an incorrect size', async () => {
+            const invalidBlock = Buffer.from('aabbccdd', 'utf-8');
+            let isExecuted = false;
+            try {
+                await blockchain.getHeadBlock(invalidBlock);
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof SerializationError);
+                assert.strictEqual(err.layer, constants.layer.blockchain);
+                assert.strictEqual(err.reason, SerializationError.reasons.invalidBlockHash);
+            }
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+        });
     });
     describe('get root block', () => {
         it('should walk across the blocks to find the first one in the chain', async () => {
@@ -286,6 +312,19 @@ describe('Blocktree Layer 1 - Blockchain', () => {
         it('should return null if there is not a valid block', async () => {
             const root = await blockchain.getRootBlock(0);
             assert.strictEqual(root, null);
+        });
+        it('should fail if the requested block hash is an incorrect size', async () => {
+            const invalidBlock = Buffer.from('aabbccdd', 'utf-8');
+            let isExecuted = false;
+            try {
+                await blockchain.getRootBlock(invalidBlock);
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof SerializationError);
+                assert.strictEqual(err.layer, constants.layer.blockchain);
+                assert.strictEqual(err.reason, SerializationError.reasons.invalidBlockHash);
+            }
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
     });
     describe('validate blockchain', () => {

@@ -14,6 +14,12 @@ module.exports = function blockchainLayerFactory({ system }) {
      */
     let emitter = null;
 
+    /**
+     * @private
+     * Checks the block hash value.
+     * @param {Buffer} block The block to check.
+     * @returns {Buffer} the hash (or throws an error if invalid)
+     */
     function checkBlockHash(block) {
         if (!block) {
             return constants.block.zero;

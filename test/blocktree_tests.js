@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 const assert = require('assert');
 const constants = require('../src/constants');
-const { InvalidBlockError } = require('../src/errors');
+const { InvalidBlockError, SerializationError } = require('../src/errors');
 const { initBlocktree, getRandomHash } = require('./test-helper');
 
 describe('Blocktree Layer 2 - Blocktree', () => {
@@ -45,6 +45,19 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
             assert.ok(Buffer.compare(result.prev, block1) === 0);
             assert.ok(result.nonce, 'Expected valid nonce value.');
+        });
+        it('should fail if the requested block hash is an incorrect size', async () => {
+            const invalidBlock = Buffer.from('aabbccdd', 'utf-8');
+            let isExecuted = false;
+            try {
+                await blocktree.readBlock(invalidBlock);
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof SerializationError);
+                assert.strictEqual(err.layer, constants.layer.blocktree);
+                assert.strictEqual(err.reason, SerializationError.reasons.invalidBlockHash);
+            }
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
     });
     describe('write block', () => {
@@ -199,6 +212,19 @@ describe('Blocktree Layer 2 - Blocktree', () => {
             const result = await blocktree.getParentBlock(block);
 
             assert.ok(Buffer.compare(result, parent) === 0);
+        });
+        it('should fail if the requested block hash is an incorrect size', async () => {
+            const invalidBlock = Buffer.from('aabbccdd', 'utf-8');
+            let isExecuted = false;
+            try {
+                await blocktree.getParentBlock(invalidBlock);
+                isExecuted = true;
+            } catch (err) {
+                assert.ok(err instanceof SerializationError);
+                assert.strictEqual(err.layer, constants.layer.blocktree);
+                assert.strictEqual(err.reason, SerializationError.reasons.invalidBlockHash);
+            }
+            assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
         });
     });
     describe('validate blocktree', () => {
