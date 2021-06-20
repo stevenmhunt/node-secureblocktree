@@ -171,7 +171,7 @@ module.exports = (context) => ({
         } catch (err) {
             assert.ok(err instanceof InvalidBlockError);
             assert.strictEqual(err.layer, constants.layer.secureBlocktree);
-            assert.strictEqual(err.reason, InvalidBlockError.reasons.isNull);
+            assert.strictEqual(err.reason, InvalidBlockError.reasons.notFound);
         }
 
         assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');

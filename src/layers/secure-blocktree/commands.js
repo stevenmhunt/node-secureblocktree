@@ -1,5 +1,6 @@
-const constants = require('../../constants');
-
+/**
+ * Secure Blocktree Commands API.
+ */
 module.exports = function secureBlockTreeCommandsFactory({
     context, blocktree,
 }) {
@@ -13,7 +14,7 @@ module.exports = function secureBlockTreeCommandsFactory({
     async function handleCommand(env, command, parameters) {
         switch (command) {
         case 'install-root': {
-            const rootWriteKey = 'bbbb';
+            /* const rootWriteKey = 'bbbb';
             const rootKeys = {
                 [constants.action.read]: ['aaaa'],
                 [constants.action.write]: ['bbbb'],
@@ -27,7 +28,7 @@ module.exports = function secureBlockTreeCommandsFactory({
                 parent,
                 prev,
             });
-            await env.println(await context.installRoot({ rootKeys, rootZoneKeys, signAsRoot }));
+            await env.println(await context.installRoot({ rootKeys, rootZoneKeys, signAsRoot })); */
             return true;
         }
         case 'read-secure-block': {

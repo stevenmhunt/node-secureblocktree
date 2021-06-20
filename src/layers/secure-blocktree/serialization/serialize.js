@@ -2,9 +2,9 @@ const constants = require('../../../constants');
 const { fromInt16, fromByte } = require('../../../utils');
 
 /**
- * @private
  * Serializes a key.
  * @param {Buffer} key The key to serialize.
+ * @returns {Buffer} A serialized key.
  */
 function serializeKey(key) {
     if (!key) {
@@ -21,12 +21,11 @@ function serializeKey(key) {
 }
 
 /**
- * @private
- * Given a list of keys, serializes them for being written to a block.
- * @param {*} keys The list of keys to serialize.
+ * Given a key set, serializes them for being written to a block.
+ * @param {*} keys The key set to serialize.
  * @returns {Buffer} A binary representation of the array.
  */
-function serializeKeys(keys) {
+function serializeKeySet(keys) {
     const size = Object.keys(keys || {}).length;
     if (size === 0) {
         return fromByte(size);
@@ -43,11 +42,21 @@ function serializeKeys(keys) {
     return Buffer.concat(results);
 }
 
+/**
+ * Serializes a certificate.
+ * @param {Buffer} key The certificate to serialize.
+ * @returns {Buffer} A serialized certificate.
+ */
 function serializeCertificate() {
     return Buffer.alloc(0);
 }
 
-function serializeCertificates() {
+/**
+ * Given a certificate set, serializes them for being written to a block.
+ * @param {Object} certs The certificate set to serialize.
+ * @returns {Buffer} A binary representation of the array.
+ */
+function serializeCertificateSet() {
     return Buffer.alloc(0);
 }
 
@@ -70,8 +79,8 @@ function serializeSignature(sig) {
 
 module.exports = {
     serializeKey,
-    serializeKeys,
+    serializeKeySet,
     serializeCertificate,
-    serializeCertificates,
+    serializeCertificateSet,
     serializeSignature,
 };

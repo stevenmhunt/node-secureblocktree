@@ -6,7 +6,6 @@ const sbtKeysFactory = require('./keys');
 const sbtSignaturesFactory = require('./signatures');
 const sbtDataFactory = require('./data');
 const sbtBlockTypesFactory = require('./blockTypes');
-const sbtInstallFactory = require('./install');
 const sbtCommandsFactory = require('./commands');
 
 /**
@@ -24,7 +23,6 @@ module.exports = function secureBlocktreeLayerFactory({
     context = { ...context, ...sbtSignaturesFactory({ context }) };
     context = { ...context, ...sbtDataFactory({ context }) };
     context = { ...context, ...sbtBlockTypesFactory({ context, blocktree, secureCache }) };
-    context = { ...context, ...sbtInstallFactory({ context, blocktree, secureCache }) };
     context = { ...context, ...sbtCommandsFactory({ context, blocktree }) };
 
     return context;

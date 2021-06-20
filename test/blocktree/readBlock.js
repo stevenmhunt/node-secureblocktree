@@ -1,23 +1,9 @@
 const assert = require('assert');
 const constants = require('../../src/constants');
-const { SerializationError } = require('../../src/errors');
+const { SerializationError, InvalidBlockError } = require('../../src/errors');
+const { getRandomHash } = require('../test-helper');
 
 module.exports = (context) => ({
-    'should return null if block is empty': async () => {
-        const { blocktree } = context;
-        const result = await blocktree.readBlock(constants.block.zero);
-        assert.strictEqual(null, result);
-    },
-    'should return null if block is null': async () => {
-        const { blocktree } = context;
-        const result = await blocktree.readBlock(null);
-        assert.strictEqual(null, result);
-    },
-    'should return null if block is false': async () => {
-        const { blocktree } = context;
-        const result = await blocktree.readBlock(false);
-        assert.strictEqual(null, result);
-    },
     'should retrieve block data if found from a root': async () => {
         const { blocktree } = context;
         const data = Buffer.from("I'm a string!", 'utf-8');
@@ -53,6 +39,78 @@ module.exports = (context) => ({
             assert.ok(err instanceof SerializationError);
             assert.strictEqual(err.layer, constants.layer.blocktree);
             assert.strictEqual(err.reason, SerializationError.reasons.invalidBlockHash);
+        }
+        assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+    },
+    'should return null for null block hash and validation is disabled': async () => {
+        const { blocktree } = context;
+        const options = { validate: false };
+        const result = await blocktree.readBlock(constants.block.zero, options);
+        assert.strictEqual(null, result);
+    },
+    'should return null if no block is found and validation is disabled': async () => {
+        const { blocktree } = context;
+        const options = { validate: false };
+        const result = await blocktree.readBlock(getRandomHash(), options);
+        assert.strictEqual(null, result);
+    },
+    'should return null if block is false and validation is disabled': async () => {
+        const { blocktree } = context;
+        const options = { validate: false };
+        const result = await blocktree.readBlock(false, options);
+        assert.strictEqual(null, result);
+    },
+    'should return null if block is null and validation is disabled': async () => {
+        const { blocktree } = context;
+        const options = { validate: false };
+        const result = await blocktree.readBlock(null, options);
+        assert.strictEqual(null, result);
+    },
+    'should fail for null block hash': async () => {
+        const { blocktree } = context;
+        let isExecuted = false;
+        try {
+            await blocktree.readBlock(constants.block.zero);
+            isExecuted = true;
+        } catch (err) {
+            assert.ok(err instanceof InvalidBlockError);
+            assert.strictEqual(err.reason, InvalidBlockError.reasons.notFound);
+        }
+        assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+    },
+    'should fail if no block is found': async () => {
+        const { blocktree } = context;
+        let isExecuted = false;
+        try {
+            await blocktree.readBlock(getRandomHash());
+            isExecuted = true;
+        } catch (err) {
+            assert.ok(err instanceof InvalidBlockError);
+            assert.strictEqual(err.reason, InvalidBlockError.reasons.notFound);
+        }
+        assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+    },
+    'should fail if block is false': async () => {
+        const { blocktree } = context;
+        let isExecuted = false;
+        try {
+            await blocktree.readBlock(false);
+            isExecuted = true;
+        } catch (err) {
+            assert.ok(err instanceof InvalidBlockError);
+            assert.strictEqual(err.reason, InvalidBlockError.reasons.notFound);
+        }
+        assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+    },
+    'should fail if block is null': async () => {
+        const { blocktree } = context;
+        let isExecuted = false;
+        try {
+            await blocktree.readBlock(null);
+            isExecuted = true;
+        } catch (err) {
+            assert.ok(err instanceof InvalidBlockError);
+            assert.strictEqual(err.reason, InvalidBlockError.reasons.notFound);
         }
         assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
     },

@@ -93,7 +93,27 @@ async function generateTestKeys(encryption) {
 
 async function initializeSecureRoot(secureBlocktree, rootKeys, rootZoneKeys) {
     const signAsRoot = signAs(secureBlocktree, rootKeys[constants.action.write][0]);
-    return secureBlocktree.installRoot({ rootKeys, rootZoneKeys, signAsRoot });
+
+    // create the root block.
+    const rootBlock = await secureBlocktree.createRoot({
+        keys: rootKeys,
+    });
+
+    // establish the root zone.
+    const rootZone = await secureBlocktree.createZone({
+        sig: signAsRoot,
+        block: rootBlock,
+    });
+
+    // set the root zone keys.
+    await secureBlocktree.setKeys({
+        sig: signAsRoot,
+        block: rootZone,
+        parentKey: rootKeys[constants.action.write][0],
+        keys: rootZoneKeys,
+    });
+
+    return { rootBlock, rootZone };
 }
 
 const loadTests = (fn, context) => () => {

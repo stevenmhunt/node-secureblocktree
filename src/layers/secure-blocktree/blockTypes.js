@@ -4,6 +4,9 @@ const {
     InvalidSignatureError, InvalidBlockError, InvalidRootError,
 } = require('../../errors');
 
+/**
+ * Secure Blocktree Block Types API.
+ */
 module.exports = function secureBlocktreeBlockTypesFactory({
     context, blocktree, secureCache,
 }) {
@@ -171,13 +174,11 @@ module.exports = function secureBlocktreeBlockTypesFactory({
                 InvalidSignatureError.reasons.notFound);
         }
         if (!block) {
-            throw new InvalidBlockError({ block }, InvalidBlockError.reasons.isNull,
+            throw new InvalidBlockError({ block }, InvalidBlockError.reasons.notFound,
                 constants.layer.secureBlocktree);
         }
-        // always all child blocks to the root.
+        // validate the provided signature and the parent value.
         const parent = await context.validateParentBlock({ parent: block, type });
-
-        // validate the provided signature.
         const signature = await context.validateSignature({ sig, parent, prev: null });
 
         // create a new blockchain for the child block.
@@ -199,13 +200,18 @@ module.exports = function secureBlocktreeBlockTypesFactory({
     async function createZone({
         sig, block, keys, options,
     }) {
-        return createChildBlockInternal({
+        const result = await createChildBlockInternal({
             sig,
             block,
             keys,
             type: constants.blockType.zone,
             data: options,
         });
+        const rootBlock = await secureCache.readCache(null, constants.secureCache.rootBlock);
+        if (rootBlock && Buffer.compare(block, rootBlock)) {
+            await secureCache.writeCache(null, constants.secureCache.rootZone, result);
+        }
+        return result;
     }
 
     /**

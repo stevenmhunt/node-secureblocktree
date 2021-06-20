@@ -1,8 +1,8 @@
 /* eslint-disable no-plusplus */
 const constants = require('../../../../constants');
 const { fromInt64, toInt64 } = require('../../../../utils');
-const { serializeKey, serializeKeys } = require('../serialize');
-const { deserializeKey, deserializeKeys } = require('../deserialize');
+const { serializeKey, serializeKeySet } = require('../serialize');
+const { deserializeKey, deserializeKeySet } = require('../deserialize');
 
 /**
  * Serialize and deserialize functions for key blocks.
@@ -12,7 +12,7 @@ module.exports = {
      * Serializes a keys block.
      * @returns {Buffer} The serialized block.
      */
-    serialize: function serializeKeysBlock({
+    serialize: function serializeKeySetBlock({
         parentKey, keys, storedKeys, tsInit, tsExp, data,
     }) {
         const dataValue = data || Buffer.alloc(0);
@@ -23,9 +23,9 @@ module.exports = {
             // parent key (for validating key chain)
             serializeKey(parentKey),
             // keys to add
-            serializeKeys(keys),
+            serializeKeySet(keys),
             // stored keys to add
-            serializeKeys(storedKeys),
+            serializeKeySet(storedKeys),
             // (optional) additional data
             dataValue,
         ]);
@@ -34,7 +34,7 @@ module.exports = {
      * Deserializes a keys block.
      * @returns {Object} The deserialized block.
      */
-    deserialize: function deserializeKeysBlock(data, startIndex = 0) {
+    deserialize: function deserializeKeySetBlock(data, startIndex = 0) {
         const result = {};
         let index = startIndex;
 
@@ -48,11 +48,11 @@ module.exports = {
         result.parentKey = res.result;
         index = res.index;
 
-        res = deserializeKeys(data, index);
+        res = deserializeKeySet(data, index);
         result.keys = res.result;
         index = res.index;
 
-        res = deserializeKeys(data, index);
+        res = deserializeKeySet(data, index);
         result.storedKeys = res.result;
         index = res.index;
 

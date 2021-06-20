@@ -86,12 +86,20 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @param {Buffer} block The block hash to read.
      * @returns {Promise<Object>} The requested blockchain data.
      */
-    async function readBlock(block) {
+    async function readBlock(block, options = {}) {
         return utils.withEvent(emitter, 'read-block', {
             block,
-        }, async () => deserializeBlockchainData(
-            await system.readStorage(checkBlockHash(block)),
-        ));
+        }, async () => {
+            const result = deserializeBlockchainData(
+                await system.readStorage(checkBlockHash(block)),
+            );
+            if (options.validate !== false && !result) {
+                throw new InvalidBlockError({
+                    block,
+                }, InvalidBlockError.reasons.notFound, constants.layer.blockchain);
+            }
+            return result;
+        });
     }
 
     /**
@@ -126,11 +134,11 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @param {Buffer} block The block to start from.
      * @returns {Promise<string>} The root block of the blockchain.
      */
-    async function getRootBlock(block) {
+    async function getRootBlock(block, options) {
         let result = checkBlockHash(block);
         let next = result;
         do {
-            const nextBlock = await readBlock(next);
+            const nextBlock = await readBlock(next, options);
             next = (nextBlock || {}).prev;
             result = next || result;
             if (!nextBlock) {
@@ -212,13 +220,13 @@ module.exports = function blockchainLayerFactory({ system }) {
     async function writeBlock(bcBlockData, options = {}) {
         return utils.withEvent(emitter, 'write-block', { bcBlockData, options }, async () => {
             const timestamp = system.generateTimestamp();
-            const prev = bcBlockData.prev ? await readBlock(bcBlockData.prev) : null;
+            const prev = bcBlockData.prev ? await readBlock(bcBlockData.prev, options) : null;
             const seq = (prev || { seq: 0n }).seq + 1n;
             if (options.validate !== false && bcBlockData.prev) {
                 if (!prev) {
                     throw new InvalidBlockError({
                         block: bcBlockData.prev,
-                    }, InvalidBlockError.reasons.isNull, constants.layer.blockchain);
+                    }, InvalidBlockError.reasons.notFound, constants.layer.blockchain);
                 }
                 if (prev.timestamp > timestamp) {
                     throw new InvalidBlockError({
@@ -241,7 +249,7 @@ module.exports = function blockchainLayerFactory({ system }) {
             const block = checkBlockHash(await system.writeStorage(
                 serializeBlockchainData(bcBlockData, timestamp, seq),
             ));
-            if (options.cacheRoot !== false) {
+            if (options.cacheRoot !== false && options.validate !== false) {
                 const root = await cacheRootBlock(block, bcBlockData);
                 await system.writeCache(root, constants.cache.headBlock, block);
             }
@@ -298,8 +306,8 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @param {Buffer} block The block to start with.
      * @returns {Promise<string>} The head block of the blockchain.
      */
-    async function getHeadBlock(block) {
-        const bc = await getRootBlock(checkBlockHash(block));
+    async function getHeadBlock(block, options = {}) {
+        const bc = await getRootBlock(checkBlockHash(block), options);
         if (!bc) {
             return null;
         }
@@ -330,7 +338,7 @@ module.exports = function blockchainLayerFactory({ system }) {
         let blockBefore = null;
         do {
             blockCount += 1;
-            const nextBlock = await readBlock(next);
+            const nextBlock = await readBlock(next, { validate: false });
             if (!nextBlock) {
                 return {
                     isValid: false,

@@ -58,7 +58,7 @@ SerializationError.reasons = serializationErrorReasons;
  * Reasons for invalid block error.
  */
 const invalidBlockErrorReasons = {
-    isNull: 1,
+    notFound: 1,
     invalidTimestamp: 2,
     nextBlockExists: 3,
     invalidParentType: 4,
@@ -79,7 +79,7 @@ class InvalidBlockError extends BlocktreeError {
         super(constants.error.invalidBlock, layer, (() => {
             const { block, type, parentType } = values;
             switch (reason) {
-            case invalidBlockErrorReasons.isNull:
+            case invalidBlockErrorReasons.notFound:
                 return 'Expected block to be present.';
             case invalidBlockErrorReasons.invalidTimestamp:
                 return `Cannot add a new block to ${block} with a lower timestamp than prev.`;

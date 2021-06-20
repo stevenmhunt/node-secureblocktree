@@ -77,8 +77,10 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
      * @param {Buffer} block The block hash to read.
      * @returns {Promise<Object>} The requested blocktree data.
      */
-    async function readBlock(block) {
-        return deserializeBlocktreeData(await blockchain.readBlock(checkBlockHash(block)));
+    async function readBlock(block, options) {
+        return deserializeBlocktreeData(
+            await blockchain.readBlock(checkBlockHash(block), options),
+        );
     }
 
     /**
@@ -233,7 +235,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
     async function getParentBlock(block) {
         const blockData = await readBlock(checkBlockHash(block));
         if (!blockData) {
-            throw new InvalidBlockError({ block }, InvalidBlockError.reasons.isNull,
+            throw new InvalidBlockError({ block }, InvalidBlockError.reasons.notFound,
                 constants.layer.blocktree);
         }
         return blockData.parent;

@@ -2,6 +2,12 @@
 const constants = require('../../../constants');
 const { toInt16 } = require('../../../utils');
 
+/**
+ * Given a buffer, deserializes the data into a key.
+ * @param {*} data The data to deserialize.
+ * @param {*} startIndex The index to start reading from.
+ * @returns {Object} A key object.
+ */
 function deserializeKey(data, startIndex = 0) {
     let index = startIndex;
     let result = null;
@@ -14,7 +20,13 @@ function deserializeKey(data, startIndex = 0) {
     return { result, index };
 }
 
-function deserializeKeys(data, startIndex = 0) {
+/**
+ * Given a buffer, deserializes the data into a key set.
+ * @param {*} data The data to deserialize.
+ * @param {*} startIndex The index to start reading from.
+ * @returns {Object} A key set object.
+ */
+function deserializeKeySet(data, startIndex = 0) {
     let index = startIndex;
     const actionCount = data[index++];
     const result = {};
@@ -33,6 +45,12 @@ function deserializeKeys(data, startIndex = 0) {
     return { result, index };
 }
 
+/**
+ * Given a buffer, deserializes the data into a certificate.
+ * @param {*} data The data to deserialize.
+ * @param {*} startIndex The index to start reading from.
+ * @returns {Object} A certificate object.
+ */
 function deserializeCertificate(buf, index) {
     return {
         result: null,
@@ -40,13 +58,25 @@ function deserializeCertificate(buf, index) {
     };
 }
 
-function deserializeCertificates(buf, index) {
+/**
+ * Given a buffer, deserializes the data into a certificate set.
+ * @param {*} data The data to deserialize.
+ * @param {*} startIndex The index to start reading from.
+ * @returns {Object} A certificate set object.
+ */
+function deserializeCertificateSet(buf, index) {
     return {
         result: null,
         index,
     };
 }
 
+/**
+ * Given a buffer, deserializes the data into a signature.
+ * @param {*} data The data to deserialize.
+ * @param {*} startIndex The index to start reading from.
+ * @returns {Object} A signature object.
+ */
 function deserializeSignature(data, startIndex = 0) {
     let index = startIndex;
     let result = null;
@@ -61,8 +91,8 @@ function deserializeSignature(data, startIndex = 0) {
 
 module.exports = {
     deserializeKey,
-    deserializeKeys,
+    deserializeKeySet,
     deserializeCertificate,
-    deserializeCertificates,
+    deserializeCertificateSet,
     deserializeSignature,
 };

@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 const assert = require('assert');
 const constants = require('../../src/constants');
-const { SerializationError } = require('../../src/errors');
+const { SerializationError, InvalidBlockError } = require('../../src/errors');
 
 module.exports = (context) => ({
     'should walk across the blocks to find the first one in the chain': async () => {
@@ -23,10 +23,23 @@ module.exports = (context) => ({
         assert.ok(rootBlock !== null);
         assert.strictEqual(rootBlock.prev, null);
     },
-    'should return null if there is not a valid block': async () => {
+    'should return null if there is not a valid block and validation is disabled': async () => {
         const { blockchain } = context;
-        const root = await blockchain.getRootBlock(0);
+        const options = { validate: false };
+        const root = await blockchain.getRootBlock(constants.block.zero, options);
         assert.strictEqual(root, null);
+    },
+    'should fail if there is not a valid block': async () => {
+        const { blockchain } = context;
+        let isExecuted = false;
+        try {
+            await blockchain.getRootBlock(constants.block.zero);
+            isExecuted = true;
+        } catch (err) {
+            assert.ok(err instanceof InvalidBlockError);
+            assert.strictEqual(err.reason, InvalidBlockError.reasons.notFound);
+        }
+        assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
     },
     'should fail if the requested block hash is an incorrect size': async () => {
         const { blockchain } = context;

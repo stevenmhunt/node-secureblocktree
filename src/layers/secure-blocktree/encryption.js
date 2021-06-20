@@ -3,6 +3,9 @@ const utils = require('../../utils');
 const { serializeKey } = require('./serialization/serialize');
 const { deserializeKey } = require('./serialization/deserialize');
 
+/**
+ * Secure Blocktree Encryption API.
+ */
 module.exports = function secureBlocktreeEncryptionFactory({
     encryption,
 }) {

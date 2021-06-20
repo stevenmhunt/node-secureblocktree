@@ -1,26 +1,12 @@
 const assert = require('assert');
 const constants = require('../../src/constants');
-const { SerializationError } = require('../../src/errors');
+const { SerializationError, InvalidBlockError } = require('../../src/errors');
+const { getRandomHash } = require('../test-helper');
 
 /**
  * Tests for blockchain.readBlock()
  */
 module.exports = (context) => ({
-    'should return null if block is empty': async () => {
-        const { blockchain } = context;
-        const result = await blockchain.readBlock(constants.block.zero);
-        assert.strictEqual(null, result);
-    },
-    'should return null if no value is null': async () => {
-        const { blockchain } = context;
-        const result = await blockchain.readBlock(null);
-        assert.strictEqual(null, result);
-    },
-    'should return null if no value is false': async () => {
-        const { blockchain } = context;
-        const result = await blockchain.readBlock(false);
-        assert.strictEqual(null, result);
-    },
     'should retrieve block data if found from a root': async () => {
         const { blockchain } = context;
         const data = Buffer.from("I'm a string!", 'utf-8');
@@ -56,6 +42,78 @@ module.exports = (context) => ({
             assert.ok(err instanceof SerializationError);
             assert.strictEqual(err.layer, constants.layer.blockchain);
             assert.strictEqual(err.reason, SerializationError.reasons.invalidBlockHash);
+        }
+        assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+    },
+    'should return null if block hash is null and validation is disabled': async () => {
+        const { blockchain } = context;
+        const options = { validate: false };
+        const result = await blockchain.readBlock(constants.block.zero, options);
+        assert.strictEqual(null, result);
+    },
+    'should return null if no block is found and validation is disabled': async () => {
+        const { blockchain } = context;
+        const options = { validate: false };
+        const result = await blockchain.readBlock(getRandomHash(), options);
+        assert.strictEqual(null, result);
+    },
+    'should return null if block is null and validation is disabled': async () => {
+        const { blockchain } = context;
+        const options = { validate: false };
+        const result = await blockchain.readBlock(null, options);
+        assert.strictEqual(null, result);
+    },
+    'should return null if block is false and validation is disabled': async () => {
+        const { blockchain } = context;
+        const options = { validate: false };
+        const result = await blockchain.readBlock(false, options);
+        assert.strictEqual(null, result);
+    },
+    'should fail for null block hash': async () => {
+        const { blockchain } = context;
+        let isExecuted = false;
+        try {
+            await blockchain.readBlock(constants.block.zero);
+            isExecuted = true;
+        } catch (err) {
+            assert.ok(err instanceof InvalidBlockError);
+            assert.strictEqual(err.reason, InvalidBlockError.reasons.notFound);
+        }
+        assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+    },
+    'should fail if no block is found': async () => {
+        const { blockchain } = context;
+        let isExecuted = false;
+        try {
+            await blockchain.readBlock(getRandomHash());
+            isExecuted = true;
+        } catch (err) {
+            assert.ok(err instanceof InvalidBlockError);
+            assert.strictEqual(err.reason, InvalidBlockError.reasons.notFound);
+        }
+        assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+    },
+    'should fail if block is false': async () => {
+        const { blockchain } = context;
+        let isExecuted = false;
+        try {
+            await blockchain.readBlock(false);
+            isExecuted = true;
+        } catch (err) {
+            assert.ok(err instanceof InvalidBlockError);
+            assert.strictEqual(err.reason, InvalidBlockError.reasons.notFound);
+        }
+        assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+    },
+    'should fail if block is null': async () => {
+        const { blockchain } = context;
+        let isExecuted = false;
+        try {
+            await blockchain.readBlock(null);
+            isExecuted = true;
+        } catch (err) {
+            assert.ok(err instanceof InvalidBlockError);
+            assert.strictEqual(err.reason, InvalidBlockError.reasons.notFound);
         }
         assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
     },

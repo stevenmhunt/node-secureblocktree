@@ -1,6 +1,9 @@
 const constants = require('../../constants');
 const { InvalidRootError, InvalidBlockError } = require('../../errors');
 
+/**
+ * Secure Blocktree Blocks API.
+ */
 module.exports = function secureBlocktreeBlocksFactory({
     blocktree, serialization,
 }) {
@@ -9,8 +12,10 @@ module.exports = function secureBlocktreeBlocksFactory({
      * @param {Buffer} block The block hash to read.
      * @returns {Promise<Object>} The requested secure data.
      */
-    async function readSecureBlock(block) {
-        return serialization.deserializeSecureBlock(await blocktree.readBlock(block));
+    async function readSecureBlock(block, options) {
+        return serialization.deserializeSecureBlock(
+            await blocktree.readBlock(block, options),
+        );
     }
 
     /**
@@ -96,7 +101,7 @@ module.exports = function secureBlocktreeBlocksFactory({
             selected = await blocktree.getRootBlock(parent);
         }
         if (selected === null) {
-            throw new InvalidBlockError({ block: selected }, InvalidBlockError.reasons.isNull,
+            throw new InvalidBlockError({ block: selected }, InvalidBlockError.reasons.notFound,
                 constants.layer.secureBlocktree);
         }
         // get the root block if we're adding to the current blockchain.
