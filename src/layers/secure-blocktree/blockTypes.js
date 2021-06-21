@@ -1,5 +1,5 @@
 const constants = require('../../constants');
-const { deserializeKey } = require('./serialization/deserialize');
+const { deserializeKeyFromSignature } = require('./serialization/deserialize');
 const {
     InvalidSignatureError, InvalidBlockError, InvalidRootError,
 } = require('../../errors');
@@ -41,8 +41,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
             // validate the provided signature, the key, and the parent value.
             parent = await context.validateParentBlock({ prev, type });
             signature = await context.validateSignature({ sig, prev, parent });
-            const keyData = deserializeKey(Buffer.from(signature, constants.format.signature));
-            parentKey = keyData.result;
+            parentKey = deserializeKeyFromSignature(signature);
             await context.validateParentKey({ block: prev, key: parentKey });
         }
 
@@ -103,18 +102,22 @@ module.exports = function secureBlocktreeBlockTypesFactory({
     }
 
     /**
-     * Adds a secret to the specified blockchainn.
+     * Adds a secret to the specified blockchain.
      * @param {Buffer} sig The signature to use.
      * @param {Buffer} block The block to add a record to.
      * @param {Buffer} key the public key used to encrypt the data.
      * @param {Buffer} ref a reference value for looking up the secret.
      * @param {Buffer} secret The secret to store.
+     * @param {BigInt} tsInit The initializion timestamp for the secret.
+     * @param {BigInt} tsExp The expiration timestamp for the secret.
      * @returns {Promise<string>} The new block.
      */
     async function addSecret({
-        sig, block, key, ref, secret,
+        sig, block, key, ref, secret, tsInit, tsExp,
     }) {
         const type = constants.blockType.secret;
+        const init = tsInit !== undefined ? tsInit : constants.timestamp.zero;
+        const exp = tsExp !== undefined ? tsExp : constants.timestamp.max;
         // validate the provided signature and the parent value.
         const prev = block ? await blocktree.getHeadBlock(block) : block;
         const parent = await context.validateParentBlock({ prev, type });
@@ -128,7 +131,40 @@ module.exports = function secureBlocktreeBlockTypesFactory({
             prev,
             type,
             data: {
-                key, ref, secret,
+                key, ref, secret, tsInit: init, tsExp: exp,
+            },
+        });
+    }
+
+    /**
+     * Adds a trusted key to the specified blockchain.
+     * @param {Buffer} sig The signature to use.
+     * @param {Buffer} key The key to trust.
+     * @param {Buffer} action The action to allow.
+      * @param {BigInt} tsInit The initializion timestamp for the trust.
+     * @param {BigInt} tsExp The expiration timestamp for the trust.
+    * @returns {Promise<string>} The new block.
+     */
+    async function addTrustedKey({
+        sig, block, key, action, tsInit, tsExp,
+    }) {
+        const type = constants.blockType.trustedKey;
+        const init = tsInit !== undefined ? tsInit : constants.timestamp.zero;
+        const exp = tsExp !== undefined ? tsExp : constants.timestamp.max;
+        // validate the provided signature and the parent value.
+        const prev = block ? await blocktree.getHeadBlock(block) : block;
+        const parent = await context.validateParentBlock({ prev, type });
+        const signature = await context.validateSignature({
+            sig, prev, parent, requireParent: true,
+        });
+
+        return context.writeSecureBlock({
+            sig: signature,
+            parent,
+            prev,
+            type,
+            data: {
+                key, action, tsInit: init, tsExp: exp,
             },
         });
     }
@@ -287,6 +323,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
         revokeKey,
         addOptions,
         addSecret,
+        addTrustedKey,
         addRecord,
         createRoot,
         createZone,

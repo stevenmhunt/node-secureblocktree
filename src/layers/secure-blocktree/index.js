@@ -3,6 +3,7 @@ const serialization = require('./serialization');
 const sbtEncryptionFactory = require('./encryption');
 const sbtBlocksFactory = require('./blocks');
 const sbtKeysFactory = require('./keys');
+const sbtSecretsFactory = require('./secrets');
 const sbtSignaturesFactory = require('./signatures');
 const sbtDataFactory = require('./data');
 const sbtBlockTypesFactory = require('./blockTypes');
@@ -16,10 +17,8 @@ module.exports = function secureBlocktreeLayerFactory({
 }) {
     let context = sbtEncryptionFactory({ encryption });
     context = { ...context, ...sbtBlocksFactory({ blocktree, serialization }) };
-    context = {
-        ...context,
-        ...sbtKeysFactory({ time, context, blocktree }),
-    };
+    context = { ...context, ...sbtKeysFactory({ time, context, blocktree }) };
+    context = { ...context, ...sbtSecretsFactory({ time, context, blocktree }) };
     context = { ...context, ...sbtSignaturesFactory({ context }) };
     context = { ...context, ...sbtDataFactory({ context }) };
     context = { ...context, ...sbtBlockTypesFactory({ context, blocktree, secureCache }) };

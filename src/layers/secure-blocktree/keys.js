@@ -2,6 +2,9 @@
 const constants = require('../../constants');
 const { InvalidKeyError } = require('../../errors');
 
+/**
+ * Secure Blocktree Keys API.
+ */
 module.exports = function secureBlocktreeKeysFactory({
     time, context, blocktree,
 }) {

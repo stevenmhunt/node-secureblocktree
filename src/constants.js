@@ -51,9 +51,10 @@ const constants = {
     blockType: {
         root: 0,
         key: 1,
-        secret: 2,
-        record: 3,
+        trustedKey: 2,
+        secret: 3,
         options: 4,
+        record: 5,
         zone: 128,
         identity: 129,
         collection: 130,

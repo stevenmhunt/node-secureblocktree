@@ -26,7 +26,8 @@ module.exports = {
             result.push(keyBytes);
 
             const value = options[key];
-            const valueBytes = Buffer.from(value, 'utf-8');
+            // TODO: fix this weirdness...
+            const valueBytes = Buffer.from(`${value}`, 'utf-8');
             const valueLength = Buffer.byteLength(valueBytes);
 
             result.push(fromByte(valueLength, 'value'));

@@ -38,7 +38,18 @@ function deserializeSignature(data, startIndex = 0) {
     return { result, index };
 }
 
+/**
+ * Given a signature, deserializes the public key from it.
+ * @param {Buffer} signature The signature to extract the public key from.
+ * @returns {Buffer} The public key associated with the signature.
+ */
+function deserializeKeyFromSignature(signature) {
+    const { result } = deserializeKey(Buffer.from(signature, constants.format.signature));
+    return result;
+}
+
 module.exports = {
     deserializeKey,
     deserializeSignature,
+    deserializeKeyFromSignature,
 };
