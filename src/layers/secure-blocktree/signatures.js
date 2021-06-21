@@ -1,6 +1,6 @@
 const constants = require('../../constants');
 const { InvalidSignatureError } = require('../../errors');
-const { deserializeKeyFromSignature } = require('./serialization/deserialize');
+const { deserializeKeyFromSignature } = require('./serialization');
 
 /**
  * Secure Blockchain Signatures API.

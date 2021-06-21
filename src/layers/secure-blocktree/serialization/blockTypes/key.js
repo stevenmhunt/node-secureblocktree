@@ -1,8 +1,8 @@
 /* eslint-disable no-plusplus */
 const constants = require('../../../../constants');
-const { fromInt64, toInt64, fromByte } = require('../../../../utils');
-const { serializeDataShort } = require('../serialize');
-const { deserializeDataShort } = require('../deserialize');
+const {
+    fromInt64, toInt64, fromByte, fromVarBinary, toVarBinary,
+} = require('../../../../utils');
 
 /**
  * Serialize and deserialize functions for key blocks.
@@ -12,15 +12,15 @@ module.exports = {
      * Serializes a key block.
      * @returns {Buffer} The serialized block.
      */
-    serialize: function serializeDataShortBlock({
+    serialize: function fromVarBinaryBlock({
         parentKey, key, action, tsInit, tsExp, data,
     }) {
         const dataValue = data || Buffer.alloc(0);
         return Buffer.concat([
             // parent key (for validating key chain)
-            serializeDataShort(parentKey),
+            fromVarBinary(parentKey),
             // key to add
-            serializeDataShort(key),
+            fromVarBinary(key),
             // the action to associate
             fromByte(action.charCodeAt(), 'action'),
             // start and expiration timestamps for key
@@ -34,15 +34,15 @@ module.exports = {
      * Deserializes a key block.
      * @returns {Object} The deserialized block.
      */
-    deserialize: function deserializeDataShortBlock(data, startIndex = 0) {
+    deserialize: function toVarBinaryBlock(data, startIndex = 0) {
         const result = {};
         let index = startIndex;
 
-        let res = deserializeDataShort(data, index);
+        let res = toVarBinary(data, index);
         result.parentKey = res.result;
         index = res.index;
 
-        res = deserializeDataShort(data, index);
+        res = toVarBinary(data, index);
         result.key = res.result;
         index = res.index;
 

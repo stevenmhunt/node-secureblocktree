@@ -1,9 +1,7 @@
 /* eslint-disable no-plusplus */
 const constants = require('../../../constants');
-const { fromByte } = require('../../../utils');
+const { fromByte, fromVarBinary, toVarBinary } = require('../../../utils');
 const blockTypes = require('./blockTypes');
-const { serializeDataShort } = require('./serialize');
-const { deserializeDataShort } = require('./deserialize');
 
 /**
  * @private
@@ -16,7 +14,7 @@ function serializeSecureBlockData(type, data) {
     if (data && data.isEncrypted && data.key && Buffer.isBuffer(data.encryptedData)) {
         return Buffer.concat([
             fromByte(constants.secureBlockData.encrypted),
-            serializeDataShort(data.key),
+            fromVarBinary(data.key),
             data.encryptedData,
         ]);
     }
@@ -40,7 +38,7 @@ function serializeSecureBlock(secureData) {
         // secure block type
         fromByte(secureData.type),
         // signature data
-        serializeDataShort(secureData.sig),
+        fromVarBinary(secureData.sig),
         // data
         serializeSecureBlockData(secureData.type, secureData.data),
     ].filter((i) => i));
@@ -71,7 +69,7 @@ function deserializeSecureBlockData(type, data) {
         }
         return null;
     case constants.secureBlockData.encrypted: {
-        const key = deserializeDataShort(data, 1);
+        const key = toVarBinary(data, 1);
         return {
             isEncrypted: true,
             key: key.result,
@@ -106,14 +104,25 @@ function deserializeSecureBlock(btBlockData) {
         timestamp, prev, parent, nonce, hash, layer,
     };
     result.type = data[index++];
-    const res = deserializeDataShort(data, index);
+    const res = toVarBinary(data, index);
     result.sig = res.result;
     index = res.index;
     result.data = deserializeSecureBlockData(result.type, data.slice(index));
     return result;
 }
 
+/**
+ * Given a signature, deserializes the public key from it.
+ * @param {Buffer} signature The signature to extract the public key from.
+ * @returns {Buffer} The public key associated with the signature.
+ */
+function deserializeKeyFromSignature(signature) {
+    const { result } = toVarBinary(Buffer.from(signature, constants.format.signature));
+    return result;
+}
+
 module.exports = {
     serializeSecureBlock,
     deserializeSecureBlock,
+    deserializeKeyFromSignature,
 };

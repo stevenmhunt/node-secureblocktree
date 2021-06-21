@@ -153,6 +153,43 @@ function fromByte(val, name = '(value)') {
 }
 
 /**
+ * Serializes a buffer up to 64K.
+ * @param {Buffer} data The key to serialize.
+ * @returns {Buffer} A serialized buffer.
+ */
+function fromVarBinary(data) {
+    if (!data) {
+        return fromInt16(0);
+    }
+    let result = data;
+    if (!Buffer.isBuffer(result)) {
+        result = Buffer.from(result, constants.format.key);
+    }
+    return Buffer.concat([
+        fromInt16(Buffer.byteLength(result)),
+        result,
+    ]);
+}
+
+/**
+ * Given a buffer, deserializes the data into a buffer with a 2-byte size value.
+ * @param {*} data The data to deserialize.
+ * @param {*} startIndex The index to start reading from.
+ * @returns {Object} A deserialized object.
+ */
+function toVarBinary(data, startIndex = 0) {
+    let index = startIndex;
+    let result = null;
+    const size = toInt16(data, index);
+    index += constants.size.int16;
+    if (size > 0) {
+        result = data.slice(index, index + size);
+        index += size;
+    }
+    return { result, index };
+}
+
+/**
  * Manages emitting events when an action occurs.
  */
 async function withEvent(emitter, event, parameters, fn) {
@@ -199,6 +236,8 @@ module.exports = {
     toInt16,
     fromByte,
     toByte,
+    fromVarBinary,
+    toVarBinary,
     withEvent,
     generateHash,
     generateNonce,

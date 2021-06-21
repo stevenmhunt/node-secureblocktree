@@ -1,7 +1,5 @@
 const constants = require('../../constants');
-const utils = require('../../utils');
-const { serializeDataShort } = require('./serialization/serialize');
-const { deserializeDataShort } = require('./serialization/deserialize');
+const { generateNonce, fromVarBinary, toVarBinary } = require('../../utils');
 
 /**
  * Secure Blocktree Encryption API.
@@ -51,7 +49,7 @@ module.exports = function secureBlocktreeEncryptionFactory({
     async function signBlock({
         secret, key, parent, prev,
     }) {
-        const nonce = utils.generateNonce();
+        const nonce = generateNonce();
         const result = await encryption.sign(
             secret,
             Buffer.concat([
@@ -59,7 +57,7 @@ module.exports = function secureBlocktreeEncryptionFactory({
             ]),
         );
         return Buffer.concat([
-            serializeDataShort(key),
+            fromVarBinary(key),
             nonce,
             result,
         ]);
@@ -81,7 +79,7 @@ module.exports = function secureBlocktreeEncryptionFactory({
             return false;
         }
         const sigData = Buffer.from(sig, constants.format.signature);
-        const keyData = deserializeDataShort(sigData, 0, null);
+        const keyData = toVarBinary(sigData, 0, null);
         const sigKey = keyData.result;
         const nonce = sigData.slice(keyData.index, keyData.index + constants.size.int64);
         const signature = sigData.slice(keyData.index + constants.size.int64);

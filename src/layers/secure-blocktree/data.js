@@ -1,6 +1,6 @@
 const constants = require('../../constants');
 const { InvalidKeyError } = require('../../errors');
-const { deserializeKeyFromSignature } = require('./serialization/deserialize');
+const { deserializeKeyFromSignature } = require('./serialization');
 
 /**
  * Secure Blocktree Data API.

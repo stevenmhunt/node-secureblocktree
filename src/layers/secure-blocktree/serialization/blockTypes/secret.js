@@ -1,8 +1,8 @@
 /* eslint-disable no-plusplus */
 const constants = require('../../../../constants');
-const { fromInt64, toInt64 } = require('../../../../utils');
-const { serializeDataShort } = require('../serialize');
-const { deserializeDataShort } = require('../deserialize');
+const {
+    fromInt64, toInt64, fromVarBinary, toVarBinary,
+} = require('../../../../utils');
 
 /**
  * Serialize and deserialize functions for secret blocks.
@@ -18,11 +18,11 @@ module.exports = {
         const dataValue = data || Buffer.alloc(0);
         return Buffer.concat([
             // key associated with the secret
-            serializeDataShort(key),
+            fromVarBinary(key),
             // the reference value for the secret
-            serializeDataShort(ref),
+            fromVarBinary(ref),
             // the secret data
-            serializeDataShort(secret),
+            fromVarBinary(secret),
             // start and expiration timestamps for the secret
             fromInt64(tsInit),
             fromInt64(tsExp),
@@ -34,19 +34,21 @@ module.exports = {
      * Deserializes a key block.
      * @returns {Object} The deserialized block.
      */
-    deserialize: function deserializeDataShortBlock(data, startIndex = 0) {
+    deserialize: function toVarBinaryBlock(data, startIndex = 0) {
         const result = {};
         let index = startIndex;
 
-        let res = deserializeDataShort(data, index);
-        result.parentKey = res.result;
-        index = res.index;
-
-        res = deserializeDataShort(data, index);
+        let res = toVarBinary(data, index);
         result.key = res.result;
         index = res.index;
 
-        result.action = String.fromCharCode(data[index++]);
+        res = toVarBinary(data, index);
+        result.ref = res.result;
+        index = res.index;
+
+        res = toVarBinary(data, index);
+        result.secret = res.result;
+        index = res.index;
 
         result.tsInit = toInt64(data, index);
         index += constants.size.int64;

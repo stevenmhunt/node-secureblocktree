@@ -10,6 +10,6 @@ module.exports = {
     [constants.blockType.zone]: require('./options'),
     [constants.blockType.identity]: require('./options'),
     [constants.blockType.options]: require('./options'),
-    [constants.blockType.secret]: require('./options'),
+    [constants.blockType.secret]: require('./secret'),
     [constants.blockType.collection]: require('./options'),
 };

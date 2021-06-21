@@ -1,5 +1,5 @@
 const constants = require('../../constants');
-const { deserializeKeyFromSignature } = require('./serialization/deserialize');
+const { deserializeKeyFromSignature } = require('./serialization');
 const {
     InvalidSignatureError, InvalidBlockError, InvalidRootError,
 } = require('../../errors');
