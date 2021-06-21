@@ -2,8 +2,8 @@
 const constants = require('../../../constants');
 const { fromByte } = require('../../../utils');
 const blockTypes = require('./blockTypes');
-const { serializeSignature, serializeKey } = require('./serialize');
-const { deserializeSignature, deserializeKey } = require('./deserialize');
+const { serializeDataShort } = require('./serialize');
+const { deserializeDataShort } = require('./deserialize');
 
 /**
  * @private
@@ -16,7 +16,7 @@ function serializeSecureBlockData(type, data) {
     if (data && data.isEncrypted && data.key && Buffer.isBuffer(data.encryptedData)) {
         return Buffer.concat([
             fromByte(constants.secureBlockData.encrypted),
-            serializeKey(data.key),
+            serializeDataShort(data.key),
             data.encryptedData,
         ]);
     }
@@ -40,7 +40,7 @@ function serializeSecureBlock(secureData) {
         // secure block type
         fromByte(secureData.type),
         // signature data
-        serializeSignature(secureData.sig),
+        serializeDataShort(secureData.sig),
         // data
         serializeSecureBlockData(secureData.type, secureData.data),
     ].filter((i) => i));
@@ -71,7 +71,7 @@ function deserializeSecureBlockData(type, data) {
         }
         return null;
     case constants.secureBlockData.encrypted: {
-        const key = deserializeKey(data, 1);
+        const key = deserializeDataShort(data, 1);
         return {
             isEncrypted: true,
             key: key.result,
@@ -106,7 +106,7 @@ function deserializeSecureBlock(btBlockData) {
         timestamp, prev, parent, nonce, hash, layer,
     };
     result.type = data[index++];
-    const res = deserializeSignature(data, index);
+    const res = deserializeDataShort(data, index);
     result.sig = res.result;
     index = res.index;
     result.data = deserializeSecureBlockData(result.type, data.slice(index));

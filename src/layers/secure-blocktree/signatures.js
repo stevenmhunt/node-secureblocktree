@@ -1,6 +1,6 @@
 const constants = require('../../constants');
 const { InvalidSignatureError } = require('../../errors');
-const { deserializeKeyFromSignature } = require('./serialization/deserialize');
+const { deserializeDataShortFromSignature } = require('./serialization/deserialize');
 
 /**
  * Secure Blockchain Signatures API.
@@ -20,7 +20,7 @@ module.exports = function secureBlocktreeSignaturesFactory({ context }) {
     }) {
         const block = requireParent !== false ? parent : (prev || parent);
         const signature = typeof sig === 'function' ? await sig({ prev, parent }) : sig;
-        const key = deserializeKeyFromSignature(signature);
+        const key = deserializeDataShortFromSignature(signature);
 
         // perform a "key seek" to verify that the key is registered.
         const keySeek = await context.performKeySeek({

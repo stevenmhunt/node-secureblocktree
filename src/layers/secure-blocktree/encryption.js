@@ -1,7 +1,7 @@
 const constants = require('../../constants');
 const utils = require('../../utils');
-const { serializeKey } = require('./serialization/serialize');
-const { deserializeKey } = require('./serialization/deserialize');
+const { serializeDataShort } = require('./serialization/serialize');
+const { deserializeDataShort } = require('./serialization/deserialize');
 
 /**
  * Secure Blocktree Encryption API.
@@ -59,7 +59,7 @@ module.exports = function secureBlocktreeEncryptionFactory({
             ]),
         );
         return Buffer.concat([
-            serializeKey(key),
+            serializeDataShort(key),
             nonce,
             result,
         ]);
@@ -81,7 +81,7 @@ module.exports = function secureBlocktreeEncryptionFactory({
             return false;
         }
         const sigData = Buffer.from(sig, constants.format.signature);
-        const keyData = deserializeKey(sigData, 0, null);
+        const keyData = deserializeDataShort(sigData, 0, null);
         const sigKey = keyData.result;
         const nonce = sigData.slice(keyData.index, keyData.index + constants.size.int64);
         const signature = sigData.slice(keyData.index + constants.size.int64);

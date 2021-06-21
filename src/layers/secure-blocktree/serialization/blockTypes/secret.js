@@ -1,29 +1,29 @@
 /* eslint-disable no-plusplus */
 const constants = require('../../../../constants');
-const { fromInt64, toInt64, fromByte } = require('../../../../utils');
+const { fromInt64, toInt64 } = require('../../../../utils');
 const { serializeDataShort } = require('../serialize');
 const { deserializeDataShort } = require('../deserialize');
 
 /**
- * Serialize and deserialize functions for key blocks.
+ * Serialize and deserialize functions for secret blocks.
  */
 module.exports = {
     /**
-     * Serializes a key block.
+     * Serializes a secret block.
      * @returns {Buffer} The serialized block.
      */
-    serialize: function serializeDataShortBlock({
-        parentKey, key, action, tsInit, tsExp, data,
+    serialize: function serializeSecretBlock({
+        key, ref, secret, tsInit, tsExp, data,
     }) {
         const dataValue = data || Buffer.alloc(0);
         return Buffer.concat([
-            // parent key (for validating key chain)
-            serializeDataShort(parentKey),
-            // key to add
+            // key associated with the secret
             serializeDataShort(key),
-            // the action to associate
-            fromByte(action.charCodeAt(), 'action'),
-            // start and expiration timestamps for key
+            // the reference value for the secret
+            serializeDataShort(ref),
+            // the secret data
+            serializeDataShort(secret),
+            // start and expiration timestamps for the secret
             fromInt64(tsInit),
             fromInt64(tsExp),
             // (optional) additional data

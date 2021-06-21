@@ -2,42 +2,24 @@ const constants = require('../../../constants');
 const { fromInt16 } = require('../../../utils');
 
 /**
- * Serializes a key.
- * @param {Buffer} key The key to serialize.
- * @returns {Buffer} A serialized key.
+ * Serializes a buffer up to 64K.
+ * @param {Buffer} data The key to serialize.
+ * @returns {Buffer} A serialized buffer.
  */
-function serializeKey(key) {
-    if (!key) {
+function serializeDataShort(data) {
+    if (!data) {
         return fromInt16(0);
     }
-    let keyData = key;
-    if (!Buffer.isBuffer(keyData)) {
-        keyData = Buffer.from(keyData, constants.format.key);
+    let result = data;
+    if (!Buffer.isBuffer(result)) {
+        result = Buffer.from(result, constants.format.key);
     }
     return Buffer.concat([
-        fromInt16(Buffer.byteLength(keyData)),
-        keyData,
-    ]);
-}
-
-/**
- * @private
- * Serializes a digital signature for storing within a secure block.
- * @param {*} sig The signature to serialize.
- * @returns {Buffer} A binary representation of the signature.
- */
-function serializeSignature(sig) {
-    let sigData = sig || Buffer.alloc(0);
-    if (!Buffer.isBuffer(sigData)) {
-        sigData = Buffer.from(sigData, constants.format.signature);
-    }
-    return Buffer.concat([
-        fromInt16(Buffer.byteLength(sigData)),
-        sigData,
+        fromInt16(Buffer.byteLength(result)),
+        result,
     ]);
 }
 
 module.exports = {
-    serializeKey,
-    serializeSignature,
+    serializeDataShort,
 };
