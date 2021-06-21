@@ -25,12 +25,12 @@ function deserializeDataShort(data, startIndex = 0) {
  * @param {Buffer} signature The signature to extract the public key from.
  * @returns {Buffer} The public key associated with the signature.
  */
-function deserializeDataShortFromSignature(signature) {
+function deserializeKeyFromSignature(signature) {
     const { result } = deserializeDataShort(Buffer.from(signature, constants.format.signature));
     return result;
 }
 
 module.exports = {
     deserializeDataShort,
-    deserializeDataShortFromSignature,
+    deserializeKeyFromSignature,
 };

@@ -1,6 +1,6 @@
 const constants = require('../../constants');
 const { InvalidKeyError } = require('../../errors');
-const { deserializeDataShortFromSignature } = require('./serialization/deserialize');
+const { deserializeKeyFromSignature } = require('./serialization/deserialize');
 
 /**
  * Secure Blocktree Data API.
@@ -12,8 +12,8 @@ module.exports = function secureBlocktreeDataFactory({ context }) {
         // collect key information.
         const action = constants.action.read;
         const blockData = await context.readSecureBlock(block);
-        const requiredKey = deserializeDataShortFromSignature(blockData.sig);
-        const currentKey = deserializeDataShortFromSignature(sig);
+        const requiredKey = deserializeKeyFromSignature(blockData.sig);
+        const currentKey = deserializeKeyFromSignature(sig);
 
         // perform a key seek to locate the required block.
         const seek = await context.performKeySeek({ block, action, key: requiredKey });

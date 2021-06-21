@@ -1,5 +1,5 @@
 const constants = require('../../constants');
-const { deserializeDataShortFromSignature } = require('./serialization/deserialize');
+const { deserializeKeyFromSignature } = require('./serialization/deserialize');
 const {
     InvalidSignatureError, InvalidBlockError, InvalidRootError,
 } = require('../../errors');
@@ -41,7 +41,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
             // validate the provided signature, the key, and the parent value.
             parent = await context.validateParentBlock({ prev, type });
             signature = await context.validateSignature({ sig, prev, parent });
-            parentKey = deserializeDataShortFromSignature(signature);
+            parentKey = deserializeKeyFromSignature(signature);
             await context.validateParentKey({ block: prev, key: parentKey });
         }
 
