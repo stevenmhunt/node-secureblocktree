@@ -9,6 +9,7 @@ module.exports = {
     [constants.blockType.key]: require('./key'),
     [constants.blockType.zone]: require('./options'),
     [constants.blockType.identity]: require('./options'),
-    [constants.blockType.collection]: require('./options'),
     [constants.blockType.options]: require('./options'),
+    [constants.blockType.secret]: require('./options'),
+    [constants.blockType.collection]: require('./options'),
 };

@@ -51,11 +51,12 @@ const constants = {
     blockType: {
         root: 0,
         key: 1,
-        options: 2,
-        zone: 3,
-        identity: 4,
-        collection: 5,
-        record: 6,
+        secret: 2,
+        record: 3,
+        options: 4,
+        zone: 128,
+        identity: 129,
+        collection: 130,
     },
     keyType: {
         publicKey: 1,
@@ -88,6 +89,10 @@ const constants = {
 
 constants.parentBlockTypes = {
     [constants.blockType.key]: [
+        constants.blockType.zone,
+        constants.blockType.identity,
+        constants.blockType.collection],
+    [constants.blockType.secret]: [
         constants.blockType.zone,
         constants.blockType.identity,
         constants.blockType.collection],

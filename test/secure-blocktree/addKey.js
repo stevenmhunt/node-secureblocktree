@@ -11,7 +11,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKey({
+        await secureBlocktree.addKey({
             block: newZone,
             sig: context.signAs(rootZoneKey),
             key: newZoneKey,
@@ -19,7 +19,7 @@ module.exports = (context) => ({
         });
         const newKey = await context.generateTestKey();
         const newZoneHead = await secureBlocktree.getHeadBlock(newZone);
-        const result = await secureBlocktree.setKey({
+        const result = await secureBlocktree.addKey({
             block: newZoneHead,
             sig: context.signAs(rootZoneKey),
             key: newKey,
@@ -38,14 +38,14 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKey({
+        await secureBlocktree.addKey({
             block: newZone,
             sig: context.signAs(rootZoneKey),
             key: newZoneKey,
             action: constants.action.write,
         });
         const newKey = await context.generateTestKey();
-        const result = await secureBlocktree.setKey({
+        const result = await secureBlocktree.addKey({
             block: newZone,
             sig: context.signAs(rootKey),
             key: newKey,
@@ -64,7 +64,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKey({
+        await secureBlocktree.addKey({
             block: newZone,
             sig: context.signAs(rootZoneKey),
             key: newZoneKey,
@@ -74,7 +74,7 @@ module.exports = (context) => ({
         const newZoneHead = await secureBlocktree.getHeadBlock(newZone);
         let isExecuted = false;
         try {
-            await secureBlocktree.setKey({
+            await secureBlocktree.addKey({
                 block: newZoneHead,
                 sig: context.signAs(rootZoneKey, rootKey),
                 key: newKey,
@@ -96,7 +96,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        const newZoneHead = await secureBlocktree.setKey({
+        const newZoneHead = await secureBlocktree.addKey({
             block: newZone,
             sig: context.signAs(rootZoneKey),
             key: await context.generateTestKey(),
@@ -105,7 +105,7 @@ module.exports = (context) => ({
         const newKey = await context.generateTestKey();
         let isExecuted = false;
         try {
-            await secureBlocktree.setKey({
+            await secureBlocktree.addKey({
                 block: newZoneHead,
                 sig: context.signAs(invalidKey),
                 key: newKey,
@@ -126,7 +126,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKey({
+        await secureBlocktree.addKey({
             block: newZone,
             sig: context.signAs(rootZoneKey),
             key: newZoneKey,
@@ -134,7 +134,7 @@ module.exports = (context) => ({
         });
         let isExecuted = false;
         try {
-            await secureBlocktree.setKey({
+            await secureBlocktree.addKey({
                 block: newZone,
                 sig: context.signAs(newZoneKey),
                 key: await context.generateTestKey(),
@@ -152,7 +152,7 @@ module.exports = (context) => ({
         const newKey = await context.generateTestKey();
         let isExecuted = false;
         try {
-            await secureBlocktree.setKey({
+            await secureBlocktree.addKey({
                 block: null,
                 sig: context.signAs(rootKey),
                 key: newKey,
@@ -173,7 +173,7 @@ module.exports = (context) => ({
         const newKey = await context.generateTestKey();
         let isExecuted = false;
         try {
-            await secureBlocktree.setKey({
+            await secureBlocktree.addKey({
                 block: rootBlock,
                 sig: context.signAs(rootKey),
                 key: newKey,

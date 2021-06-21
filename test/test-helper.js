@@ -99,7 +99,7 @@ async function initializeSecureRoot(secureBlocktree, rootKey, rootZoneKey) {
     });
 
     // set the root zone keys.
-    await secureBlocktree.setKey({
+    await secureBlocktree.addKey({
         sig: signAsRoot,
         block: rootZone,
         parentKey: rootKey,

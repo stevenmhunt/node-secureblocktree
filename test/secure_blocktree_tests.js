@@ -11,12 +11,14 @@ function loadSecureBlocktreeTests(context) {
         loadTests(require('./secure-blocktree/createZone'), context));
     describe('createIdentity()',
         loadTests(require('./secure-blocktree/createIdentity'), context));
-    describe('setKey()',
-        loadTests(require('./secure-blocktree/setKey'), context));
+    describe('addKey()',
+        loadTests(require('./secure-blocktree/addKey'), context));
     describe('revokeKey()',
         loadTests(require('./secure-blocktree/revokeKey'), context));
-    describe('setOptions()',
-        loadTests(require('./secure-blocktree/setOptions'), context));
+    describe('addSecret()',
+        loadTests(require('./secure-blocktree/addSecret'), context));
+    describe('addOptions()',
+        loadTests(require('./secure-blocktree/addOptions'), context));
     describe('createCollection()',
         loadTests(require('./secure-blocktree/createCollection'), context));
 }

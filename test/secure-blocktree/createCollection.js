@@ -52,7 +52,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKey({
+        await secureBlocktree.addKey({
             block: localZone,
             sig: context.signAs(rootZoneKey),
             key: localZoneKey,
@@ -79,7 +79,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKey({
+        await secureBlocktree.addKey({
             block: localZone,
             sig: context.signAs(rootZoneKey),
             key: localZoneKey,
@@ -89,7 +89,7 @@ module.exports = (context) => ({
             block: localZone,
             sig: context.signAs(localZoneKey),
         });
-        await secureBlocktree.setKey({
+        await secureBlocktree.addKey({
             block: collection,
             sig: context.signAs(localZoneKey),
             key: collectionKey,
@@ -111,7 +111,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        let next = await secureBlocktree.setKey({
+        let next = await secureBlocktree.addKey({
             block: collection,
             sig: context.signAs(rootZoneKey),
             key: collectionKey,
@@ -205,7 +205,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKey({
+        await secureBlocktree.addKey({
             block: newZone,
             sig: context.signAs(rootZoneKey),
             key: newZoneKey,
@@ -233,7 +233,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKey({
+        await secureBlocktree.addKey({
             block: newZone,
             sig: context.signAs(rootZoneKey),
             key: newZoneKey,

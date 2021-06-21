@@ -10,7 +10,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        const result = await secureBlocktree.setOptions({
+        const result = await secureBlocktree.addOptions({
             block: newZone,
             sig: context.signAs(rootZoneKey),
             options: { name: 'NEW NAME' },
@@ -27,7 +27,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        const result = await secureBlocktree.setOptions({
+        const result = await secureBlocktree.addOptions({
             block: newZone,
             sig: context.signAs(rootKey),
             options: { name: 'NEW NAME' },
@@ -45,7 +45,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKey({
+        await secureBlocktree.addKey({
             block: newZone,
             sig: context.signAs(rootZoneKey),
             key: newZoneKey,
@@ -53,7 +53,7 @@ module.exports = (context) => ({
         });
         let isExecuted = false;
         try {
-            await secureBlocktree.setOptions({
+            await secureBlocktree.addOptions({
                 block: newZone,
                 sig: context.signAs(rootZoneKey,
                     rootKey),
@@ -77,7 +77,7 @@ module.exports = (context) => ({
         });
         let isExecuted = false;
         try {
-            await secureBlocktree.setOptions({
+            await secureBlocktree.addOptions({
                 block: newZone,
                 sig: context.signAs(invalidKey),
                 options: { name: 'NEW NAME' },
@@ -97,7 +97,7 @@ module.exports = (context) => ({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKey({
+        await secureBlocktree.addKey({
             block: newZone,
             sig: context.signAs(rootZoneKey),
             key: newZoneKey,
@@ -105,7 +105,7 @@ module.exports = (context) => ({
         });
         let isExecuted = false;
         try {
-            await secureBlocktree.setOptions({
+            await secureBlocktree.addOptions({
                 block: newZone,
                 sig: context.signAs(newZoneKey),
                 options: { name: 'NEW NAME' },
@@ -121,7 +121,7 @@ module.exports = (context) => ({
         const { secureBlocktree, rootKey } = context;
         let isExecuted = false;
         try {
-            await secureBlocktree.setOptions({
+            await secureBlocktree.addOptions({
                 block: null,
                 sig: context.signAs(rootKey),
                 options: { name: 'NEW NAME' },
@@ -140,7 +140,7 @@ module.exports = (context) => ({
         const { rootBlock } = secureRoot;
         let isExecuted = false;
         try {
-            await secureBlocktree.setOptions({
+            await secureBlocktree.addOptions({
                 block: rootBlock,
                 sig: context.signAs(rootKey),
                 options: { name: 'NEW NAME' },

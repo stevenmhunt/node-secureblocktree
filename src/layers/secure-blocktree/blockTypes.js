@@ -20,7 +20,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * @param {BigInt} tsExp The expiration timestamp for the key.
      * @returns {Promise<string>} The new block.
      */
-    async function setKey({
+    async function addKey({
         sig, block, key, action, tsInit, tsExp,
     }) {
         const type = constants.blockType.key;
@@ -70,7 +70,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
     async function revokeKey({
         sig, block, parentKey, key, action,
     }) {
-        return setKey({
+        return addKey({
             sig,
             block,
             parentKey,
@@ -88,7 +88,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * @param {Object} options The key/value pairs to set.
      * @returns {Promise<string>} The new block.
      */
-    async function setOptions({
+    async function addOptions({
         sig, block, options,
     }) {
         const type = constants.blockType.options;
@@ -99,6 +99,37 @@ module.exports = function secureBlocktreeBlockTypesFactory({
 
         return context.writeSecureBlock({
             sig: signature, parent, prev, type, data: options,
+        });
+    }
+
+    /**
+     * Adds a secret to the specified blockchainn.
+     * @param {Buffer} sig The signature to use.
+     * @param {Buffer} block The block to add a record to.
+     * @param {Buffer} key the public key used to encrypt the data.
+     * @param {Buffer} ref a reference value for looking up the secret.
+     * @param {Buffer} secret The secret to store.
+     * @returns {Promise<string>} The new block.
+     */
+    async function addSecret({
+        sig, block, key, ref, secret,
+    }) {
+        const type = constants.blockType.secret;
+        // validate the provided signature and the parent value.
+        const prev = block ? await blocktree.getHeadBlock(block) : block;
+        const parent = await context.validateParentBlock({ prev, type });
+        const signature = await context.validateSignature({
+            sig, prev, parent, requireParent: false,
+        });
+
+        return context.writeSecureBlock({
+            sig: signature,
+            parent,
+            prev,
+            type,
+            data: {
+                key, ref, secret,
+            },
         });
     }
 
@@ -252,9 +283,10 @@ module.exports = function secureBlocktreeBlockTypesFactory({
     }
 
     return {
-        setKey,
+        addKey,
         revokeKey,
-        setOptions,
+        addOptions,
+        addSecret,
         addRecord,
         createRoot,
         createZone,
