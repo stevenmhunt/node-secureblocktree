@@ -1,6 +1,6 @@
 /* eslint-disable global-require */
 const {
-    initSecureBlocktree, initializeSecureRoot, generateTestKeys, signAs,
+    initSecureBlocktree, initializeSecureRoot, generateTestKey, signAs,
     getEncryption, loadTests,
 } = require('./test-helper');
 
@@ -11,10 +11,10 @@ function loadSecureBlocktreeTests(context) {
         loadTests(require('./secure-blocktree/createZone'), context));
     describe('createIdentity()',
         loadTests(require('./secure-blocktree/createIdentity'), context));
-    describe('setKeys()',
-        loadTests(require('./secure-blocktree/setKeys'), context));
-    describe('revokeKeys()',
-        loadTests(require('./secure-blocktree/revokeKeys'), context));
+    describe('setKey()',
+        loadTests(require('./secure-blocktree/setKey'), context));
+    describe('revokeKey()',
+        loadTests(require('./secure-blocktree/revokeKey'), context));
     describe('setOptions()',
         loadTests(require('./secure-blocktree/setOptions'), context));
     describe('createCollection()',
@@ -27,16 +27,16 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
         const context = {};
 
         before(async () => {
-            context.generateTestKeys = () => generateTestKeys(encryption);
-            context.rootKeys = await context.generateTestKeys();
-            context.rootZoneKeys = await context.generateTestKeys();
+            context.generateTestKey = () => generateTestKey(encryption);
+            context.rootKey = await context.generateTestKey();
+            context.rootZoneKey = await context.generateTestKey();
         });
 
         beforeEach(async () => {
             context.secureBlocktree = initSecureBlocktree(encryption, false);
             context.signAs = (key, altKey) => signAs(context.secureBlocktree, key, altKey);
             context.secureRoot = await initializeSecureRoot(
-                context.secureBlocktree, context.rootKeys, context.rootZoneKeys,
+                context.secureBlocktree, context.rootKey, context.rootZoneKey,
             );
         });
 
@@ -46,16 +46,16 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
         const context = {};
 
         before(async () => {
-            context.generateTestKeys = () => generateTestKeys(encryption);
-            context.rootKeys = await context.generateTestKeys();
-            context.rootZoneKeys = await context.generateTestKeys();
+            context.generateTestKey = () => generateTestKey(encryption);
+            context.rootKey = await context.generateTestKey();
+            context.rootZoneKey = await context.generateTestKey();
         });
 
         beforeEach(async () => {
             context.secureBlocktree = initSecureBlocktree(encryption, true);
             context.signAs = (key, altKey) => signAs(context.secureBlocktree, key, altKey);
             context.secureRoot = await initializeSecureRoot(
-                context.secureBlocktree, context.rootKeys, context.rootZoneKeys,
+                context.secureBlocktree, context.rootKey, context.rootZoneKey,
             );
         });
 

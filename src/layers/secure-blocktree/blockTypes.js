@@ -11,20 +11,19 @@ module.exports = function secureBlocktreeBlockTypesFactory({
     context, blocktree, secureCache,
 }) {
     /**
-     * Writes new keys to the specified blockchain.
+     * Writes a new key to the specified blockchain.
      * @param {Buffer} sig The signature to use.
-     * @param {Buffer} block The block to add keys to.
-     * @param {Object} keys A set of actions with associated keys.
-     * @param {Object} storedKeys Encrypted keystore used for trusted reads.
-     * @param {Object} certificates A set of actions with associated certificates.
-     * @param {BigInt} tsInit The initializion timestamp for the keys.
-     * @param {BigInt} tsExp The expiration timestamp for the keys.
+     * @param {Buffer} block The block to add a key to.
+     * @param {Buffer} key The key to add.
+     * @param {string} action The action to assign to the key.
+     * @param {BigInt} tsInit The initializion timestamp for the key.
+     * @param {BigInt} tsExp The expiration timestamp for the key.
      * @returns {Promise<string>} The new block.
      */
-    async function setKeys({
-        sig, block, keys, storedKeys, certificates, tsInit, tsExp,
+    async function setKey({
+        sig, block, key, action, tsInit, tsExp,
     }) {
-        const type = constants.blockType.keys;
+        const type = constants.blockType.key;
         const init = tsInit !== undefined ? tsInit : constants.timestamp.zero;
         const exp = tsExp !== undefined ? tsExp : constants.timestamp.max;
         const prev = block ? await blocktree.getHeadBlock(block) : block;
@@ -39,41 +38,44 @@ module.exports = function secureBlocktreeBlockTypesFactory({
                 throw new InvalidRootError();
             }
         } else {
-            // validate the provided signature, the keys, and the parent value.
+            // validate the provided signature, the key, and the parent value.
             parent = await context.validateParentBlock({ prev, type });
             signature = await context.validateSignature({ sig, prev, parent });
             const keyData = deserializeKey(Buffer.from(signature, constants.format.signature));
             parentKey = keyData.result;
-            await context.validateKeys({ block: prev, keys, parentKey });
+            await context.validateParentKey({ block: prev, key: parentKey });
         }
 
-        const data = {
-            parentKey, keys, storedKeys, certificates, tsInit: init, tsExp: exp,
-        };
         return context.writeSecureBlock({
-            sig: signature, parent, prev, type, data,
+            sig: signature,
+            parent,
+            prev,
+            type,
+            data: {
+                parentKey, key, action, tsInit: init, tsExp: exp,
+            },
         });
     }
 
     /**
-     * Revokes keys from the specified blockchain.
+     * Revokes a key from the specified blockchain.
      * @param {Buffer} sig The signature to use.
-     * @param {Buffer} block The block to add keys to.
-     * @param {Object} keys A set of actions with associated keys.
-     * @param {Object} certificates A set of actions with associated certificates.
-     * @param {BigInt} tsInit The initializion timestamp for the keys.
-     * @param {BigInt} tsExp The expiration timestamp for the keys.
+     * @param {Buffer} block The block to revoke a key from.
+     * @param {Buffer} key The key to revoke.
+     * @param {string} action The action to revoke on.
+     * @param {BigInt} tsInit The initializion timestamp for the key.
+     * @param {BigInt} tsExp The expiration timestamp for the key.
      * @returns {Promise<string>} The new block.
      */
-    async function revokeKeys({
-        sig, block, parentKey, keys, certificates,
+    async function revokeKey({
+        sig, block, parentKey, key, action,
     }) {
-        return setKeys({
+        return setKey({
             sig,
             block,
-            keys,
-            certificates,
             parentKey,
+            key,
+            action,
             tsInit: constants.timestamp.zero,
             tsExp: constants.timestamp.zero,
         });
@@ -82,7 +84,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
     /**
      * Specifies configuration options for the specified blockchain.
      * @param {Buffer} sig The signature to use.
-     * @param {Buffer} block The block to add keys to.
+     * @param {Buffer} block The block to add options to.
      * @param {Object} options The key/value pairs to set.
      * @returns {Promise<string>} The new block.
      */
@@ -103,7 +105,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
     /**
      * Adds a record to a collection.
      * @param {Buffer} sig The signature to use.
-     * @param {Buffer} block The block to add keys to.
+     * @param {Buffer} block The block to add a record to.
      * @param {Object} data The key/value pairs to set.
      * @returns {Promise<string>} The new block.
      */
@@ -125,13 +127,11 @@ module.exports = function secureBlocktreeBlockTypesFactory({
 
     /**
      * Creates the root block in the secure blocktree.
-     * @param {Object} keys A set of actions with associated keys.
-     * @param {Object} storedKeys Encrypted keystore used for trusted reads.
-     * @param {Object} certificates A set of actions with associated certificates.
+     * @param {Buffer} key The root key.
      * @returns {Promise<string>} The root block.
      */
     async function createRoot({
-        keys, storedKeys, certificates,
+        key,
     }) {
         // there can only be one root key in the system.
         if (await blocktree.countBlocks() > 0) {
@@ -146,11 +146,14 @@ module.exports = function secureBlocktreeBlockTypesFactory({
         const signature = null;
         const parentKey = null;
 
-        const data = {
-            parentKey, keys, storedKeys, certificates, tsInit, tsExp,
-        };
         const result = await context.writeSecureBlock({
-            sig: signature, parent, prev, type, data,
+            sig: signature,
+            parent,
+            prev,
+            type,
+            data: {
+                parentKey, key, action: constants.action.any, tsInit, tsExp,
+            },
         });
         await secureCache.writeCache(null, constants.secureCache.rootBlock, result);
         return result;
@@ -193,17 +196,15 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * Creates a new zone, which acts as a permission container for managing keys and data.
      * @param {Buffer} sig The signature to use.
      * @param {Buffer} block The block to add a zone to.
-     * @param {Object} keys A set of actions with associated keys, or null if no zone keys.
      * @param {string} name The name of the zone.
      * @returns {Promise<string>} The new block.
      */
     async function createZone({
-        sig, block, keys, options,
+        sig, block, options,
     }) {
         const result = await createChildBlockInternal({
             sig,
             block,
-            keys,
             type: constants.blockType.zone,
             data: options,
         });
@@ -218,7 +219,6 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * Creates a new identity, which represents a user or system.
      * @param {Buffer} sig The signature to use.
      * @param {Buffer} block The block to add an identity to.
-     * @param {Object} keys A set of actions with associated keys, or null if no zone keys.
      * @param {string} name The name of the identity.
      * @returns {Promise<string>} The new block.
      */
@@ -237,7 +237,6 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * Creates a new collection, which represents a blockchain for storing data.
      * @param {Buffer} sig The signature to use.
      * @param {Buffer} block The block to add a collection to.
-     * @param {Object} keys A set of actions with associated keys, or null if no zone keys.
      * @param {string} name The name of the collection.
      * @returns {Promise<string>} The new block.
      */
@@ -253,8 +252,8 @@ module.exports = function secureBlocktreeBlockTypesFactory({
     }
 
     return {
-        setKeys,
-        revokeKeys,
+        setKey,
+        revokeKey,
         setOptions,
         addRecord,
         createRoot,

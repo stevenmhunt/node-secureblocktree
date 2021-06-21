@@ -50,12 +50,16 @@ const constants = {
     },
     blockType: {
         root: 0,
-        keys: 1,
+        key: 1,
         options: 2,
         zone: 3,
         identity: 4,
         collection: 5,
         record: 6,
+    },
+    keyType: {
+        publicKey: 1,
+        certificate: 2,
     },
     secureBlockData: {
         null: 0,
@@ -63,6 +67,7 @@ const constants = {
         encrypted: 2,
     },
     action: {
+        any: '*',
         read: 'r',
         write: 'w',
     },
@@ -82,7 +87,7 @@ const constants = {
 };
 
 constants.parentBlockTypes = {
-    [constants.blockType.keys]: [
+    [constants.blockType.key]: [
         constants.blockType.zone,
         constants.blockType.identity,
         constants.blockType.collection],

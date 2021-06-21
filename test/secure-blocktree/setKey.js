@@ -4,94 +4,81 @@ const { InvalidBlockError, InvalidSignatureError } = require('../../src/errors')
 
 module.exports = (context) => ({
     'should succeed for a zone using the parent key': async () => {
-        const { secureRoot, secureBlocktree, rootZoneKeys } = context;
+        const { secureRoot, secureBlocktree, rootZoneKey } = context;
         const { rootZone } = secureRoot;
-        const newZoneKeys = await context.generateTestKeys();
+        const newZoneKey = await context.generateTestKey();
         const newZone = await secureBlocktree.createZone({
             block: rootZone,
-            sig: context.signAs(
-                rootZoneKeys[constants.action.write][0],
-            ),
+            sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKeys({
+        await secureBlocktree.setKey({
             block: newZone,
-            sig: context.signAs(
-                rootZoneKeys[constants.action.write][0],
-            ),
-            keys: newZoneKeys,
+            sig: context.signAs(rootZoneKey),
+            key: newZoneKey,
+            action: constants.action.write,
         });
-        const newKeys = await context.generateTestKeys();
+        const newKey = await context.generateTestKey();
         const newZoneHead = await secureBlocktree.getHeadBlock(newZone);
-        const result = await secureBlocktree.setKeys({
+        const result = await secureBlocktree.setKey({
             block: newZoneHead,
-            sig: context.signAs(
-                rootZoneKeys[constants.action.write][0],
-            ),
-            keys: newKeys,
+            sig: context.signAs(rootZoneKey),
+            key: newKey,
+            action: constants.action.write,
         });
 
         assert.ok(result !== null, 'Expected a valid block to be returned.');
     },
     'should succeed for a zone using the root key': async () => {
         const {
-            secureRoot, secureBlocktree, rootKeys, rootZoneKeys,
+            secureRoot, secureBlocktree, rootKey, rootZoneKey,
         } = context;
         const { rootZone } = secureRoot;
-        const newZoneKeys = await context.generateTestKeys();
+        const newZoneKey = await context.generateTestKey();
         const newZone = await secureBlocktree.createZone({
             block: rootZone,
-            sig: context.signAs(
-                rootZoneKeys[constants.action.write][0],
-            ),
+            sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKeys({
+        await secureBlocktree.setKey({
             block: newZone,
-            sig: context.signAs(
-                rootZoneKeys[constants.action.write][0],
-            ),
-            keys: newZoneKeys,
+            sig: context.signAs(rootZoneKey),
+            key: newZoneKey,
+            action: constants.action.write,
         });
-        const newKeys = await context.generateTestKeys();
-        const result = await secureBlocktree.setKeys({
+        const newKey = await context.generateTestKey();
+        const result = await secureBlocktree.setKey({
             block: newZone,
-            sig: context.signAs(
-                rootKeys[constants.action.write][0],
-            ),
-            keys: newKeys,
+            sig: context.signAs(rootKey),
+            key: newKey,
+            action: constants.action.write,
         });
 
         assert.ok(result !== null, 'Expected a valid block to be returned.');
     },
     'should fail with an inconsistent signature': async () => {
         const {
-            secureRoot, secureBlocktree, rootKeys, rootZoneKeys,
+            secureRoot, secureBlocktree, rootKey, rootZoneKey,
         } = context;
         const { rootZone } = secureRoot;
-        const newZoneKeys = await context.generateTestKeys();
+        const newZoneKey = await context.generateTestKey();
         const newZone = await secureBlocktree.createZone({
             block: rootZone,
-            sig: context.signAs(
-                rootZoneKeys[constants.action.write][0],
-            ),
+            sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKeys({
+        await secureBlocktree.setKey({
             block: newZone,
-            sig: context.signAs(
-                rootZoneKeys[constants.action.write][0],
-            ),
-            keys: newZoneKeys,
+            sig: context.signAs(rootZoneKey),
+            key: newZoneKey,
+            action: constants.action.write,
         });
-        const newKeys = await context.generateTestKeys();
+        const newKey = await context.generateTestKey();
         const newZoneHead = await secureBlocktree.getHeadBlock(newZone);
         let isExecuted = false;
         try {
-            await secureBlocktree.setKeys({
+            await secureBlocktree.setKey({
                 block: newZoneHead,
-                sig: context.signAs(
-                    rootZoneKeys[constants.action.write][0],
-                    rootKeys[constants.action.write][0],
-                ),
-                keys: newKeys,
+                sig: context.signAs(rootZoneKey, rootKey),
+                key: newKey,
+                action: constants.action.write,
             });
             isExecuted = true;
         } catch (err) {
@@ -102,29 +89,27 @@ module.exports = (context) => ({
         assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
     },
     'should fail without a known signature': async () => {
-        const { secureRoot, secureBlocktree, rootZoneKeys } = context;
-        const invalidKey = await context.generateTestKeys();
+        const { secureRoot, secureBlocktree, rootZoneKey } = context;
+        const invalidKey = await context.generateTestKey();
         const { rootZone } = secureRoot;
         const newZone = await secureBlocktree.createZone({
             block: rootZone,
-            sig: context.signAs(
-                rootZoneKeys[constants.action.write][0],
-            ),
+            sig: context.signAs(rootZoneKey),
         });
-        const newZoneHead = await secureBlocktree.setKeys({
+        const newZoneHead = await secureBlocktree.setKey({
             block: newZone,
-            sig: context.signAs(
-                rootZoneKeys[constants.action.write][0],
-            ),
-            keys: await context.generateTestKeys(),
+            sig: context.signAs(rootZoneKey),
+            key: await context.generateTestKey(),
+            action: constants.action.write,
         });
-        const newKeys = await context.generateTestKeys();
+        const newKey = await context.generateTestKey();
         let isExecuted = false;
         try {
-            await secureBlocktree.setKeys({
+            await secureBlocktree.setKey({
                 block: newZoneHead,
-                sig: context.signAs(invalidKey[constants.action.write][0]),
-                keys: newKeys,
+                sig: context.signAs(invalidKey),
+                key: newKey,
+                action: constants.action.write,
             });
             isExecuted = true;
         } catch (err) {
@@ -134,30 +119,26 @@ module.exports = (context) => ({
         assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
     },
     'should fail with the blockchain\'s own key': async () => {
-        const { secureRoot, secureBlocktree, rootZoneKeys } = context;
+        const { secureRoot, secureBlocktree, rootZoneKey } = context;
         const { rootZone } = secureRoot;
-        const newZoneKeys = await context.generateTestKeys();
+        const newZoneKey = await context.generateTestKey();
         const newZone = await secureBlocktree.createZone({
             block: rootZone,
-            sig: context.signAs(
-                rootZoneKeys[constants.action.write][0],
-            ),
+            sig: context.signAs(rootZoneKey),
         });
-        await secureBlocktree.setKeys({
+        await secureBlocktree.setKey({
             block: newZone,
-            sig: context.signAs(
-                rootZoneKeys[constants.action.write][0],
-            ),
-            keys: newZoneKeys,
+            sig: context.signAs(rootZoneKey),
+            key: newZoneKey,
+            action: constants.action.write,
         });
         let isExecuted = false;
         try {
-            await secureBlocktree.setKeys({
+            await secureBlocktree.setKey({
                 block: newZone,
-                sig: context.signAs(
-                    newZoneKeys[constants.action.write][0],
-                ),
-                keys: await context.generateTestKeys(),
+                sig: context.signAs(newZoneKey),
+                key: await context.generateTestKey(),
+                action: constants.action.write,
             });
             isExecuted = true;
         } catch (err) {
@@ -167,16 +148,15 @@ module.exports = (context) => ({
         assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
     },
     'should fail without a parent': async () => {
-        const { secureBlocktree, rootKeys } = context;
-        const newKeys = await context.generateTestKeys();
+        const { secureBlocktree, rootKey } = context;
+        const newKey = await context.generateTestKey();
         let isExecuted = false;
         try {
-            await secureBlocktree.setKeys({
+            await secureBlocktree.setKey({
                 block: null,
-                sig: context.signAs(
-                    rootKeys[constants.action.write][0],
-                ),
-                keys: newKeys,
+                sig: context.signAs(rootKey),
+                key: newKey,
+                action: constants.action.write,
             });
             isExecuted = true;
         } catch (err) {
@@ -188,17 +168,16 @@ module.exports = (context) => ({
         assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
     },
     'should fail onto the root block': async () => {
-        const { secureRoot, secureBlocktree, rootKeys } = context;
+        const { secureRoot, secureBlocktree, rootKey } = context;
         const { rootBlock } = secureRoot;
-        const newKeys = await context.generateTestKeys();
+        const newKey = await context.generateTestKey();
         let isExecuted = false;
         try {
-            await secureBlocktree.setKeys({
+            await secureBlocktree.setKey({
                 block: rootBlock,
-                sig: context.signAs(
-                    rootKeys[constants.action.write][0],
-                ),
-                keys: newKeys,
+                sig: context.signAs(rootKey),
+                key: newKey,
+                action: constants.action.write,
             });
             isExecuted = true;
         } catch (err) {

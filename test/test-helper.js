@@ -72,31 +72,24 @@ function signAs(secureBlocktree, key, altKey) {
     });
 }
 
-async function generateTestKeys(encryption) {
-    const readKey = await encryption.generateKeyPair();
-    const writeKey = await encryption.generateKeyPair();
+async function generateTestKey(encryption) {
+    const key = await encryption.generateKeyPair();
 
     // FOR TESTING PURPOSES ONLY!!!!
-    const publicReadKey = readKey.publicKey;
-    const privateReadKey = readKey.privateKey;
-    const publicWriteKey = writeKey.publicKey;
-    const privateWriteKey = writeKey.privateKey;
+    const { publicKey } = key;
+    const { privateKey } = key;
 
-    privateKeys[publicReadKey] = privateReadKey;
-    privateKeys[publicWriteKey] = privateWriteKey;
+    privateKeys[publicKey] = privateKey;
 
-    return {
-        [constants.action.read]: [publicReadKey],
-        [constants.action.write]: [publicWriteKey],
-    };
+    return publicKey;
 }
 
-async function initializeSecureRoot(secureBlocktree, rootKeys, rootZoneKeys) {
-    const signAsRoot = signAs(secureBlocktree, rootKeys[constants.action.write][0]);
+async function initializeSecureRoot(secureBlocktree, rootKey, rootZoneKey) {
+    const signAsRoot = signAs(secureBlocktree, rootKey);
 
     // create the root block.
     const rootBlock = await secureBlocktree.createRoot({
-        keys: rootKeys,
+        key: rootKey,
     });
 
     // establish the root zone.
@@ -106,11 +99,12 @@ async function initializeSecureRoot(secureBlocktree, rootKeys, rootZoneKeys) {
     });
 
     // set the root zone keys.
-    await secureBlocktree.setKeys({
+    await secureBlocktree.setKey({
         sig: signAsRoot,
         block: rootZone,
-        parentKey: rootKeys[constants.action.write][0],
-        keys: rootZoneKeys,
+        parentKey: rootKey,
+        key: rootZoneKey,
+        action: constants.action.any,
     });
 
     return { rootBlock, rootZone };
@@ -128,7 +122,7 @@ module.exports = {
     initSecureBlocktree,
     initializeSecureRoot,
     getEncryption,
-    generateTestKeys,
+    generateTestKey,
     getPrivateKey,
     signAs,
     loadTests,

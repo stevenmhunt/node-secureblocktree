@@ -41,32 +41,28 @@ module.exports = function secureBlocktreeKeysFactory({
         const inactiveKeys = {};
         while (current != null) {
             secureBlock = await context.readSecureBlock(current);
-            if (secureBlock.type <= constants.blockType.keys) {
-                const actionKeys = Object.keys(secureBlock.data.keys);
-                for (let i = 0; i < actionKeys.length; i += 1) {
-                    if (action === undefined
-                        || action === actionKeys[i]) {
-                        const keyList = secureBlock.data.keys[actionKeys[i]];
-                        for (let j = 0; j < keyList.length; j += 1) {
-                            const currentKey = keyList[j];
-                            const { tsInit, tsExp } = secureBlock.data;
-                            if (isActive === true
-                                && !isKeyActive({ tsInit, tsExp, timestamp })) {
-                                inactiveKeys[currentKey] = true;
-                            }
-                            if (!inactiveKeys[currentKey]) {
-                                result.push({
-                                    key: currentKey,
-                                    block: current,
-                                    action: actionKeys[i],
-                                    parentKey: secureBlock.data.parentKey,
-                                    tsInit: secureBlock.data.tsInit,
-                                    tsExp: secureBlock.data.tsExp,
-                                });
-                                if (key && Buffer.compare(key, currentKey) === 0) {
-                                    return result;
-                                }
-                            }
+            if (secureBlock.type <= constants.blockType.key) {
+                const {
+                    parentKey, key: currentKey,
+                    action: currentAction, tsInit, tsExp,
+                } = secureBlock.data;
+                if (action === undefined
+                    || action === currentAction || currentAction === constants.action.any) {
+                    if (isActive === true
+                        && !isKeyActive({ tsInit, tsExp, timestamp })) {
+                        inactiveKeys[currentKey] = true;
+                    }
+                    if (!inactiveKeys[currentKey]) {
+                        result.push({
+                            key: currentKey,
+                            block: current,
+                            action: currentAction,
+                            parentKey,
+                            tsInit,
+                            tsExp,
+                        });
+                        if (key && Buffer.compare(key, currentKey) === 0) {
+                            return result;
                         }
                     }
                 }
@@ -112,7 +108,7 @@ module.exports = function secureBlocktreeKeysFactory({
      * @returns {Promise<boolean>} Whether the key is valid or not.
      */
     async function validateParentKey({
-        block, key, timestamp, isRecursive,
+        block, key, timestamp, isRecursive, noThrow,
     }) {
         const result = await performKeySeek({
             block,
@@ -129,52 +125,14 @@ module.exports = function secureBlocktreeKeysFactory({
                     return true;
                 }
                 return validateParentKey({
-                    block: parent, key: result.parentKey, timestamp, isRecursive,
+                    block: parent, key: result.parentKey, timestamp, isRecursive, noThrow,
                 });
             }
         }
-        return false;
-    }
-
-    /**
-     * @private
-     * Validates a list of keys.
-     * @param {Buffer} block The block to start validating from.
-     * @param {Buffer} keys The keys to validate.
-     * @param {string} action The action to perform.
-     * @returns {Promise<boolean>} Whether the key is valid or not.
-     */
-    async function validateKeysInternal({
-        block, keys, parentKey,
-    }) {
-        const isParentValid = await validateParentKey({
-            block,
-            key: parentKey,
-            isRecursive: true,
-        });
-        const result = await Promise.all(keys.map(async (k) => !!k && isParentValid));
-        return result.filter((i) => i).length;
-    }
-
-    /**
-     * Given a set of keys and actions, validates all given keys.
-     * @param {Buffer} block The block to start validating from.
-     * @param {Buffer} keys The key sets to validate.
-     * @returns {Promise<boolean>} Whether the key is valid or not.
-     */
-    async function validateKeys({ block, keys, parentKey }) {
-        const results = await Promise.all(
-            Object.keys(keys).map(
-                async (k) => validateKeysInternal({
-                    block,
-                    keys: keys[k],
-                    parentKey,
-                }),
-            ),
-        );
-        if (results.reduce((a, b) => a + b) < Object.keys(keys).length) {
-            throw new InvalidKeyError();
+        if (noThrow !== false) {
+            throw new InvalidKeyError({ block, key });
         }
+        return false;
     }
 
     return {
@@ -182,6 +140,5 @@ module.exports = function secureBlocktreeKeysFactory({
         performKeyScan,
         performKeySeek,
         validateParentKey,
-        validateKeys,
     };
 };

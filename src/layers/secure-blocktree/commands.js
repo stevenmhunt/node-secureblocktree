@@ -15,11 +15,11 @@ module.exports = function secureBlockTreeCommandsFactory({
         switch (command) {
         case 'install-root': {
             /* const rootWriteKey = 'bbbb';
-            const rootKeys = {
+            const rootKey = {
                 [constants.action.read]: ['aaaa'],
                 [constants.action.write]: ['bbbb'],
             };
-            const rootZoneKeys = {
+            const rootZoneKey = {
                 [constants.action.read]: ['cccc'],
                 [constants.action.write]: ['dddd'],
             };
@@ -28,7 +28,7 @@ module.exports = function secureBlockTreeCommandsFactory({
                 parent,
                 prev,
             });
-            await env.println(await context.installRoot({ rootKeys, rootZoneKeys, signAsRoot })); */
+            await env.println(await context.installRoot({ rootKey, rootZoneKey, signAsRoot })); */
             return true;
         }
         case 'read-secure-block': {
