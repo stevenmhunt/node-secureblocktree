@@ -1,5 +1,5 @@
 /* eslint-disable no-plusplus */
-const { fromByte } = require('../../../../utils');
+const { fromByte } = require('../../../../utils/convert');
 
 /**
  * Serialize and deserialize functions for options.

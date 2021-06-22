@@ -28,8 +28,7 @@ module.exports = function secureBlocktreeDataFactory({ context }) {
         }
         const { secret } = secretData;
 
-        // use the provided broker to construct a secret which can be decoded
-        // by the trusted key.
+        // use a broker to construct a secret which can be decoded by the trusted key.
         return broker.buildTrustedSecret({
             secret, authorizedKey: requiredKey, trustedKey: currentKey,
         });

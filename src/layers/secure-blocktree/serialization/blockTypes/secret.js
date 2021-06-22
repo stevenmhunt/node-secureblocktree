@@ -2,7 +2,7 @@
 const constants = require('../../../../constants');
 const {
     fromInt64, toInt64, fromVarBinary, toVarBinary,
-} = require('../../../../utils');
+} = require('../../../../utils/convert');
 
 /**
  * Serialize and deserialize functions for secret blocks.

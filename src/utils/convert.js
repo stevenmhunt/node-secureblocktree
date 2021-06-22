@@ -1,6 +1,5 @@
-const crypto = require('crypto');
-const constants = require('./constants');
-const { SerializationError } = require('./errors');
+const constants = require('../constants');
+const { SerializationError } = require('../errors');
 
 /**
  * Reads a 64-bit unsigned integer from the buffer.
@@ -189,44 +188,6 @@ function toVarBinary(data, startIndex = 0) {
     return { result, index };
 }
 
-/**
- * Manages emitting events when an action occurs.
- */
-async function withEvent(emitter, event, parameters, fn) {
-    if (!emitter) {
-        return fn();
-    }
-    try {
-        const result = await fn();
-        emitter.emit(event, {
-            parameters,
-            result,
-        });
-        return result;
-    } catch (err) {
-        emitter.emit('error', {
-            event, parameters, err,
-        });
-        throw err;
-    }
-}
-
-/**
- * Generates hashes for block data.
- * @param {string} value
- */
-function generateHash(value) {
-    return crypto.createHash(constants.block.hash).update(value).digest();
-}
-
-/**
- * Generates a cryptographically random 64 bit integer.
- * @returns {Buffer} A random 64 bit integer.
- */
-function generateNonce() {
-    return crypto.randomBytes(constants.size.int64);
-}
-
 module.exports = {
     fromInt64,
     toInt64,
@@ -238,7 +199,4 @@ module.exports = {
     toByte,
     fromVarBinary,
     toVarBinary,
-    withEvent,
-    generateHash,
-    generateNonce,
 };

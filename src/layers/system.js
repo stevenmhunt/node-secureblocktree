@@ -1,4 +1,4 @@
-const { generateHash } = require('../utils');
+const { generateHash } = require('../utils/crypto');
 
 /**
  * Blocktree Level 0 - System

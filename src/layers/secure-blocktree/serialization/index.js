@@ -1,6 +1,6 @@
 /* eslint-disable no-plusplus */
 const constants = require('../../../constants');
-const { fromByte, fromVarBinary, toVarBinary } = require('../../../utils');
+const { fromByte, fromVarBinary, toVarBinary } = require('../../../utils/convert');
 const blockTypes = require('./blockTypes');
 
 /**

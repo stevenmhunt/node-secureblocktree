@@ -1,13 +1,12 @@
 /* eslint-disable no-await-in-loop */
 const HashTable = require('@ronomon/hash-table');
 
-const keySize = 32;
-const valueSize = 2 ** 16 - 1 + 2;
-const elementsMin = 1024; // Optional. Reserve space for at least 1,024 elements.
-const elementsMax = 65536; // Optional. Expect at most 65,536 elements.
-
-module.exports = function storageFactory() {
-    const hashTable = new HashTable(keySize, valueSize, elementsMin, elementsMax);
+module.exports = function storageFactory({
+    keySize, valueSize, min, max,
+}) {
+    const hashTable = new HashTable(
+        keySize || 32, valueSize || 2 ** 16, min || 1024, max || 65535,
+    );
     const keys = [];
 
     /**

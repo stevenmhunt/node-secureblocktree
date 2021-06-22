@@ -1,12 +1,13 @@
 const constants = require('../../constants');
-const { generateNonce, fromVarBinary, toVarBinary } = require('../../utils');
+const { fromVarBinary, toVarBinary } = require('../../utils/convert');
+const {
+    generateNonce, encrypt, decrypt, sign, verify,
+} = require('../../utils/crypto');
 
 /**
  * Secure Blocktree Encryption API.
  */
-module.exports = function secureBlocktreeEncryptionFactory({
-    encryption,
-}) {
+module.exports = function secureBlocktreeEncryptionFactory() {
     /**
      * Encrypts data using the specified key.
      * @param {PrivateKey} key The private key to encrypt data with.
@@ -14,7 +15,7 @@ module.exports = function secureBlocktreeEncryptionFactory({
      * @returns {Promise<Buffer>} The encrypted data.
      */
     async function encryptData(key, data) {
-        return encryption.encrypt(
+        return encrypt(
             key,
             Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf-8'),
         );
@@ -28,7 +29,7 @@ module.exports = function secureBlocktreeEncryptionFactory({
      * @returns {Promise<Object>} The decrypted data.
      */
     async function decryptData(key, data, options = {}) {
-        const result = await encryption.decrypt(
+        const result = await decrypt(
             Buffer.from(key, constants.format.key),
             Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf-8'),
         );
@@ -50,7 +51,7 @@ module.exports = function secureBlocktreeEncryptionFactory({
         secret, key, parent, prev,
     }) {
         const nonce = generateNonce();
-        const result = await encryption.sign(
+        const result = await sign(
             secret,
             Buffer.concat([
                 nonce, parent || Buffer.alloc(0), prev || Buffer.alloc(0),
@@ -87,7 +88,7 @@ module.exports = function secureBlocktreeEncryptionFactory({
             nonce, parent || Buffer.alloc(0), prev || Buffer.alloc(0),
         ]);
 
-        const result = await encryption.verify(
+        const result = await verify(
             sigKey,
             signature,
             message,

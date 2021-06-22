@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const constants = require('../src/constants');
+const { generateKeyPair } = require('../src/utils/crypto');
 
 // blocktree layers
 const secureBlocktreeLayerFactory = require('../src/layers/secure-blocktree');
@@ -8,20 +9,23 @@ const blockchainLayerFactory = require('../src/layers/blockchain');
 const systemLayerFactory = require('../src/layers/system');
 
 // mocks
-const cacheFactory = require('./mocks/cache');
-const noCacheFactory = require('./mocks/no-cache');
-const encryptionFactory = require('./mocks/encryption');
-const timeFactory = require('./mocks/time');
-const storageFactory = require('./mocks/storage');
+const timeMock = require('./mocks/time');
+
+// caches
+const memoryCache = require('../src/cache/memoryCache');
+const noCache = require('../src/cache/noCache');
+
+// storage
+const memoryStorage = require('../src/storage/memoryStorage');
 
 function getRandomHash() {
     return crypto.randomBytes(constants.size.hash);
 }
 
 function initSystem(withCache) {
-    const cache = withCache ? cacheFactory() : noCacheFactory();
-    const time = timeFactory();
-    const storage = storageFactory();
+    const cache = withCache ? memoryCache() : noCache();
+    const time = timeMock();
+    const storage = memoryStorage();
     return { cache, time, storage };
 }
 
@@ -38,18 +42,14 @@ function initBlocktree(withCache) {
     return { ...blocktree, mocks: blockchain.mocks };
 }
 
-function getEncryption() {
-    return encryptionFactory();
-}
-
-function initSecureBlocktree(encryption, withCache) {
+function initSecureBlocktree(withCache) {
     const blocktree = initBlocktree(withCache);
-    const secureCache = withCache ? cacheFactory() : noCacheFactory();
-    const time = timeFactory();
+    const secureCache = withCache ? memoryCache() : noCache();
+    const time = timeMock();
     const secureBlocktree = secureBlocktreeLayerFactory({
-        blocktree, secureCache, time, encryption,
+        blocktree, secureCache, time,
     });
-    return { ...secureBlocktree, mocks: blocktree.mocks, encryption };
+    return { ...secureBlocktree, mocks: blocktree.mocks };
 }
 
 const privateKeys = {};
@@ -72,8 +72,8 @@ function signAs(secureBlocktree, key, altKey) {
     });
 }
 
-async function generateTestKey(encryption) {
-    const key = await encryption.generateKeyPair();
+async function generateTestKey() {
+    const key = await generateKeyPair();
 
     // FOR TESTING PURPOSES ONLY!!!!
     const { publicKey } = key;
@@ -121,7 +121,6 @@ module.exports = {
     initBlocktree,
     initSecureBlocktree,
     initializeSecureRoot,
-    getEncryption,
     generateTestKey,
     getPrivateKey,
     signAs,

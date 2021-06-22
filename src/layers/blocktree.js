@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop, no-plusplus */
 const constants = require('../constants');
 const { SerializationError, InvalidBlockError } = require('../errors');
-const { fromByte } = require('../utils');
+const { fromByte } = require('../utils/convert');
 
 /**
  * Blocktree Layer 2 - Blocktree

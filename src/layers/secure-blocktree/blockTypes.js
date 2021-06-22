@@ -67,12 +67,11 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * @returns {Promise<string>} The new block.
      */
     async function revokeKey({
-        sig, block, parentKey, key, action,
+        sig, block, key, action,
     }) {
         return addKey({
             sig,
             block,
-            parentKey,
             key,
             action,
             tsInit: constants.timestamp.zero,

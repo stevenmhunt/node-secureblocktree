@@ -2,7 +2,9 @@
 const EventEmitter = require('events');
 const constants = require('../constants');
 const { SerializationError, InvalidBlockError } = require('../errors');
-const utils = require('../utils');
+const { fromInt64, toInt64 } = require('../utils/convert');
+const { generateNonce, generateHash } = require('../utils/crypto');
+const { withEvent } = require('../utils/event');
 
 /**
  * Blocktree Layer 1 - Blockchain
@@ -41,13 +43,13 @@ module.exports = function blockchainLayerFactory({ system }) {
     function serializeBlockchainData(bcBlockData, timestamp, seq) {
         return Buffer.concat([
             // sequence
-            utils.fromInt64(seq),
+            fromInt64(seq),
             // previous hash
             checkBlockHash(bcBlockData.prev),
             // uniqueness
-            utils.fromInt64(utils.generateNonce()),
+            fromInt64(generateNonce()),
             // timestamp
-            utils.fromInt64(timestamp),
+            fromInt64(timestamp),
             // data
             bcBlockData.data,
         ]);
@@ -65,19 +67,19 @@ module.exports = function blockchainLayerFactory({ system }) {
         }
         let index = 0;
         const result = {};
-        result.seq = utils.toInt64(buf, index);
+        result.seq = toInt64(buf, index);
         index += constants.size.int64;
         result.prev = buf.slice(index, index + constants.size.hash);
         if (Buffer.compare(result.prev, constants.block.zero) === 0) {
             result.prev = null;
         }
         index += constants.size.hash;
-        result.nonce = utils.toInt64(buf, index);
+        result.nonce = toInt64(buf, index);
         index += constants.size.int64;
-        result.timestamp = utils.toInt64(buf, index);
+        result.timestamp = toInt64(buf, index);
         index += constants.size.int64;
         result.data = buf.slice(index);
-        result.hash = utils.generateHash(buf);
+        result.hash = generateHash(buf);
         return result;
     }
 
@@ -87,7 +89,7 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promise<Object>} The requested blockchain data.
      */
     async function readBlock(block, options = {}) {
-        return utils.withEvent(emitter, 'read-block', {
+        return withEvent(emitter, 'read-block', {
             block,
         }, async () => {
             const result = deserializeBlockchainData(
@@ -176,7 +178,7 @@ module.exports = function blockchainLayerFactory({ system }) {
 
         // 3) if found, cache it for next time.
         if (value) {
-            const result = utils.generateHash(value);
+            const result = generateHash(value);
             await system.writeCache(blockHash, constants.cache.next, result);
             return result;
         }
@@ -218,7 +220,7 @@ module.exports = function blockchainLayerFactory({ system }) {
      * @returns {Promise<string>} The hash of the newly written block.
      */
     async function writeBlock(bcBlockData, options = {}) {
-        return utils.withEvent(emitter, 'write-block', { bcBlockData, options }, async () => {
+        return withEvent(emitter, 'write-block', { bcBlockData, options }, async () => {
             const timestamp = system.generateTimestamp();
             const prev = bcBlockData.prev ? await readBlock(bcBlockData.prev, options) : null;
             const seq = (prev || { seq: 0n }).seq + 1n;

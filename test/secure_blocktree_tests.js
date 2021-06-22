@@ -1,7 +1,6 @@
 /* eslint-disable global-require */
 const {
-    initSecureBlocktree, initializeSecureRoot, generateTestKey, signAs,
-    getEncryption, loadTests,
+    initSecureBlocktree, initializeSecureRoot, generateTestKey, signAs, loadTests,
 } = require('./test-helper');
 
 function loadSecureBlocktreeTests(context) {
@@ -24,18 +23,17 @@ function loadSecureBlocktreeTests(context) {
 }
 
 describe('Blocktree Layer 3 - Secure Blocktree', () => {
-    const encryption = getEncryption();
     describe('without cache', () => {
         const context = {};
 
         before(async () => {
-            context.generateTestKey = () => generateTestKey(encryption);
+            context.generateTestKey = generateTestKey;
             context.rootKey = await context.generateTestKey();
             context.rootZoneKey = await context.generateTestKey();
         });
 
         beforeEach(async () => {
-            context.secureBlocktree = initSecureBlocktree(encryption, false);
+            context.secureBlocktree = initSecureBlocktree(false);
             context.signAs = (key, altKey) => signAs(context.secureBlocktree, key, altKey);
             context.secureRoot = await initializeSecureRoot(
                 context.secureBlocktree, context.rootKey, context.rootZoneKey,
@@ -48,13 +46,13 @@ describe('Blocktree Layer 3 - Secure Blocktree', () => {
         const context = {};
 
         before(async () => {
-            context.generateTestKey = () => generateTestKey(encryption);
+            context.generateTestKey = generateTestKey;
             context.rootKey = await context.generateTestKey();
             context.rootZoneKey = await context.generateTestKey();
         });
 
         beforeEach(async () => {
-            context.secureBlocktree = initSecureBlocktree(encryption, true);
+            context.secureBlocktree = initSecureBlocktree(true);
             context.signAs = (key, altKey) => signAs(context.secureBlocktree, key, altKey);
             context.secureRoot = await initializeSecureRoot(
                 context.secureBlocktree, context.rootKey, context.rootZoneKey,
