@@ -1,6 +1,9 @@
 /* eslint-disable no-plusplus */
 const constants = require('../../../constants');
-const { fromByte, fromVarBinary, toVarBinary } = require('../../../utils/convert');
+const { InvalidSignatureError } = require('../../../errors');
+const {
+    fromByte, fromVarBinary, toVarBinary, toInt64, fromInt64,
+} = require('../../../utils/convert');
 const blockTypes = require('./blockTypes');
 
 /**
@@ -33,14 +36,28 @@ function serializeSecureBlockData(type, data) {
  * @returns {Object} A blocktree object.
  */
 function serializeSecureBlock(secureData) {
-    const { prev, parent, layer } = secureData;
+    const {
+        type, index, sig, prev, parent, layer, data: resData,
+    } = secureData;
+
+    // final index value check for signature before serializing the block.
+    if (index > 0n) {
+        const sigIndex = toInt64(sig);
+        if (index !== sigIndex) {
+            throw new InvalidSignatureError({ parent, prev, sig },
+                InvalidSignatureError.reasons.doesNotMatch);
+        }
+    }
+
     const data = Buffer.concat([
         // secure block type
-        fromByte(secureData.type),
+        fromByte(type),
+        // block index
+        fromInt64(index),
         // signature data
-        fromVarBinary(secureData.sig),
+        fromVarBinary(sig),
         // data
-        serializeSecureBlockData(secureData.type, secureData.data),
+        serializeSecureBlockData(type, resData),
     ].filter((i) => i));
     return {
         prev,
@@ -104,9 +121,14 @@ function deserializeSecureBlock(btBlockData) {
         timestamp, prev, parent, nonce, hash, layer,
     };
     result.type = data[index++];
+
+    result.index = toInt64(data, index);
+    index += constants.size.int64;
+
     const res = toVarBinary(data, index);
     result.sig = res.result;
     index = res.index;
+
     result.data = deserializeSecureBlockData(result.type, data.slice(index));
     return result;
 }
@@ -117,7 +139,8 @@ function deserializeSecureBlock(btBlockData) {
  * @returns {Buffer} The public key associated with the signature.
  */
 function deserializeKeyFromSignature(signature) {
-    const { result } = toVarBinary(Buffer.from(signature, constants.format.signature));
+    const { result } = toVarBinary(Buffer.from(signature, constants.format.signature),
+        constants.size.int64);
     return result;
 }
 

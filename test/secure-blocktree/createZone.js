@@ -150,4 +150,25 @@ module.exports = (context) => ({
 
         assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
     },
+    'should fail with a duplicated signature': async () => {
+        const { secureBlocktree, secureRoot, rootZoneKey } = context;
+        const { rootZone } = secureRoot;
+        const sig = await context.signAs(rootZoneKey)({ parent: rootZone });
+        await secureBlocktree.createZone({
+            block: rootZone,
+            sig,
+        });
+        let isExecuted = false;
+        try {
+            await secureBlocktree.createZone({
+                block: rootZone,
+                sig,
+            });
+            isExecuted = true;
+        } catch (err) {
+            assert.ok(err instanceof InvalidSignatureError);
+        }
+
+        assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');
+    },
 });

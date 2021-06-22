@@ -15,7 +15,7 @@ const sbtCommandsFactory = require('./commands');
 module.exports = function secureBlocktreeLayerFactory({
     blocktree, secureCache, time,
 }) {
-    let context = sbtEncryptionFactory();
+    let context = sbtEncryptionFactory({ blocktree });
     context = { ...context, ...sbtBlocksFactory({ blocktree, serialization }) };
     context = { ...context, ...sbtKeysFactory({ time, context, blocktree }) };
     context = { ...context, ...sbtSecretsFactory({ time, context, blocktree }) };

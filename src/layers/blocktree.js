@@ -132,7 +132,7 @@ module.exports = function blocktreeLayerFactory({ blockchain, cache }) {
 
     /**
      * Retrieves a count of the number of blocks in the system.
-     * @returns {Promise<number>} The number of blocks in the system.
+     * @returns {Promise<BigInt>} The number of blocks in the system.
      */
     async function countBlocks() {
         return blockchain.countBlocks();

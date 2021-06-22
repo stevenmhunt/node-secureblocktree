@@ -265,7 +265,7 @@ module.exports = function blockchainLayerFactory({ system }) {
 
     /**
      * Retrieves a count of the number of blocks in the system.
-     * @returns {Promise<number>} The number of blocks in the system.
+     * @returns {Promise<BigInt>} The number of blocks in the system.
      */
     async function countBlocks() {
         return system.countInStorage();

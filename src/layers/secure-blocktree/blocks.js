@@ -24,13 +24,15 @@ module.exports = function secureBlocktreeBlocksFactory({
      * @returns {Promise<string>} The hash of the newly written block.
      */
     async function writeSecureBlock(secureData) {
+        const data = secureData;
         // there can only be one root key in the system.
-        if (!secureData.parent) {
-            if (await blocktree.countBlocks() > 0) {
+        data.index = await blocktree.countBlocks();
+        if (!data.parent) {
+            if (data.index > 0n) {
                 throw new InvalidRootError();
             }
         }
-        return blocktree.writeBlock(serialization.serializeSecureBlock(secureData));
+        return blocktree.writeBlock(serialization.serializeSecureBlock(data));
     }
 
     /**

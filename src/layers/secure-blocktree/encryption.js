@@ -1,5 +1,5 @@
 const constants = require('../../constants');
-const { fromVarBinary, toVarBinary } = require('../../utils/convert');
+const { fromVarBinary, toVarBinary, fromInt64 } = require('../../utils/convert');
 const {
     generateNonce, encrypt, decrypt, sign, verify,
 } = require('../../utils/crypto');
@@ -7,7 +7,7 @@ const {
 /**
  * Secure Blocktree Encryption API.
  */
-module.exports = function secureBlocktreeEncryptionFactory() {
+module.exports = function secureBlocktreeEncryptionFactory({ blocktree }) {
     /**
      * Encrypts data using the specified key.
      * @param {PrivateKey} key The private key to encrypt data with.
@@ -50,14 +50,16 @@ module.exports = function secureBlocktreeEncryptionFactory() {
     async function signBlock({
         secret, key, parent, prev,
     }) {
+        const index = fromInt64(await blocktree.countBlocks());
         const nonce = generateNonce();
         const result = await sign(
             secret,
             Buffer.concat([
-                nonce, parent || Buffer.alloc(0), prev || Buffer.alloc(0),
+                index, nonce, parent || Buffer.alloc(0), prev || Buffer.alloc(0),
             ]),
         );
         return Buffer.concat([
+            index,
             fromVarBinary(key),
             nonce,
             result,
@@ -80,12 +82,13 @@ module.exports = function secureBlocktreeEncryptionFactory() {
             return false;
         }
         const sigData = Buffer.from(sig, constants.format.signature);
-        const keyData = toVarBinary(sigData, 0, null);
+        const index = sigData.slice(0, constants.size.int64);
+        const keyData = toVarBinary(sigData, constants.size.int64);
         const sigKey = keyData.result;
         const nonce = sigData.slice(keyData.index, keyData.index + constants.size.int64);
         const signature = sigData.slice(keyData.index + constants.size.int64);
         const message = Buffer.concat([
-            nonce, parent || Buffer.alloc(0), prev || Buffer.alloc(0),
+            index, nonce, parent || Buffer.alloc(0), prev || Buffer.alloc(0),
         ]);
 
         const result = await verify(

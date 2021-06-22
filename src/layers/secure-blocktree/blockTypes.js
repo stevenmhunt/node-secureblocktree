@@ -34,7 +34,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
         // if attempting to initialize the root...
         if (sig === null && prev === null && parentKey === null) {
             // there can only be one root key in the system.
-            if (await blocktree.countBlocks() > 0) {
+            if (await blocktree.countBlocks() > 0n) {
                 throw new InvalidRootError();
             }
         } else {
@@ -200,7 +200,7 @@ module.exports = function secureBlocktreeBlockTypesFactory({
         key,
     }) {
         // there can only be one root key in the system.
-        if (await blocktree.countBlocks() > 0) {
+        if (await blocktree.countBlocks() > 0n) {
             throw new InvalidRootError();
         }
 

@@ -68,7 +68,7 @@ module.exports = function storageFactory() {
      * @returns {Promise<number>} The number of blocks in storage.
      */
     async function countInStorage() {
-        return keys.length;
+        return BigInt(keys.length);
     }
 
     return {
