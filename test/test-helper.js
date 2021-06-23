@@ -12,20 +12,20 @@ const systemLayerFactory = require('../src/layers/system');
 const timeMock = require('./mocks/time');
 
 // caches
-const memoryCache = require('../src/cache/memoryCache');
+const inMemoryCache = require('../src/cache/inMemoryCache');
 const noCache = require('../src/cache/noCache');
 
 // storage
-const memoryStorage = require('../src/storage/memoryStorage');
+const inMemoryStorage = require('../src/storage/inMemoryStorage');
 
 function getRandomHash() {
     return crypto.randomBytes(constants.size.hash);
 }
 
 function initSystem(withCache) {
-    const cache = withCache ? memoryCache() : noCache();
+    const cache = withCache ? inMemoryCache() : noCache();
     const time = timeMock();
-    const storage = memoryStorage();
+    const storage = inMemoryStorage();
     return { cache, time, storage };
 }
 
@@ -44,7 +44,7 @@ function initBlocktree(withCache) {
 
 function initSecureBlocktree(withCache) {
     const blocktree = initBlocktree(withCache);
-    const secureCache = withCache ? memoryCache() : noCache();
+    const secureCache = withCache ? inMemoryCache() : noCache();
     const time = timeMock();
     const secureBlocktree = secureBlocktreeLayerFactory({
         blocktree, secureCache, time,

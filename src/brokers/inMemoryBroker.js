@@ -2,15 +2,15 @@ const { decrypt, encrypt } = require('../utils/crypto');
 const { InvalidKeyError } = require('../errors');
 
 /**
- * Creates an in-memory encrypted data broker.
+ * Creates an in-memory encrypted trusted secrets broker.
  */
-module.export = function memoryBrokerFactory({ keys }) {
+module.export = function inMemoryBrokerFactory() {
     /**
      * The authorized keys being managed by the broker.
      * Note: this is a simple implementation which places private keys directly into
      * unencrypted memory. This is not the most secure implementation of this pattern.
      */
-    const authorizedKeys = keys || {};
+    const authorizedKeys = {};
 
     /**
      * Adds an authorized key to the broker.

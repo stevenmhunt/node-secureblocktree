@@ -12,19 +12,19 @@ const systemLayerFactory = require('./src/layers/system');
 const timeFactory = require('./test/mocks/time');
 
 // caches
-const memoryCache = require('./src/cache/memoryCache');
+const inMemoryCache = require('./src/cache/inMemoryCache');
 
 // storage
-const memoryStorage = require('./src/storage/memoryStorage');
+const inMemoryStorage = require('./src/storage/inMemoryStorage');
 
 if (require.main === module) {
-    const cache = memoryCache();
+    const cache = inMemoryCache();
     const time = timeFactory();
-    const storage = memoryStorage();
+    const storage = inMemoryStorage();
     const system = systemLayerFactory({ cache, storage, time });
     const blockchain = blockchainLayerFactory({ system, cache, time });
     const blocktree = blocktreeLayerFactory({ blockchain });
-    const secureCache = memoryCache();
+    const secureCache = inMemoryCache();
     const secureBlocktree = secureBlocktreeLayerFactory({
         blocktree, secureCache, time,
     });

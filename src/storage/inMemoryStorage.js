@@ -1,9 +1,9 @@
 /* eslint-disable no-await-in-loop */
 
 /**
- * Mock storage factory (in-memory, using a vanilla JS object)
+ * In-memory storage factory (using a vanilla JS object)
  */
-module.exports = function storageFactory() {
+module.exports = function inMemoryStorageFactory() {
     const data = {};
     const keys = [];
 

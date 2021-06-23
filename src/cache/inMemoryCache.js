@@ -1,7 +1,7 @@
 /**
- * Mock cache factory (in-memory, using a vanilla JS object)
+ * In-memory cache factory (using a vanilla JS object)
  */
-module.exports = function cacheFactory() {
+module.exports = function inMemoryCacheFactory() {
     const cache = {};
 
     /**

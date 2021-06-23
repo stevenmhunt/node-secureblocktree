@@ -12,6 +12,7 @@
   "license": "MIT",
   "dependencies": {
     "@ronomon/hash-table": "^2.0.7",
+    "axios": "^0.21.1",
     "object-hash": "^2.2.0"
   },
   "devDependencies": {
