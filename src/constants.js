@@ -1,6 +1,9 @@
 const constants = {
     crypto: {
-        keysize: 512,
+        rsaKeySize: 1024,
+        aesKeySize: 32,
+        aesType: 'aes-256-cbc',
+        ivSize: 16,
     },
     cache: {
         headBlock: 'head block',
@@ -11,6 +14,7 @@ const constants = {
     secureCache: {
         rootBlock: 'root block',
         rootZone: 'root zone',
+        name: 'name',
     },
     size: {
         byte: 1,

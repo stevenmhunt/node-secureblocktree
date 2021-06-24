@@ -255,6 +255,10 @@ module.exports = function secureBlocktreeBlockTypesFactory({
             sig: signature, parent, prev: null, type, data,
         });
 
+        if (data && !data.isEncrypted && data.name) {
+            await secureCache.writeCache(childBlock, constants.secureCache.name, data.name);
+        }
+
         return childBlock;
     }
 

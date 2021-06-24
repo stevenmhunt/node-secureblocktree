@@ -10,6 +10,7 @@ module.exports = (context) => ({
         const newZone = await secureBlocktree.createZone({
             block: rootZone,
             sig: context.signAs(rootZoneKey),
+            options: { name: 'new zone' },
         });
         const result = await secureBlocktree.readSecureBlock(newZone);
 
@@ -17,6 +18,29 @@ module.exports = (context) => ({
         assert.strictEqual(result.prev, null);
         assert.ok(Buffer.compare(result.parent, rootZone) === 0);
         assert.strictEqual(result.type, constants.blockType.zone);
+        assert.ok(result.nonce, 'Expected valid nonce value.');
+    },
+    'should succeed with encryption within the root zone': async () => {
+        const { secureBlocktree, secureRoot, rootZoneKey } = context;
+        const { rootZone } = secureRoot;
+        const newZone = await secureBlocktree.createZone({
+            block: rootZone,
+            sig: context.signAs(rootZoneKey),
+            options: await secureBlocktree.encryptBlockData({
+                key: rootZoneKey,
+                type: constants.blockType.zone,
+                data: {
+                    name: 'secret name',
+                },
+            }),
+        });
+        const result = await secureBlocktree.readSecureBlock(newZone);
+
+        assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
+        assert.strictEqual(result.prev, null);
+        assert.ok(Buffer.compare(result.parent, rootZone) === 0);
+        assert.strictEqual(result.type, constants.blockType.zone);
+        assert.strictEqual(result.data.isEncrypted, true);
         assert.ok(result.nonce, 'Expected valid nonce value.');
     },
     'should fail without a parent': async () => {

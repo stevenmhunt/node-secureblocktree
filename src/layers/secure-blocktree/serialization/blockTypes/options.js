@@ -46,11 +46,11 @@ module.exports = {
 
         for (let i = 0; i < length; i += 1) {
             const keySize = data[index++];
-            const key = Buffer.slice(index, index + keySize).toString('utf-8');
+            const key = data.slice(index, index + keySize).toString('utf-8');
             index += keySize;
 
             const valueSize = data[index++];
-            const value = Buffer.slice(index, index + valueSize).toString('utf-8');
+            const value = data.slice(index, index + valueSize).toString('utf-8');
             index += valueSize;
             result[key] = value;
         }

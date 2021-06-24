@@ -1,11 +1,33 @@
 const constants = require('../../constants');
 const { InvalidKeyError } = require('../../errors');
-const { deserializeKeyFromSignature } = require('./serialization');
+const { serializeSecureBlockData, deserializeKeyFromSignature } = require('./serialization');
 
 /**
  * Secure Blocktree Data API.
  */
 module.exports = function secureBlocktreeDataFactory({ context }) {
+    /**
+     * Creates encrypted block data.
+     * @param {Buffer} key The public key to use for encrypting the block.
+     * @param {number} type The block type.
+     * @param {Object} data The data to encrypt.
+     * @returns {Promise<Object>} The encrypted block object.
+     */
+    async function encryptBlockData({
+        key, type, data,
+    }) {
+        const serializedData = serializeSecureBlockData(type, data);
+        return {
+            isEncrypted: true,
+            key,
+            encryptedData: await context.encryptData(key, serializedData),
+        };
+    }
+
+    /**
+     *
+     * @param {*} param0
+     */
     async function performTrustedRead({
         block, sig, broker,
     }) {
@@ -14,6 +36,11 @@ module.exports = function secureBlocktreeDataFactory({ context }) {
         const blockData = await context.readSecureBlock(block);
         const requiredKey = deserializeKeyFromSignature(blockData.sig);
         const currentKey = deserializeKeyFromSignature(sig);
+
+        // if we already have the required key, then we don't need to do anything.
+        if (Buffer.compare(requiredKey, currentKey) === 0) {
+            return blockData.data;
+        }
 
         // perform a key seek to locate the required block.
         const seek = await context.performKeySeek({ block, action, key: requiredKey });
@@ -35,6 +62,7 @@ module.exports = function secureBlocktreeDataFactory({ context }) {
     }
 
     return {
+        encryptBlockData,
         performTrustedRead,
     };
 };

@@ -7,7 +7,6 @@ const {
 const blockTypes = require('./blockTypes');
 
 /**
- * @private
  * Serializes secure block data to be written to the block.
  * @param {*} type The type of secure block to serialize.
  * @param {*} data The type-specific block data.
@@ -147,5 +146,7 @@ function deserializeKeyFromSignature(signature) {
 module.exports = {
     serializeSecureBlock,
     deserializeSecureBlock,
+    serializeSecureBlockData,
+    deserializeSecureBlockData,
     deserializeKeyFromSignature,
 };
