@@ -191,6 +191,7 @@ module.exports = (context) => ({
             isExecuted = true;
         } catch (err) {
             assert.ok(err instanceof InvalidSignatureError);
+            assert.strictEqual(err.reason, InvalidSignatureError.reasons.nonceAlreadyUsed);
         }
 
         assert.strictEqual(isExecuted, false, 'Expected an exception to be thrown.');

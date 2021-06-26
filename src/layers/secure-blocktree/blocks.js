@@ -1,5 +1,6 @@
 const constants = require('../../constants');
-const { InvalidRootError, InvalidBlockError } = require('../../errors');
+const { InvalidRootError, InvalidBlockError, InvalidSignatureError } = require('../../errors');
+const { toInt64 } = require('../../utils/convert');
 
 /**
  * Secure Blocktree Blocks API.
@@ -7,6 +8,8 @@ const { InvalidRootError, InvalidBlockError } = require('../../errors');
 module.exports = function secureBlocktreeBlocksFactory({
     blocktree, serialization,
 }) {
+    const sigNonces = {};
+
     /**
      * Reads a secure block from the blocktree.
      * @param {Buffer} block The block hash to read.
@@ -25,12 +28,22 @@ module.exports = function secureBlocktreeBlocksFactory({
      */
     async function writeSecureBlock(secureData) {
         const data = secureData;
-        // there can only be one root key in the system.
-        data.index = await blocktree.countBlocks();
         if (!data.parent) {
-            if (data.index > 0n) {
+            // there can only be one root key in the system.
+            if (await blocktree.countBlocks() > 0n) {
                 throw new InvalidRootError();
             }
+        } else {
+            if (!data.sig) {
+                throw new InvalidSignatureError({ sig: data.sig },
+                    InvalidSignatureError.reasons.notFound);
+            }
+            const sigNonce = toInt64(data.sig, 0);
+            if (sigNonces[sigNonce.toString()]) {
+                throw new InvalidSignatureError({ sig: data.sig },
+                    InvalidSignatureError.reasons.nonceAlreadyUsed);
+            }
+            sigNonces[sigNonce.toString()] = true;
         }
         return blocktree.writeBlock(serialization.serializeSecureBlock(data));
     }

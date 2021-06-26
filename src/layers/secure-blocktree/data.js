@@ -79,7 +79,7 @@ module.exports = function secureBlocktreeDataFactory({ context }) {
 
         // verify the trusted key is trusted.
         const trustSeek = await context.performKeySeek({
-            block, action, key: trustedKey, allowTrustedKeys: true,
+            block, action, key: trustedKey,
         });
         if (!trustSeek) {
             throw new InvalidKeyError({ key: trustedKey });

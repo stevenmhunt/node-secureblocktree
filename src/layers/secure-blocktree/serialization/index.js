@@ -1,8 +1,7 @@
 /* eslint-disable no-plusplus */
 const constants = require('../../../constants');
-const { InvalidSignatureError } = require('../../../errors');
 const {
-    fromByte, fromVarBinary, toVarBinary, toInt64, fromInt64,
+    fromByte, fromVarBinary, toVarBinary,
 } = require('../../../utils/convert');
 const blockTypes = require('./blockTypes');
 
@@ -36,23 +35,12 @@ function serializeSecureBlockData(type, data) {
  */
 function serializeSecureBlock(secureData) {
     const {
-        type, index, sig, prev, parent, layer, data: resData,
+        type, sig, prev, parent, layer, data: resData,
     } = secureData;
-
-    // final index value check for signature before serializing the block.
-    if (index > 0n) {
-        const sigIndex = toInt64(sig);
-        if (index !== sigIndex) {
-            throw new InvalidSignatureError({ parent, prev, sig },
-                InvalidSignatureError.reasons.doesNotMatch);
-        }
-    }
 
     const data = Buffer.concat([
         // secure block type
         fromByte(type),
-        // block index
-        fromInt64(index),
         // signature data
         fromVarBinary(sig),
         // data
@@ -120,9 +108,6 @@ function deserializeSecureBlock(btBlockData) {
         timestamp, prev, parent, nonce, hash, layer,
     };
     result.type = data[index++];
-
-    result.index = toInt64(data, index);
-    index += constants.size.int64;
 
     const res = toVarBinary(data, index);
     result.sig = res.result;

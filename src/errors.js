@@ -105,6 +105,7 @@ InvalidBlockError.reasons = invalidBlockErrorReasons;
 const invalidSignatureErrorReasons = {
     notFound: 1,
     doesNotMatch: 2,
+    nonceAlreadyUsed: 3,
 };
 
 /**

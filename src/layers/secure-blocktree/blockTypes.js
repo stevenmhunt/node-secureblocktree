@@ -136,39 +136,6 @@ module.exports = function secureBlocktreeBlockTypesFactory({
     }
 
     /**
-     * Adds a trusted key to the specified blockchain.
-     * @param {Buffer} sig The signature to use.
-     * @param {Buffer} key The key to trust.
-     * @param {Buffer} action The action to allow.
-     * @param {BigInt} tsInit The initializion timestamp for the trust.
-     * @param {BigInt} tsExp The expiration timestamp for the trust.
-     * @returns {Promise<string>} The new block.
-     */
-    async function addTrustedKey({
-        sig, block, key, action, tsInit, tsExp,
-    }) {
-        const type = constants.blockType.trustedKey;
-        const init = tsInit !== undefined ? tsInit : constants.timestamp.zero;
-        const exp = tsExp !== undefined ? tsExp : constants.timestamp.max;
-        // validate the provided signature and the parent value.
-        const prev = block ? await blocktree.getHeadBlock(block) : block;
-        const parent = await context.validateParentBlock({ prev, type });
-        const signature = await context.validateSignature({
-            sig, prev, parent, requireParent: true,
-        });
-
-        return context.writeSecureBlock({
-            sig: signature,
-            parent,
-            prev,
-            type,
-            data: {
-                key, action, tsInit: init, tsExp: exp,
-            },
-        });
-    }
-
-    /**
      * Adds a record to a collection.
      * @param {Buffer} sig The signature to use.
      * @param {Buffer} block The block to add a record to.
@@ -326,7 +293,6 @@ module.exports = function secureBlocktreeBlockTypesFactory({
         revokeKey,
         addOptions,
         addSecret,
-        addTrustedKey,
         addRecord,
         createRoot,
         createZone,

@@ -82,6 +82,9 @@ module.exports = function inMemoryBrokerFactory() {
                 InvalidSignatureError.reasons.doesNotMatch);
         }
 
+        // prevent re-using of the token.
+        tokens[token.toString('base64')] = null;
+
         return Promise.all(secrets.map(async (secret) => {
             // decrypt the secret using the authorized private key.
             const decrypted = await decrypt(privateKey, secret);
