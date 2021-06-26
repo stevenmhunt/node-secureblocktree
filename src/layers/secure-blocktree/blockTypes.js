@@ -140,9 +140,9 @@ module.exports = function secureBlocktreeBlockTypesFactory({
      * @param {Buffer} sig The signature to use.
      * @param {Buffer} key The key to trust.
      * @param {Buffer} action The action to allow.
-      * @param {BigInt} tsInit The initializion timestamp for the trust.
+     * @param {BigInt} tsInit The initializion timestamp for the trust.
      * @param {BigInt} tsExp The expiration timestamp for the trust.
-    * @returns {Promise<string>} The new block.
+     * @returns {Promise<string>} The new block.
      */
     async function addTrustedKey({
         sig, block, key, action, tsInit, tsExp,

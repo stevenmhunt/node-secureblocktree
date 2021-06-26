@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const constants = require('../src/constants');
-const { generateKeyPair } = require('../src/utils/crypto');
+const { generateKeyPair, sign } = require('../src/utils/crypto');
 
 // blocktree layers
 const secureBlocktreeLayerFactory = require('../src/layers/secure-blocktree');
@@ -64,12 +64,17 @@ function getPrivateKey(key, isExport = false) {
 }
 
 function signAs(secureBlocktree, key, altKey) {
-    return ({ parent, prev }) => secureBlocktree.signBlock({
-        secret: getPrivateKey(key),
-        key: altKey || key,
-        parent,
-        prev,
-    });
+    return ({ parent, prev, token }) => {
+        if (!token) {
+            return secureBlocktree.signBlock({
+                secret: getPrivateKey(key),
+                key: altKey || key,
+                parent,
+                prev,
+            });
+        }
+        return sign(getPrivateKey(key), token);
+    };
 }
 
 async function generateTestKey() {

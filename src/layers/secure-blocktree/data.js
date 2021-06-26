@@ -25,40 +25,63 @@ module.exports = function secureBlocktreeDataFactory({ context }) {
     }
 
     /**
-     *
-     * @param {*} param0
+     * Given an encrypted block, uses privilege elevation to re-encrypt data to a trusted key.
+     * @param {Buffer} block The block id.
+     * @param {Buffer} key The trusted key to use.
+     * @param {Buffer} signedToken a signed token from a secrets broker.
+     * @param {Object} broker The secrets broker.
+     * @returns {Promise<Buffer>} The encrypted data, encrypted with the trusted key.
      */
     async function performTrustedRead({
-        block, sig, broker,
+        block, key, signedToken, broker,
     }) {
         // collect key information.
         const action = constants.action.read;
         const blockData = await context.readSecureBlock(block);
-        const requiredKey = deserializeKeyFromSignature(blockData.sig);
-        const currentKey = deserializeKeyFromSignature(sig);
-
-        // if we already have the required key, then we don't need to do anything.
-        if (Buffer.compare(requiredKey, currentKey) === 0) {
+        if (!blockData.data || !blockData.data.isEncrypted) {
             return blockData.data;
         }
 
-        // perform a key seek to locate the required block.
-        const seek = await context.performKeySeek({ block, action, key: requiredKey });
-        if (!seek) {
-            throw new InvalidKeyError({ key: requiredKey });
+        const authorizedKey = deserializeKeyFromSignature(blockData.sig);
+        const trustedKey = !Buffer.isBuffer(key) ? Buffer.from(key, constants.format.key) : key;
+
+        // if we already have the required key or there's no data,
+        // then we don't need to do anything.
+        if (Buffer.compare(authorizedKey, trustedKey) === 0
+            || !blockData.data.data
+            || Buffer.byteLength(blockData.data.data) === 0) {
+            return blockData.data.data;
         }
 
-        // attempt to locate a secret for the current key.
-        const secretData = await context.performSecretSeek({ block: seek.block, ref: currentKey });
+        // verify the trusted key
+        const trustSeek = await context.performKeySeek({
+            block, action, key: trustedKey, allowTrustedKeys: true,
+        });
+        if (!trustSeek) {
+            throw new InvalidKeyError({ key: trustedKey });
+        }
+
+        // perform a key seek to locate the required block.
+        const seek = await context.performKeySeek({ block, action, key: authorizedKey });
+        if (!seek) {
+            throw new InvalidKeyError({ key: authorizedKey });
+        }
+
+        // attempt to locate a secret for the authorized key.
+        const secretData = await context.performSecretSeek({
+            block: seek.block, ref: authorizedKey,
+        });
         if (!secretData) {
-            throw new InvalidKeyError({ key: currentKey });
+            throw new InvalidKeyError({ key: authorizedKey });
         }
         const { secret } = secretData;
+        const secrets = [blockData.data.data];
 
         // use a broker to construct a secret which can be decoded by the trusted key.
-        return broker.buildTrustedSecret({
-            secret, authorizedKey: requiredKey, trustedKey: currentKey,
+        const [result] = await broker.buildTrustedSecrets({
+            signedToken, secrets, authorizedKey, trustedKey, encryptedKeyData: [secret],
         });
+        return result;
     }
 
     return {

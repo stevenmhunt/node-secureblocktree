@@ -20,6 +20,8 @@ function loadSecureBlocktreeTests(context) {
         loadTests(require('./secure-blocktree/addOptions'), context));
     describe('createCollection()',
         loadTests(require('./secure-blocktree/createCollection'), context));
+    describe('performTrustedRead()',
+        loadTests(require('./secure-blocktree/performTrustedRead'), context));
 }
 
 describe('Blocktree Layer 3 - Secure Blocktree', () => {

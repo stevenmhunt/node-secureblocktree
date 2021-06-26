@@ -10,7 +10,7 @@ const { fromInt16 } = require('../utils/convert');
  * @param serverPublicKey {Buffer} (Optional) The server's public key for encrypting data.
  * @param httpClientOptions {Object} (Optional) Custom settings for the HTTP client.
  */
-module.export = function httpBrokerFactory({
+module.exports = function httpBrokerFactory({
     url, clientSecret, clientPrivateKey, serverPublicKey, httpClientOptions,
 }) {
     /**
@@ -30,7 +30,7 @@ module.export = function httpBrokerFactory({
     /**
      * @private
      * Constructs the request data to send to the broker.
-     * @param {*} data
+     * @param {Object} data
      */
     async function buildSecureRequest(data) {
         const nonce = generateNonce();
@@ -57,12 +57,25 @@ module.export = function httpBrokerFactory({
     }
 
     /**
+     * Generates a broker request token.
+     * @param {Buffer} trustedKey The public key of the key pair that will be trusted.
+     * @returns {Promise<Buffer>} The request token.
+     */
+    async function generateRequestToken({ trustedKey }) {
+        const req = await buildSecureRequest({
+            trustedKey,
+        });
+        const { data } = await instance.post('requestTokens', req);
+        return Buffer.from(data, 'base64');
+    }
+
+    /**
      * Adds an authorized key to the broker.
      * @param {Buffer} publicKey The public key.
      * @param {Buffer} privateKey The private key.
      * @returns {Promise}
      */
-    async function addAuthorizedKey(publicKey, privateKey) {
+    async function addAuthorizedKey({ publicKey, privateKey }) {
         const req = await buildSecureRequest({
             publicKey, privateKey,
         });
@@ -74,7 +87,7 @@ module.export = function httpBrokerFactory({
      * @param {Buffer} publicKey The public key to revoke.
      * @returns {Promise}
      */
-    async function revokeAuthorizedKey(publicKey) {
+    async function revokeAuthorizedKey({ publicKey }) {
         const req = await buildSecureRequest({ publicKey });
         await instance.post('revokedKeys', req);
     }
@@ -82,19 +95,28 @@ module.export = function httpBrokerFactory({
     /**
      * Given a secret, uses the authorized key to decrypt it and then re-encrypts the
      * data using the trusted key. This brokering process is used for performing trusted reads.
+     * @param {Buffer} signedToken The token
      * @param {Buffer} secret The secret to convert into a trusted secret.
      * @param {Buffer} authorizedKey The public key of the pair used to encrypt.
      * @param {Buffer} trustedKey The public key to re-encrypt the data with.
      * @returns {Promise<Buffer>} The re-encrypted data.
      */
-    async function buildTrustedSecret({ secret, authorizedKey, trustedKey }) {
-        const req = await buildSecureRequest({ secret, authorizedKey, trustedKey });
+    async function buildTrustedSecrets({
+        signedToken, secrets, authorizedKey, trustedKey,
+    }) {
+        const req = await buildSecureRequest({
+            signedToken, secrets, authorizedKey, trustedKey,
+        });
         const { data } = await instance.post('trustedSecrets', req);
+        if (Array.isArray(data)) {
+            return data.map((i) => Buffer.from(i, 'base64'));
+        }
         return Buffer.from(data, 'base64');
     }
 
-    module.exports = {
-        buildTrustedSecret,
+    return {
+        generateRequestToken,
+        buildTrustedSecrets,
         addAuthorizedKey,
         revokeAuthorizedKey,
     };

@@ -1,9 +1,11 @@
 /* eslint-disable no-await-in-loop */
 const assert = require('assert');
 const constants = require('../../src/constants');
+const inMemoryBroker = require('../../src/brokers/inMemoryBroker');
+const { getPrivateKey } = require('../test-helper');
 
 module.exports = (context) => ({
-    'should succeed with trusted read on an encrypted zone': async () => {
+    'should succeed with trusted read on an encrypted zone with no elevation required': async () => {
         const { secureBlocktree, secureRoot, rootZoneKey } = context;
         const { rootZone } = secureRoot;
         const secret = 'THE SECRET VALUE';
@@ -18,17 +20,20 @@ module.exports = (context) => ({
                 },
             }),
         });
-        const blockData = await secureBlocktree.performTrustedRead({
-            block: newZone,
-            sig: context.signAs(rootZoneKey),
+        const broker = inMemoryBroker();
+        await broker.addAuthorizedKey({
+            publicKey: rootZoneKey,
+            privateKey: getPrivateKey(rootZoneKey),
         });
-        const result = await secureBlocktree.performTrustedRead(blockData);
-
-        assert.ok(result.timestamp > 0, 'Expected timestamp to be valid.');
-        assert.strictEqual(result.prev, null);
-        assert.ok(Buffer.compare(result.parent, rootZone) === 0);
-        assert.strictEqual(result.type, constants.blockType.zone);
-        assert.strictEqual(result.data.isEncrypted, true);
-        assert.ok(result.nonce, 'Expected valid nonce value.');
+        const signedToken = context.signAs(rootZoneKey)({
+            token: await broker.generateRequestToken({ trustedKey: rootZoneKey }),
+        });
+        const result = await secureBlocktree.performTrustedRead({
+            block: newZone,
+            key: rootZoneKey,
+            signedToken,
+            broker,
+        });
+        assert.ok(result);
     },
 });

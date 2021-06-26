@@ -42,7 +42,7 @@ module.exports = function secureBlocktreeSecretsFactory({
         const inactiveRefs = {};
         while (current != null) {
             secureBlock = await context.readSecureBlock(current);
-            if (secureBlock.type <= constants.blockType.secret) {
+            if (secureBlock.type === constants.blockType.secret) {
                 const {
                     ref: currentRef,
                     secret, tsInit, tsExp,
