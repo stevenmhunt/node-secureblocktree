@@ -1,6 +1,7 @@
 const constants = require('../../constants');
-const { InvalidKeyError } = require('../../errors');
-const { serializeSecureBlockData, deserializeKeyFromSignature } = require('./serialization');
+const { InvalidKeyError, InvalidSignatureError } = require('../../errors');
+const { serializeSecureBlockData, deserializeSecureBlockData } = require('./serialization');
+const { verify } = require('../../utils/crypto');
 
 /**
  * Secure Blocktree Data API.
@@ -24,16 +25,27 @@ module.exports = function secureBlocktreeDataFactory({ context }) {
         };
     }
 
+    async function decryptBlockData({
+        encryptedData, type, privateKey,
+    }) {
+        if (!privateKey) {
+            return deserializeSecureBlockData(type, encryptedData);
+        }
+        const data = await context.decryptData(privateKey, encryptedData);
+        return deserializeSecureBlockData(type, data);
+    }
+
     /**
      * Given an encrypted block, uses privilege elevation to re-encrypt data to a trusted key.
      * @param {Buffer} block The block id.
      * @param {Buffer} key The trusted key to use.
-     * @param {Buffer} signedToken a signed token from a secrets broker.
+     * @param {Buffer} token The token from the secrets broker.
+     * @param {Buffer} sig The token, signed by the trusted key.
      * @param {Object} broker The secrets broker.
      * @returns {Promise<Buffer>} The encrypted data, encrypted with the trusted key.
      */
     async function performTrustedRead({
-        block, key, signedToken, broker,
+        block, key, token, sig, broker,
     }) {
         // collect key information.
         const action = constants.action.read;
@@ -42,7 +54,9 @@ module.exports = function secureBlocktreeDataFactory({ context }) {
             return blockData.data;
         }
 
-        const authorizedKey = deserializeKeyFromSignature(blockData.sig);
+        const authorizedKey = !Buffer.isBuffer(blockData.data.key)
+            ? Buffer.from(blockData.data.key, constants.format.key)
+            : blockData.data.key;
         const trustedKey = !Buffer.isBuffer(key) ? Buffer.from(key, constants.format.key) : key;
 
         // if we already have the required key or there's no data,
@@ -53,7 +67,17 @@ module.exports = function secureBlocktreeDataFactory({ context }) {
             return blockData.data.data;
         }
 
-        // verify the trusted key
+        // check the signature.
+        if (!sig || !token) {
+            throw new InvalidSignatureError({ sig },
+                InvalidSignatureError.reasons.notFound);
+        }
+        if (!(await verify(trustedKey, sig, token))) {
+            throw new InvalidSignatureError({ sig },
+                InvalidSignatureError.reasons.doesNotMatch);
+        }
+
+        // verify the trusted key is trusted.
         const trustSeek = await context.performKeySeek({
             block, action, key: trustedKey, allowTrustedKeys: true,
         });
@@ -66,26 +90,18 @@ module.exports = function secureBlocktreeDataFactory({ context }) {
         if (!seek) {
             throw new InvalidKeyError({ key: authorizedKey });
         }
-
-        // attempt to locate a secret for the authorized key.
-        const secretData = await context.performSecretSeek({
-            block: seek.block, ref: authorizedKey,
-        });
-        if (!secretData) {
-            throw new InvalidKeyError({ key: authorizedKey });
-        }
-        const { secret } = secretData;
         const secrets = [blockData.data.data];
 
         // use a broker to construct a secret which can be decoded by the trusted key.
         const [result] = await broker.buildTrustedSecrets({
-            signedToken, secrets, authorizedKey, trustedKey, encryptedKeyData: [secret],
+            token, sig, secrets, authorizedKey, trustedKey,
         });
         return result;
     }
 
     return {
         encryptBlockData,
+        decryptBlockData,
         performTrustedRead,
     };
 };

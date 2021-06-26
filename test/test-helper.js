@@ -86,7 +86,7 @@ async function generateTestKey() {
 
     privateKeys[publicKey] = privateKey;
 
-    return publicKey;
+    return Buffer.from(publicKey, 'utf-8');
 }
 
 async function initializeSecureRoot(secureBlocktree, rootKey, rootZoneKey) {

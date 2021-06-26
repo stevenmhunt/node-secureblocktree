@@ -1,7 +1,7 @@
 const constants = {
     crypto: {
         rsaKeySize: 1024,
-        aesKeySize: 32,
+        aesKeySize: 16,
         aesType: 'aes-256-cbc',
         ivSize: 16,
     },

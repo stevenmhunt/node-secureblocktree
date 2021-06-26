@@ -23,16 +23,18 @@ module.exports = function secureBlocktreeEncryptionFactory({ blocktree }) {
 
     /**
      * Decrypts data using the specified key.
-     * @param {Buffer} key The public key to decrypt data with.
+     * @param {Buffer} privateKey The private key to decrypt data with.
      * @param {Buffer} data The data to decrypt.
      * @param {Object} options Additional decryption options.
      * @returns {Promise<Object>} The decrypted data.
      */
-    async function decryptData(key, data, options = {}) {
-        const result = await decrypt(
-            Buffer.from(key, constants.format.key),
-            Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf-8'),
-        );
+    async function decryptData(privateKey, data, options = {}) {
+        let key = privateKey;
+        if (typeof key === 'string') {
+            key = Buffer.from(privateKey, constants.format.key);
+        }
+        const result = await decrypt(key,
+            Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf-8'));
         if (options && options.encoding) {
             return result.toString(options.encoding);
         }
