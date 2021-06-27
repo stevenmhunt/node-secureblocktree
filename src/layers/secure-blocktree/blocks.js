@@ -1,6 +1,7 @@
 const constants = require('../../constants');
 const { InvalidRootError, InvalidBlockError, InvalidSignatureError } = require('../../errors');
 const { toInt64 } = require('../../utils/convert');
+const { deserializeSecureBlock } = require('./serialization');
 
 /**
  * Secure Blocktree Blocks API.
@@ -8,8 +9,6 @@ const { toInt64 } = require('../../utils/convert');
 module.exports = function secureBlocktreeBlocksFactory({
     blocktree, serialization,
 }) {
-    const sigNonces = {};
-
     /**
      * Reads a secure block from the blocktree.
      * @param {Buffer} block The block hash to read.
@@ -34,16 +33,26 @@ module.exports = function secureBlocktreeBlocksFactory({
                 throw new InvalidRootError();
             }
         } else {
+            // make sure there is a valid signature.
             if (!data.sig) {
                 throw new InvalidSignatureError({ sig: data.sig },
                     InvalidSignatureError.reasons.notFound);
             }
+            // make sure nonce values are only used once.
             const sigNonce = toInt64(data.sig, 0);
-            if (sigNonces[sigNonce.toString()]) {
-                throw new InvalidSignatureError({ sig: data.sig },
-                    InvalidSignatureError.reasons.nonceAlreadyUsed);
+            // if adding the first block of a new level, check other childrens' signatures first.
+            if (!data.prev) {
+                const check = (await blocktree.performChildScan(data.parent))
+                    .map((i) => deserializeSecureBlock(i))
+                    .map((i) => toInt64(i.sig, 0))
+                    .filter((i) => i === sigNonce);
+                // if any of the other children have the same nonce, then signatures are invalid.
+                // this check prevents copying signatures between children.
+                if (check.length > 0) {
+                    throw new InvalidSignatureError({ sig: data.sig },
+                        InvalidSignatureError.reasons.nonceAlreadyUsed);
+                }
             }
-            sigNonces[sigNonce.toString()] = true;
         }
         return blocktree.writeBlock(serialization.serializeSecureBlock(data));
     }

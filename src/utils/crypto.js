@@ -96,7 +96,7 @@ async function verify(publicKey, sig, data) {
 
 /**
  * Generates hashes for block data.
- * @param {string} value
+ * @param {Buffer} value
  */
 function generateHash(value) {
     return crypto.createHash(constants.block.hash).update(value).digest();
