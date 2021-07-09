@@ -1,5 +1,5 @@
 {
-  "name": "blocktree",
+  "name": "secure-blocktree",
   "version": "0.1.0",
   "description": "A blockchain implementation with additional capabilities geared towards business data management.",
   "main": "index.js",
